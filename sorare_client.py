@@ -5,9 +5,9 @@ Reads the API key from the environment (SORARE_API_KEY) or from a local
 .env.local file. Never hard-code the key in this file.
 
 Usage:
-    python3 sorare_client.py ping                 # check auth (currentUser)
-    python3 sorare_client.py player "Kylian Mbappe"
-    python3 sorare_client.py query '{ currentUser { nickname } }'
+    python3 sorare_client.py ping                          # check connectivity
+    python3 sorare_client.py player kylian-mbappe-lottin   # look up by slug
+    python3 sorare_client.py query '{ players(slugs: ["kylian-mbappe-lottin"]) { displayName } }'
 
 The API key is sent in the `APIKEY` header, as required by Sorare.
 Docs: https://developers.sorare.com/
@@ -83,11 +83,11 @@ def graphql(query, variables=None):
 PING_QUERY = "{ currentUser { nickname } }"
 
 PLAYER_QUERY = """
-query Player($name: String!) {
-  players(name: $name) {
+query Player($slugs: [String!]) {
+  players(slugs: $slugs) {
     slug
     displayName
-    position
+    anyPositions
     activeClub { name }
   }
 }
@@ -98,8 +98,11 @@ def cmd_ping():
     print(json.dumps(graphql(PING_QUERY), indent=2, ensure_ascii=False))
 
 
-def cmd_player(name):
-    print(json.dumps(graphql(PLAYER_QUERY, {"name": name}), indent=2, ensure_ascii=False))
+def cmd_player(slug):
+    # Sorare looks players up by slug (e.g. "kylian-mbappe-lottin"), not by
+    # free-text name. Pass one or more comma-separated slugs.
+    slugs = [s.strip() for s in slug.split(",") if s.strip()]
+    print(json.dumps(graphql(PLAYER_QUERY, {"slugs": slugs}), indent=2, ensure_ascii=False))
 
 
 def cmd_query(query):

@@ -16,10 +16,16 @@ Helper tooling for working with the [Sorare](https://sorare.com) GraphQL API.
 2. Run the client (no dependencies required, uses only the Python stdlib):
 
    ```bash
-   python3 sorare_client.py ping                 # verify the key works
-   python3 sorare_client.py player "Kylian Mbappe"
-   python3 sorare_client.py query '{ currentUser { nickname } }'
+   python3 sorare_client.py ping                          # verify connectivity
+   python3 sorare_client.py player kylian-mbappe-lottin   # look up player(s) by slug
+   python3 sorare_client.py query '{ players(slugs: ["kylian-mbappe-lottin"]) { displayName activeClub { name } } }'
    ```
+
+   Note: the API key authenticates the *application*, not a user. User-specific
+   fields like `currentUser` return `null` unless you also supply a signed-in
+   JWT; public data (players, clubs, competitions, cards) works with the key
+   alone. Players are looked up by **slug** (e.g. `kylian-mbappe-lottin`), not
+   by free-text name.
 
 ## How the key is used
 
