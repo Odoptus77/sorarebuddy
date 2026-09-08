@@ -39,27 +39,28 @@ def load_env(path=".env.local"):
             os.environ.setdefault(key, value)
 
 
-def get_api_key():
-    key = os.environ.get("SORARE_API_KEY")
-    if not key:
-        sys.exit(
-            "ERROR: SORARE_API_KEY is not set.\n"
-            "Set it in the environment or in .env.local (see .env.example)."
-        )
-    return key
-
-
 def graphql(query, variables=None):
-    """Execute a GraphQL request and return the parsed JSON response."""
+    """Execute a GraphQL request and return the parsed JSON response.
+
+    The API key is optional here: if SORARE_API_KEY is set we send it in the
+    APIKEY header ourselves. If it is not set, we send no key and rely on the
+    request being enriched upstream -- e.g. a Claude Code cloud environment
+    "API credential" that attaches the APIKEY header for api.sorare.com after
+    the request leaves the session's VM. That way the key never has to live
+    in the repo or the session at all.
+    """
     payload = json.dumps({"query": query, "variables": variables or {}}).encode()
+    headers = {
+        "Content-Type": "application/json",
+        "User-Agent": "sorarebuddy/0.1",
+    }
+    api_key = os.environ.get("SORARE_API_KEY")
+    if api_key:
+        headers["APIKEY"] = api_key
     req = urllib.request.Request(
         GRAPHQL_ENDPOINT,
         data=payload,
-        headers={
-            "Content-Type": "application/json",
-            "APIKEY": get_api_key(),
-            "User-Agent": "sorarebuddy/0.1",
-        },
+        headers=headers,
         method="POST",
     )
     try:

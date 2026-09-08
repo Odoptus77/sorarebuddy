@@ -31,11 +31,14 @@ request header, as required by Sorare. See the
 
 If you run this inside a Claude Code web session, the environment's
 **network policy may block `api.sorare.com`**. In that case live API calls
-fail with a proxy `403`. To make live calls work either:
+fail with a proxy `403`. The recommended fix (Pro/Max) is to store the key as
+an **API credential** on the cloud environment so the proxy attaches the
+`APIKEY` header for `api.sorare.com` automatically — the key never enters the
+session. Full step-by-step instructions (and the Custom-allowlist alternative
+for Team/Enterprise) are in [`docs/network-setup.md`](docs/network-setup.md).
 
-- run the client on your own machine, or
-- use / configure an environment whose egress policy allows `api.sorare.com`
-  (see https://code.claude.com/docs/en/claude-code-on-the-web).
+When the credential is configured this way, `SORARE_API_KEY` does not need to
+be set locally: the client sends no key and the proxy injects it.
 
 ## Security
 
