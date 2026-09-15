@@ -47,6 +47,7 @@ LEAGUE_MAP = {
     "SCOTLAND": ("premiership-gb-sct", "SPFL"),
     "JUPILER": ("jupiler", "Jupiler Pro League"),
     "PORTUGAL": ("primeira-liga", "Liga Portugal"),
+    "US": ("mlspa", "MLS"),      # Sorare's MLS token is IN_SEASON_US_*
     "USA": ("mlspa", "MLS"),
     "MLS": ("mlspa", "MLS"),
 }
