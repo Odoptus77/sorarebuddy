@@ -50,6 +50,29 @@ LEAGUE_MAP = {
     "USA": ("major-league-soccer", "MLS"),
     "MLS": ("major-league-soccer", "MLS"),
 }
+# Fallback: IN_SEASON_<COUNTRY> token -> club country code, for leagues without a
+# precise slug in LEAGUE_MAP (one top-flight per country is filtered by country).
+COUNTRY_ISO = {
+    "SCOTLAND": "gb-sct", "SPAIN": "es", "GERMANY": "de", "FRANCE": "fr",
+    "ITALY": "it", "NETHERLANDS": "nl", "PORTUGAL": "pt", "BELGIUM": "be",
+    "JUPILER": "be", "JAPAN": "jp", "KOREA": "kr", "USA": "us", "MLS": "us",
+    "BRAZIL": "br", "TURKEY": "tr", "DENMARK": "dk", "AUSTRIA": "at",
+    "CROATIA": "hr", "ARGENTINA": "ar", "MEXICO": "mx", "COLOMBIA": "co",
+    "PERU": "pe", "RUSSIA": "ru", "SWITZERLAND": "ch", "POLAND": "pl",
+    "NORWAY": "no", "SWEDEN": "se", "GREECE": "gr",
+}
+
+
+def resolve_league(token):
+    """Map an IN_SEASON_<token> to a card filter. Prefer a precise league slug;
+    otherwise fall back to the club country code. Returns (kind, value, name)."""
+    if token in LEAGUE_MAP:
+        slug, name = LEAGUE_MAP[token]
+        return ("league", slug, name)
+    if token in COUNTRY_ISO:
+        return ("country", COUNTRY_ISO[token], token.replace("_", " ").title())
+    return None
+
 
 # --- Prize-pool weighting (editable) --------------------------------------
 # Relative prize weight per competition, used to turn "best lineup" into
@@ -92,7 +115,7 @@ query Cards($slug: String!, $after: String, $rarities: [Rarity!]) {
 
 PLAYER_FIELDS = """
   slug displayName anyPositions lastFifteenSo5Appearances
-  activeClub { ... on Club { name domesticLeague { slug } } }
+  activeClub { ... on Club { name country { code } domesticLeague { slug } } }
   activeInjuries { status kind }
   nextGame { date statusTyped homeTeam { ... on Club { name } } awayTeam { ... on Club { name } } }
   l5: averageScore(type: LAST_FIVE_SO5_AVERAGE_SCORE)
@@ -152,9 +175,9 @@ def fetch_competitions(fx_slug, rarities):
             body = t[len("IN_SEASON_"):]
             for tok in RARITY_TOKENS:
                 body = body.replace("_" + tok[1], "")
-            token = body  # e.g. SCOTLAND, ENGLAND_SECOND, CONTENDERS
-            if token not in LEAGUE_MAP:
-                continue
+            token = body  # e.g. SCOTLAND, ENGLAND_SECOND, JAPAN, CONTENDERS
+            if resolve_league(token) is None:
+                continue  # Contender / Rest of the World / unmapped
             key = (rar, "HS", None, token, True)   # HS = Hot Streak (5 cards)
             g = groups.setdefault(key, {"teams_cap": 1})
             g["teams_cap"] = max(g["teams_cap"], tcap)
@@ -162,7 +185,7 @@ def fetch_competitions(fx_slug, rarities):
             # league arena (SO5, cap, league filter, all seasons)
             m2 = re.match(r"ALL_SEASONS_(.+?)_ARENA", t)
             token = m2.group(1) if m2 else None
-            if token not in LEAGUE_MAP:
+            if not token or resolve_league(token) is None:
                 continue  # U21 arena / unmapped
             key = (rar, "SO5", cap, token, False)
             g = groups.setdefault(key, {"teams_cap": 1})
@@ -176,8 +199,13 @@ def fetch_competitions(fx_slug, rarities):
         size = 7 if fmt == "SO7" else 5             # Hot Streak & Arena = 5, Classic Pro = 7
         fmt_label = {"HS": "Hot Streak", "SO7": "SO7", "SO5": "SO5"}[fmt]
         league_prefix = None
+        country_code = None
         if token:
-            league_prefix, name = LEAGUE_MAP[token]
+            kind, value, name = resolve_league(token)
+            if kind == "league":
+                league_prefix = value
+            else:
+                country_code = value
             if hotstreak:
                 label = f"Pro · {name} (Hot Streak)"
             elif cap:
@@ -193,7 +221,8 @@ def fetch_competitions(fx_slug, rarities):
         comps.append({
             "rarity": rar, "label": label, "format": fmt_label, "mode": mode,
             "size": size, "cap": cap, "teams_cap": g["teams_cap"],
-            "league_prefix": league_prefix, "in_season": in_season,
+            "league_prefix": league_prefix, "country_code": country_code,
+            "in_season": in_season,
             "hotstreak": hotstreak, "max_classic": 1 if hotstreak else None,
         })
     return comps
@@ -254,12 +283,14 @@ def eligible_entry(card, pd, ws, we):
     away = (ng.get("awayTeam") or {}).get("name")
     is_home = club is not None and club == home
     proj = round(l5 * (0.75 + 0.25 * min(1.0, app / 15.0)) * (1.03 if is_home else 1.0), 1)
-    league = ((pd.get("activeClub") or {}).get("domesticLeague") or {}).get("slug")
+    club = pd.get("activeClub") or {}
+    league = (club.get("domesticLeague") or {}).get("slug")
+    country = (club.get("country") or {}).get("code")
     return {"slug": card["slug"], "player": card["anyPlayer"]["displayName"],
             "player_slug": card["anyPlayer"]["slug"], "season": card.get("seasonYear"),
             "positions": card["anyPlayer"].get("anyPositions") or [],
             "proj": proj, "cap_score": round(l15 if l15 else l5, 1),
-            "l5": round(l5, 1), "appearances": app, "league": league,
+            "l5": round(l5, 1), "appearances": app, "league": league, "country": country,
             "home": is_home, "opponent": away if is_home else home,
             "kickoff": ng["date"]}
 
@@ -403,6 +434,9 @@ def main(argv):
         if comp.get("league_prefix"):
             pref = comp["league_prefix"]
             pool = [e for e in pool if (e.get("league") or "").startswith(pref)]
+        elif comp.get("country_code"):
+            cc = comp["country_code"]
+            pool = [e for e in pool if e.get("country") == cc]
         return pool
 
     # tag rarity on entries so a single global "used" set works across rarities
@@ -419,9 +453,9 @@ def main(argv):
     def enough_pool(comp):
         pool = comp_pool(comp, all_entries)
         if comp.get("hotstreak"):
-            # need >=4 in-season league cards for a real hot streak (+1 classic slot)
-            return sum(1 for e in pool if not e.get("is_classic")) >= 4
-        if comp.get("league_prefix"):
+            # need >=3 in-season league cards for a meaningful hot streak (+classic slot)
+            return sum(1 for e in pool if not e.get("is_classic")) >= 3
+        if comp.get("league_prefix") or comp.get("country_code"):
             return len(pool) >= 4
         return True
 
