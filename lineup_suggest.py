@@ -144,32 +144,28 @@ def fetch_competitions(fx_slug, rarities):
 
     comps = []
     for (rar, fmt, cap, token, in_season), g in groups.items():
+        mode = "Pro" if fmt == "SO7" else "Arena"   # Sorare 27: SO7=Pro, SO5=Arena
         league_prefix = None
         if token:
             league_prefix, name = LEAGUE_MAP[token]
             if in_season:
-                label = f"Liga · {name} (In-Season)"
+                label = f"Pro · {name} (Hot Streak)"
             elif cap:
-                label = f"Liga-Arena · {name} · Cap {cap}"
+                label = f"Arena · {name} · Cap {cap}"
             else:
-                label = f"Liga-Arena · {name} · Uncapped"
+                label = f"Arena · {name} · Uncapped"
         elif fmt == "SO7":
-            label = f"Classic · {' / '.join(sorted(g['families']))}"
+            label = f"Pro · {' / '.join(sorted(g['families']))}"
         elif cap:
             label = f"Arena · Cap {cap}"
         else:
             label = "Arena · Uncapped"
         comps.append({
-            "rarity": rar, "label": label, "format": fmt,
+            "rarity": rar, "label": label, "format": fmt, "mode": mode,
             "size": 5 if fmt == "SO5" else 7, "cap": cap,
             "teams_cap": g["teams_cap"], "league_prefix": league_prefix,
             "in_season": in_season,
         })
-
-    def rank(c):
-        fam = 0 if c["league_prefix"] else (1 if c["format"] == "SO7" else 2)
-        return (c["rarity"], fam, c["label"], -(c["cap"] or 99999))
-    comps.sort(key=rank)
     return comps
 
 
@@ -234,7 +230,8 @@ def eligible_entry(card, pd, ws, we):
             "positions": card["anyPlayer"].get("anyPositions") or [],
             "proj": proj, "cap_score": round(l15 if l15 else l5, 1),
             "l5": round(l5, 1), "appearances": app, "league": league,
-            "home": is_home, "opponent": away if is_home else home}
+            "home": is_home, "opponent": away if is_home else home,
+            "kickoff": ng["date"]}
 
 
 def cands(pool, slot, blocked):
@@ -344,72 +341,72 @@ def main(argv):
     current_season = max((c.get("seasonYear") or 0 for c in cards), default=0)
     print(f"Current season = {current_season}", file=sys.stderr)
 
-    for comp in comps:
-        pool = pools.get(comp["rarity"], [])
+    def comp_pool(comp, available):
+        pool = [e for e in available if e["rarity_"] == comp["rarity"]]
         if comp.get("league_prefix"):
             pref = comp["league_prefix"]
             pool = [e for e in pool if (e.get("league") or "").startswith(pref)]
         if comp.get("in_season"):
             pool = [e for e in pool if (e.get("season") or 0) >= current_season]
+        return pool
+
+    # tag rarity on entries so a single global "used" set works across rarities
+    for rar in rarities:
+        for e in pools.get(rar, []):
+            e["rarity_"] = rar
+
+    def window(teams):
+        ko = [c["kickoff"] for t in teams for c in t["cards"] if c.get("kickoff")]
+        return (min(ko), max(ko)) if ko else (None, None)
+
+    # ---- max-profit priority: each card used only once (global) ----
+    # Pass A: standalone strength of each competition's best single team.
+    for comp in comps:
+        base = build_team(comp_pool(comp, sum(pools.values(), [])), set(),
+                          comp["size"], comp["cap"])
+        comp["_priority"] = base["projected_total"] * (1.15 if comp["mode"] == "Pro" else 1.0)
+    # skip league comps with too small a pool (noise), before ordering
+    comps = [c for c in comps if not (c.get("league_prefix")
+             and len(comp_pool(c, sum(pools.values(), []))) < 4)]
+    comps.sort(key=lambda c: -c["_priority"])
+
+    # Pass B: fill in priority order from the shrinking global pool.
+    used_global = set()
+    for comp in comps:
         teams = []
-        used = set()
+        used_local = set(used_global)
         for _ in range(comp["teams_cap"]):
-            t = build_team(pool, used, comp["size"], comp["cap"])
-            if not t["cards"] or not t["complete"]:
-                if not teams and t["cards"]:
-                    teams.append(t)  # keep a partial first team to show what's missing
+            avail = [e for e in pools[comp["rarity"]] if e["slug"] not in used_local]
+            pool = comp_pool(comp, avail)
+            t = build_team(pool, set(), comp["size"], comp["cap"])
+            if not t["cards"]:
                 break
+            if not t["complete"] and teams:
+                break  # only keep a partial team as the first entry
             teams.append(t)
-            used |= t["used"]
+            used_local |= t["used"]
+            if not t["complete"]:
+                break
         for t in teams:
             t.pop("used", None)
-        # league competitions: show when there is a meaningful pool (>=4 cards),
-        # even if the 7-card team can't be completed (best partial is still useful)
-        if comp.get("league_prefix") and len(pool) < 4:
+        if not teams:
             continue
+        used_global = used_local
+        w0, w1 = window(teams)
         out["competitions"].append({**{k: comp[k] for k in
-                                    ("rarity", "label", "format", "size", "cap", "teams_cap")},
+                                    ("rarity", "label", "format", "mode", "size", "cap", "teams_cap")},
                                     "in_season": comp.get("in_season", False),
-                                    "eligible_count": len(pool), "teams": teams})
+                                    "deadline_first": w0, "deadline_last": w1,
+                                    "teams": teams})
         tt = ", ".join(f"Σ{t['projected_total']}" for t in teams) or "—"
-        print(f"  {comp['rarity']} · {comp['label']} [{comp['format']}] "
+        print(f"  {comp['rarity']} · {comp['label']} [{comp['mode']}] "
               f"teams={len(teams)}/{comp['teams_cap']}: {tt}", file=sys.stderr)
 
-    # Hot Streak proxy: Sorare's Hot Streak rules aren't in the API. Hot Streak is
-    # an in-season mode where you may field ONE Classic (other-season) card, so we
-    # pick the best in-season form 5 but allow a single classic wildcard if it beats
-    # the weakest in-season pick.
-    for rar in rarities:
-        allp = sorted(pools.get(rar, []), key=lambda e: -e["proj"])
-        ins = [e for e in allp if (e.get("season") or 0) >= current_season]
-        classic = [e for e in allp if (e.get("season") or 0) < current_season]
-        pool = ins[:5]
-        if classic and (len(pool) < 5 or classic[0]["proj"] > pool[-1]["proj"]):
-            wild = dict(classic[0]); wild["classic"] = True
-            if len(pool) == 5:
-                pool[-1] = wild
-            else:
-                pool.append(wild)
-        pool = sorted(pool, key=lambda e: -e["proj"])
-        if not pool:
-            continue
-        cards = []
-        for e in pool:
-            c = dict(e)
-            c["slot"] = next((s for s in POS_SLOTS if s in c["positions"]),
-                             (c["positions"] or ["Forward"])[0])
-            cards.append(c)
-        cap_c = max(cards, key=lambda c: c["proj"]); cap_c["captain"] = True
-        team = {"cards": cards, "complete": len(cards) == 5,
-                "cap_used": round(sum(c["cap_score"] for c in cards), 1),
-                "over_cap": False,
-                "projected_total": round(sum(c["proj"] for c in cards) + cap_c["proj"], 1)}
-        out["competitions"].append({
-            "rarity": rar, "label": "Hot Streak (Näherung · beste Form)",
-            "format": "Best-5", "size": 5, "cap": None,
-            "teams_cap": 1, "countries": None, "in_season": False,
-            "eligible_count": len(pools.get(rar, [])), "teams": [team],
-            "proxy": True})
+    out["cards_used"] = len(used_global)
+    out["total_projected"] = round(
+        sum(t["projected_total"] for c in out["competitions"] for t in c["teams"]), 1)
+    print(f"Total projected {out['total_projected']} across {out['cards_used']} cards",
+          file=sys.stderr)
 
     with open(args.json, "w", encoding="utf-8") as fh:
         json.dump(out, fh, ensure_ascii=False, indent=2)
