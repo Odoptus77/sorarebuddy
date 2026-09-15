@@ -29,7 +29,8 @@ import time
 from sorare_client import graphql
 
 CARD_PAGE = 50
-PLAYER_BATCH = 20
+PLAYER_BATCH = 10   # detailedScore (minutes) per game inflates query complexity
+GAMES_BACK = 5      # recent games used for the Startelf (start-probability) score
 PACE = 0.25
 POS_SLOTS = ["Goalkeeper", "Defender", "Midfielder", "Forward"]
 RARITY_TOKENS = [("super_rare", "SUPER_RARE"), ("limited", "LIMITED"),
@@ -126,11 +127,12 @@ query Cards($slug: String!, $after: String, $rarities: [Rarity!]) {
 PLAYER_FIELDS = """
   slug displayName anyPositions age lastFifteenSo5Appearances
   activeClub { ... on Club { name country { code } domesticLeague { slug } } }
-  activeInjuries { status kind }
+  activeInjuries { kind expectedEndDate active }
   nextGame { date statusTyped homeTeam { ... on Club { name } } awayTeam { ... on Club { name } } }
+  playerGameScores(last: %d) { anyGame { date } detailedScore { stat statValue } }
   l5: averageScore(type: LAST_FIVE_SO5_AVERAGE_SCORE)
   l15: averageScore(type: LAST_FIFTEEN_SO5_AVERAGE_SCORE)
-"""
+""" % GAMES_BACK
 
 
 def rarity_of(t):
@@ -305,9 +307,93 @@ def fetch_players(slugs):
     return out
 
 
-def eligible_entry(card, pd, ws, we):
-    if pd.get("activeInjuries"):
+# --- Startelf prediction (start-probability) score ------------------------
+# Blends Sorare's own signals into P(player starts the upcoming game):
+#   1. recent minutes per game (the strongest signal: did they actually start
+#      and stay on?), recency-weighted over the last GAMES_BACK games
+#   2. season availability (last-15 SO5 appearance rate)
+#   3. injury feed with expected return date, cross-checked against (1) so a
+#      stale injury record on a player who just played 90' doesn't over-punish
+# External predicted-lineup/news sources are network-blocked (only
+# api.sorare.com is reachable), so this is derived purely from Sorare data.
+RECENCY_W = [1.0, 0.82, 0.66, 0.52, 0.4, 0.3]   # most-recent game first
+
+
+def _recent_minutes(pd):
+    """List of minutes played in the last games, most recent first."""
+    out = []
+    for g in (pd.get("playerGameScores") or []):
+        mp = None
+        for s in (g.get("detailedScore") or []):
+            if s.get("stat") == "mins_played":
+                mp = s.get("statValue")
+                break
+        dte = ((g.get("anyGame") or {}).get("date") or "")[:10]
+        out.append((dte, mp))
+    # Sorare returns oldest->newest for last:N; flip to most-recent first.
+    out.reverse()
+    return out
+
+
+def _mins_to_start(mp):
+    """Per-game start indicator from minutes played."""
+    if mp is None:
         return None
+    if mp >= 60:
+        return 1.0      # started and stayed on
+    if mp >= 30:
+        return 0.55     # rotation / early sub or sub-on with real minutes
+    if mp > 0:
+        return 0.2      # cameo off the bench
+    return 0.0          # unused / not in squad
+
+
+def start_probability(pd, we):
+    """Return (prob in [0,1], recent_minutes list). we = gameweek end datetime."""
+    mins = _recent_minutes(pd)
+    # 1) recency-weighted minutes signal
+    num = den = 0.0
+    for i, (_, mp) in enumerate(mins[:len(RECENCY_W)]):
+        si = _mins_to_start(mp)
+        if si is None:
+            continue
+        w = RECENCY_W[i]
+        num += w * si
+        den += w
+    min_signal = (num / den) if den else None
+    # 2) season availability
+    app = pd.get("lastFifteenSo5Appearances") or 0
+    app_rate = min(1.0, app / 15.0)
+    # blend (fall back to availability when no recent games are on record)
+    if min_signal is None:
+        base = app_rate * 0.85
+    else:
+        base = 0.70 * min_signal + 0.30 * app_rate
+    # 3) injury adjustment, validated against recent minutes
+    factor = 1.0
+    for inj in (pd.get("activeInjuries") or []):
+        if inj.get("active") is False:
+            continue
+        end = inj.get("expectedEndDate")
+        out_through_gw = True
+        if end:
+            try:
+                ed = dt.datetime.fromisoformat(end.replace("Z", "+00:00"))
+                out_through_gw = ed >= we
+            except Exception:
+                out_through_gw = True
+        # if they logged real minutes in the most recent game, the record is
+        # likely stale/minor -> soft penalty; otherwise treat as (near-)out.
+        just_played = bool(mins) and (mins[0][1] or 0) >= 60
+        if out_through_gw and not just_played:
+            factor = min(factor, 0.05)
+        else:
+            factor = min(factor, 0.5)
+    prob = base * factor
+    return max(0.0, min(0.98, round(prob, 3))), mins
+
+
+def eligible_entry(card, pd, ws, we):
     ng = pd.get("nextGame")
     if not ng or not ng.get("date"):
         return None
@@ -320,12 +406,16 @@ def eligible_entry(card, pd, ws, we):
     l5, l15 = pd.get("l5"), pd.get("l15")
     if not l5:
         return None
+    start_prob, recent_mins = start_probability(pd, we)
+    if start_prob < 0.08:
+        return None          # (near-)certain absentee: drop entirely
     app = pd.get("lastFifteenSo5Appearances") or 0
     club = (pd.get("activeClub") or {}).get("name")
     home = (ng.get("homeTeam") or {}).get("name")
     away = (ng.get("awayTeam") or {}).get("name")
     is_home = club is not None and club == home
     proj = round(l5 * (0.75 + 0.25 * min(1.0, app / 15.0)) * (1.03 if is_home else 1.0), 1)
+    ev = round(proj * start_prob, 1)   # expected value = projection x P(start)
     club = pd.get("activeClub") or {}
     league = (club.get("domesticLeague") or {}).get("slug")
     country = (club.get("country") or {}).get("code")
@@ -333,27 +423,36 @@ def eligible_entry(card, pd, ws, we):
             "player_slug": card["anyPlayer"]["slug"], "season": card.get("seasonYear"),
             "positions": card["anyPlayer"].get("anyPositions") or [],
             "age": pd.get("age"),
-            "proj": proj, "cap_score": round(l15 if l15 else l5, 1),
+            "proj": proj, "ev": ev, "start_prob": start_prob,
+            "recent_mins": [mp for _, mp in recent_mins],
+            "injured": bool(pd.get("activeInjuries")),
+            "cap_score": round(l15 if l15 else l5, 1),
             "l5": round(l5, 1), "appearances": app, "league": league, "country": country,
             "home": is_home, "opponent": away if is_home else home,
             "kickoff": ng["date"]}
 
 
-def cands(pool, slot, blocked):
+def cands(pool, slot, blocked, min_start=0.0):
     if slot == "EXTRA":
         cs = [c for c in pool if c["slug"] not in blocked
               and any(p in POS_SLOTS[1:] for p in c["positions"])]  # non-GK
     else:
         cs = [c for c in pool if c["slug"] not in blocked and slot in c["positions"]]
-    return sorted(cs, key=lambda c: -c["proj"])
+    # Prefer players at/above the start-probability floor (safe starters),
+    # then by expected value. Below-floor players stay as a fallback so a slot
+    # is never left empty (an empty slot scores 0 — worse than a risky start).
+    return sorted(cs, key=lambda c: (c.get("start_prob", 0) >= min_start,
+                                     c.get("ev", c["proj"])), reverse=True)
 
 
-def build_team(pool, used, size, cap, max_classic=None):
+def build_team(pool, used, size, cap, max_classic=None, min_start=0.0):
+    def _ev(c):
+        return c.get("ev", c["proj"])
     slot_list = list(POS_SLOTS) + ["EXTRA"] * (size - 4)
     chosen = {}          # slot index -> card
     blocked = set(used)
     for idx, slot in enumerate(slot_list):
-        cs = cands(pool, slot, blocked)
+        cs = cands(pool, slot, blocked, min_start)
         if cs:
             chosen[idx] = cs[0]
             blocked.add(cs[0]["slug"])
@@ -367,10 +466,10 @@ def build_team(pool, used, size, cap, max_classic=None):
                 if not cur.get("is_classic"):
                     continue
                 others = blocked - {cur["slug"]}
-                for alt in cands(pool, slot_list[idx], others):
+                for alt in cands(pool, slot_list[idx], others, min_start):
                     if alt.get("is_classic"):
                         continue
-                    loss = cur["proj"] - alt["proj"]
+                    loss = _ev(cur) - _ev(alt)
                     if best is None or loss < best[0]:
                         best = (loss, idx, alt)
             if not best:
@@ -387,11 +486,11 @@ def build_team(pool, used, size, cap, max_classic=None):
             for idx, cur in chosen.items():
                 slot = slot_list[idx]
                 others = blocked - {cur["slug"]}
-                for alt in cands(pool, slot, others):
+                for alt in cands(pool, slot, others, min_start):
                     saved = cur["cap_score"] - alt["cap_score"]
                     if saved <= 0:
                         continue
-                    ratio = (cur["proj"] - alt["proj"]) / saved
+                    ratio = (_ev(cur) - _ev(alt)) / saved
                     if best is None or ratio < best[0]:
                         best = (ratio, idx, alt)
             if not best:
@@ -410,13 +509,17 @@ def build_team(pool, used, size, cap, max_classic=None):
     complete = len(cards) == size and not over_classic
     cap_used = round(sum(c["cap_score"] for c in cards), 1)
     if cards:
-        cap_card = max(cards, key=lambda c: c["proj"]); cap_card["captain"] = True
+        cap_card = max(cards, key=_ev); cap_card["captain"] = True
         proj_total = round(sum(c["proj"] for c in cards) + cap_card["proj"], 1)
+        exp_total = round(sum(_ev(c) for c in cards) + _ev(cap_card), 1)
+        avg_start = round(sum(c.get("start_prob", 0) for c in cards) / len(cards), 3)
+        min_start_seen = round(min(c.get("start_prob", 0) for c in cards), 3)
     else:
-        proj_total = 0
+        proj_total = exp_total = avg_start = min_start_seen = 0
     return {"cards": cards, "complete": complete, "cap_used": cap_used,
             "over_cap": cap is not None and cap_used > cap,
-            "projected_total": proj_total,
+            "projected_total": proj_total, "expected_total": exp_total,
+            "avg_start": avg_start, "min_start": min_start_seen,
             "used": {c["slug"] for c in cards}}
 
 
@@ -528,8 +631,8 @@ def main(argv):
         base = build_team(build_pool(comp, all_entries), set(),
                           comp["size"], comp["cap"], comp.get("max_classic"))
         comp["prize_weight"] = prize_weight(comp)
-        # expected reward proxy = lineup strength x prize-pool weight
-        comp["_priority"] = base["projected_total"] * comp["prize_weight"]
+        # expected reward proxy = expected lineup value (form x P(start)) x pool
+        comp["_priority"] = base["expected_total"] * comp["prize_weight"]
     hs_overview = []
     for comp in comps:
         if comp.get("hotstreak"):
@@ -545,14 +648,21 @@ def main(argv):
     comps.sort(key=lambda c: (0 if c.get("hotstreak") else 1, -c["_priority"]))
 
     # Pass B: fill in priority order from the shrinking global pool.
+    # Balanced risk policy: the first (best) team of each competition may only
+    # field near-certain starters; each further team relaxes the floor so the
+    # weaker teams can take upside punts.
+    START_FLOORS = [0.75, 0.55, 0.40, 0.25]
     used_global = set()
     for comp in comps:
         teams = []
         used_local = set(used_global)
-        for _ in range(comp["teams_cap"]):
+        for ti in range(comp["teams_cap"]):
+            floor = START_FLOORS[min(ti, len(START_FLOORS) - 1)]
             avail = [e for e in pools[comp["rarity"]] if e["slug"] not in used_local]
             pool = build_pool(comp, avail)
-            t = build_team(pool, set(), comp["size"], comp["cap"], comp.get("max_classic"))
+            t = build_team(pool, set(), comp["size"], comp["cap"],
+                           comp.get("max_classic"), min_start=floor)
+            t["risk_floor"] = floor
             if not t["cards"]:
                 break
             if not t["complete"] and teams:
@@ -577,15 +687,18 @@ def main(argv):
                                     "prize_weight": comp.get("prize_weight"),
                                     "deadline_first": w0, "deadline_last": w1,
                                     "teams": teams})
-        tt = ", ".join(f"Σ{t['projected_total']}" for t in teams) or "—"
+        tt = ", ".join(f"Σ{t['projected_total']}(EV{t['expected_total']}/{int(t['avg_start']*100)}%)"
+                       for t in teams) or "—"
         print(f"  {comp['rarity']} · {comp['label']} [{comp['mode']}] "
               f"teams={len(teams)}/{comp['teams_cap']}: {tt}", file=sys.stderr)
 
     out["cards_used"] = len(used_global)
     out["total_projected"] = round(
         sum(t["projected_total"] for c in out["competitions"] for t in c["teams"]), 1)
-    print(f"Total projected {out['total_projected']} across {out['cards_used']} cards",
-          file=sys.stderr)
+    out["total_expected"] = round(
+        sum(t["expected_total"] for c in out["competitions"] for t in c["teams"]), 1)
+    print(f"Total projected {out['total_projected']} (EV {out['total_expected']}) "
+          f"across {out['cards_used']} cards", file=sys.stderr)
 
     with open(args.json, "w", encoding="utf-8") as fh:
         json.dump(out, fh, ensure_ascii=False, indent=2)

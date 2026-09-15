@@ -157,6 +157,15 @@ tr.clickable{cursor:pointer}
 .prow .pn{font-weight:600}
 .prow .pp{font-family:"Archivo";font-weight:800;font-variant-numeric:tabular-nums;text-align:right;grid-row:span 2;align-self:center;font-size:17px}
 .prow .pm{grid-column:2/3;font-size:11.5px;color:var(--ink-soft)}
+.pchip{display:inline-block;font-size:9.5px;font-weight:800;letter-spacing:.02em;color:#fff;
+  border-radius:6px;padding:1px 5px;margin-left:6px;vertical-align:middle;font-variant-numeric:tabular-nums}
+.pchip.hi{background:var(--gain)} .pchip.mid{background:#c98a00} .pchip.lo{background:var(--loss)}
+.prow .pp .ev{display:block;font-size:10.5px;font-weight:700;color:var(--ink-soft);letter-spacing:0}
+.mins{font-variant-numeric:tabular-nums}
+.mins b{color:var(--gain)} .mins .s{color:#c98a00} .mins .x{color:var(--loss)}
+.safe{font-size:11.5px;color:var(--ink-soft);white-space:nowrap}
+.safe b{font-variant-numeric:tabular-nums}
+.safe .hi{color:var(--gain)} .safe .mid{color:#c98a00} .safe .lo{color:var(--loss)}
 .capbadge{display:inline-block;background:var(--accent);color:#fff;font-size:9.5px;font-weight:800;
   border-radius:5px;padding:1px 5px;margin-left:6px;vertical-align:middle}
 .capline{padding:9px 16px;font-size:12px;color:var(--ink-soft);border-bottom:1px solid var(--line);background:var(--panel)}
@@ -511,16 +520,34 @@ document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>showView(t.dataset.vi
 const SLOT_DE={Goalkeeper:"TW",Defender:"ABW",Midfielder:"MF",Forward:"ST",Extra:"Extra"};
 function fmtDate(iso){ try{return new Date(iso).toLocaleDateString("de-DE",{day:"numeric",month:"short"});}catch(e){return "";} }
 function fmtDT(iso){ try{return new Date(iso).toLocaleString("de-DE",{weekday:"short",day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"});}catch(e){return "";} }
+function startCls(p){ return p>=0.75?"hi":(p>=0.5?"mid":"lo"); }
+function startChip(p){
+  if(p==null) return "";
+  return `<span class="pchip ${startCls(p)}" title="Startelf-Wahrscheinlichkeit">${Math.round(p*100)}%</span>`;
+}
+function minsHtml(arr){
+  if(!arr||!arr.length) return "";
+  // most recent first: full start (≥60), part (30–59), cameo/none (<30)
+  const cells=arr.map(m=>{
+    if(m==null) return '<span class="x">·</span>';
+    if(m>=60) return `<b>${Math.round(m)}</b>`;
+    if(m>=30) return `<span class="s">${Math.round(m)}</span>`;
+    return `<span class="x">${Math.round(m)}</span>`;
+  });
+  return `<span class="mins">Min ${cells.join(" ")}</span>`;
+}
 function prow(c){
   const cap=c.captain?'<span class="capbadge">C</span>':'';
   const cl=c.classic?'<span class="capbadge" style="background:var(--flat)">Classic</span>':'';
   const ha=c.home?"H":"A";
   const slot=c.slot||c.slot_primary||"";
+  const chip=startChip(c.start_prob);
+  const ev=(c.ev!=null)?`<span class="ev">EV ${c.ev.toLocaleString("de-DE",{maximumFractionDigits:1})}</span>`:"";
   return `<div class="prow">
     <span class="slotchip">${SLOT_DE[slot]||slot||"–"}</span>
-    <span class="pn">${c.player}${cap}${cl}</span>
-    <span class="pp">${c.proj.toLocaleString("de-DE",{maximumFractionDigits:1})}</span>
-    <span class="pm">L5 ${c.l5!=null?c.l5.toLocaleString("de-DE"):"–"} · ${c.opponent||"?"} (${ha}) · Cap ${c.cap_score!=null?c.cap_score.toLocaleString("de-DE"):"–"}</span>
+    <span class="pn">${c.player}${cap}${cl}${chip}</span>
+    <span class="pp">${c.proj.toLocaleString("de-DE",{maximumFractionDigits:1})}${ev}</span>
+    <span class="pm">L5 ${c.l5!=null?c.l5.toLocaleString("de-DE"):"–"} · ${c.opponent||"?"} (${ha}) · Cap ${c.cap_score!=null?c.cap_score.toLocaleString("de-DE"):"–"} · ${minsHtml(c.recent_mins)}</span>
   </div>`;
 }
 function teamCard(comp, team, idx){
@@ -529,9 +556,11 @@ function teamCard(comp, team, idx){
     ? `<div class="lu-warn">⚠ Cap nicht erfüllbar — bestes Team liegt bei ${team.cap_used} > ${comp.cap}.</div>`
     : (!team.complete ? `<div class="lu-warn">⚠ Unvollständig — nicht genug spielende Karten (${team.cards.length}/${comp.size}).</div>` : "");
   const rows = team.cards.map(prow).join("");
+  const as=team.avg_start;
+  const safe=(as!=null)?`<div class="capline"><span class="safe">Startelf-Schnitt <b class="${startCls(as)}">${Math.round(as*100)}%</b>${team.min_start!=null?` · schwächster <b class="${startCls(team.min_start)}">${Math.round(team.min_start*100)}%</b>`:""}${team.expected_total!=null?` · Erwartung <b>Σ ${Math.round(team.expected_total).toLocaleString("de-DE")}</b>`:""}${idx===0?" · sichere Aufstellung":(team.risk_floor!=null&&team.risk_floor<0.5?" · Risiko erlaubt":"")}</span></div>`:"";
   return `<div class="lucard">
     <div class="h"><span class="t">Team ${idx+1}</span><span class="tot">Σ ${Math.round(team.projected_total).toLocaleString("de-DE")}</span></div>
-    <div class="capline">${capUse}</div>${warn}${rows}</div>`;
+    <div class="capline">${capUse}</div>${safe}${warn}${rows}</div>`;
 }
 function renderSuggestions(){
   const L=LINEUPS;
@@ -560,6 +589,7 @@ function renderSuggestions(){
       ${compBlocks}</div>`;
   }).join("");
   const totS=L.total_projected!=null?Math.round(L.total_projected).toLocaleString("de-DE"):"—";
+  const totE=L.total_expected!=null?Math.round(L.total_expected).toLocaleString("de-DE"):"—";
   const hso=L.hotstreak_overview||[];
   const hsChips=hso.map(h=>{
     const ok=h.fieldable;
@@ -572,12 +602,13 @@ function renderSuggestions(){
     <div class="eyebrow" style="margin:2px 2px 4px">Bestmögliches Gesamt-Setup (Sorare 27)</div>
     <h2 style="font-family:Archivo;font-size:20px;letter-spacing:-.01em;margin:0 0 6px">Spieltag ${L.fixture.gameWeek} · ${fmtDate(L.fixture.start)}–${fmtDate(L.fixture.end)}</h2>
     <div class="kpis" style="margin-bottom:14px">
-      <div class="kpi"><span class="label">Projizierter Gesamt-Score</span><span class="val num">Σ ${totS}</span><span class="meta">Summe aller Aufstellungen</span></div>
+      <div class="kpi"><span class="label">Projizierter Gesamt-Score</span><span class="val num">Σ ${totS}</span><span class="meta">wenn alle spielen</span></div>
+      <div class="kpi"><span class="label">Erwartungswert (× Startelf)</span><span class="val num">Σ ${totE}</span><span class="meta">Punkte × Startwahrscheinlichkeit</span></div>
       <div class="kpi"><span class="label">Karten eingesetzt</span><span class="val num">${L.cards_used??"—"}</span><span class="meta">jede Karte nur einmal (global)</span></div>
-      <div class="kpi hero"><span class="label">Aufstellungen</span><span class="val num">${(L.competitions||[]).reduce((s,c)=>s+(c.teams||[]).length,0)}</span><span class="meta">nach maximalem Ertrag priorisiert</span></div>
+      <div class="kpi hero"><span class="label">Aufstellungen</span><span class="val num">${(L.competitions||[]).reduce((s,c)=>s+(c.teams||[]).length,0)}</span><span class="meta">nach erwartetem Ertrag priorisiert</span></div>
     </div>
     ${hsBlock}
-    <p class="sugg-note"><b>Max-Profit-Aufteilung:</b> jede Karte wird <b>nur einmal</b> im ganzen GW eingesetzt; zuerst werden die <b>In-Season Hot Streaks (Pro)</b> befüllt, danach die übrigen Wettbewerbe nach <b>erwartetem Ertrag = projizierte Punkte × Pool-Gewicht</b>. Das <b>Pool-Gewicht</b> (z. B. Pool ×2,6) schätzt den relativen Preispool je Wettbewerb (Rare ≈ 2× Limited, Pro > Arena, Champion/Top-Ligen größer) aus den Blog-Zahlen — anpassbar, keine exakten Auszahlungen. <b>Pro = SO7</b> (7 Karten, Hot Streaks), <b>Arena = SO5</b> (5 Karten, Cap: Σ L15-Scores ≤ Cap). <b>⏱</b> = frühester Anstoß (Einsatz-Deadline); Wettbewerbe haben unterschiedliche Deadlines — <b>Contender</b> nutzt das späteste Spielende seiner Ligen. Projizierter Score = L5-Form × Einsatzquote × Heimvorteil (H); Verletzte ausgeschlossen; <b>C</b> = Kapitän (×2). <b>Näherungen:</b> Preispools (separater Blog) fließen nicht ein — „Profit" = projizierte Punkte; U21 sowie exakte Step-Clock/Contender-Gruppierung sind noch nicht abgebildet.</p>
+    <p class="sugg-note"><b>Startelf-Score (Prediction):</b> der farbige %-Chip je Karte ist die geschätzte <b>Startwahrscheinlichkeit</b> — gemischt aus <b>zuletzt gespielten Minuten</b> (stärkstes Signal, jüngste Spiele höher gewichtet; die Zahlen bei „Min" = Minuten der letzten Spiele, <b class="mins"><b>grün</b></b> = Start ≥60′, <span class="mins"><span class="s">gelb</span></span> = Teileinsatz, <span class="mins"><span class="x">rot</span></span> = Kurz-/kein Einsatz), <b>Einsatzquote</b> (letzte 15 SO5) und dem <b>Verletzungs-Feed</b> mit Rückkehrdatum (gegengeprüft mit den Minuten). <b>Team 1 = sichere Aufstellung</b> (nur nahezu sichere Starter, Schwelle 75 %); jedes weitere Team senkt die Schwelle (55/40/25 %), darf also <b>riskieren</b>. Ausgewählt wird nach <b>Erwartungswert EV = projizierte Punkte × Startwahrscheinlichkeit</b>. <b>Externe Prediction-/News-Seiten sind durch die Netzwerk-Policy blockiert</b> — der Score nutzt daher nur Sorare-Daten.<br><br><b>Max-Profit-Aufteilung:</b> jede Karte wird <b>nur einmal</b> im ganzen GW eingesetzt; zuerst die <b>In-Season Hot Streaks (Pro)</b>, danach die übrigen nach <b>EV × Pool-Gewicht</b>. Das <b>Pool-Gewicht</b> (z. B. Pool ×2,6) schätzt den relativen Preispool je Wettbewerb (Rare ≈ 2× Limited, Pro > Arena, Champion/Top-Ligen größer) — anpassbar, keine exakten Auszahlungen. <b>Pro = SO7</b> (7 Karten, Hot Streaks 5), <b>Arena = SO5</b> (Cap: Σ L15-Scores ≤ Cap). <b>⏱</b> = frühester Anstoß (Deadline); <b>Contender</b> nutzt das späteste Spielende seiner Ligen. Projizierter Score = L5-Form × Einsatzquote × Heimvorteil (H); <b>C</b> = Kapitän (×2). <b>Näherung:</b> exakte Step-Clock/Contender-Gruppierung noch nicht abgebildet.</p>
     ${blocks}`;
 }
 if(LINEUPS && (LINEUPS.competitions||LINEUPS.rarities)){
