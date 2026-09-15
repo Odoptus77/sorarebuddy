@@ -91,13 +91,17 @@ FAMILY_TOP_LEAGUE = 1.3      # biggest league pools
 FAMILY_OTHER_LEAGUE = 1.0
 FAMILY_FLAGSHIP = 1.5        # Champion / All Star (Pro)
 FAMILY_ALLSTAR_ARENA = 1.2   # All-Star arena
+FAMILY_U23_PRO = 1.1         # Under 23 (Pro) — dedicated pool, below flagship
+FAMILY_U23_ARENA = 0.95      # Under 23 (Arena)
 
 
 def prize_weight(comp):
     rw = RARITY_WEIGHT.get(comp["rarity"], 1.0)
     mw = MODE_WEIGHT.get(comp["mode"], 1.0)
     pref = comp.get("league_prefix")
-    if comp.get("contender"):
+    if comp.get("max_age"):
+        fam = FAMILY_U23_PRO if comp["mode"] == "Pro" else FAMILY_U23_ARENA
+    elif comp.get("contender"):
         fam = 0.9                       # grouped competition, smaller pools
     elif pref or comp.get("country_code"):
         fam = FAMILY_TOP_LEAGUE if (pref and pref.startswith(TOP_LEAGUE_PREFIXES)) else FAMILY_OTHER_LEAGUE
@@ -120,7 +124,7 @@ query Cards($slug: String!, $after: String, $rarities: [Rarity!]) {
 """ % CARD_PAGE
 
 PLAYER_FIELDS = """
-  slug displayName anyPositions lastFifteenSo5Appearances
+  slug displayName anyPositions age lastFifteenSo5Appearances
   activeClub { ... on Club { name country { code } domesticLeague { slug } } }
   activeInjuries { status kind }
   nextGame { date statusTyped homeTeam { ... on Club { name } } awayTeam { ... on Club { name } } }
@@ -170,7 +174,13 @@ def fetch_competitions(fx_slug, rarities):
         cap = int(m.group(1)) if m else None
         tcap = min(4, lb.get("teamsCap") or 1)
 
-        if "ALL_STAR" in t or "CHAMPIONS" in t:
+        if "UNDER_TWENTY_ONE" in t or "UNDER_TWENTY_THREE" in t:
+            # U23 competition (typed UNDER_TWENTY_ONE, displayed "Under 23"):
+            # Pro = SO7, Arena = SO5 with cap; age-limited, all seasons, no league.
+            key = (rar, "SO5" if is_arena else "SO7", cap, "U23", False)
+            g = groups.setdefault(key, {"teams_cap": 1})
+            g["teams_cap"] = max(g["teams_cap"], tcap)
+        elif "ALL_STAR" in t or "CHAMPIONS" in t:
             fam = "Champion" if "CHAMPIONS" in t else "All Star"
             key = (rar, "SO5" if is_arena else "SO7", cap, None, False)
             g = groups.setdefault(key, {"families": set(), "teams_cap": 1})
@@ -212,7 +222,17 @@ def fetch_competitions(fx_slug, rarities):
         country_code = None
         league_prefixes = None
         contender = False
-        if token == "CONTENDERS":
+        max_age = None
+        if token == "U23":
+            max_age = 23
+            name = "Under 23"
+            if fmt == "SO7":
+                label = "Pro · Under 23"
+            elif cap:
+                label = f"Arena · Under 23 · Cap {cap}"
+            else:
+                label = "Arena · Under 23 · Uncapped"
+        elif token == "CONTENDERS":
             contender = True
             league_prefixes = list(CONTENDER_LEAGUES)
             name = "Contender"
@@ -245,7 +265,7 @@ def fetch_competitions(fx_slug, rarities):
             "size": size, "cap": cap, "teams_cap": g["teams_cap"],
             "league_prefix": league_prefix, "country_code": country_code,
             "league_prefixes": league_prefixes, "contender": contender,
-            "in_season": in_season,
+            "max_age": max_age, "in_season": in_season,
             "hotstreak": hotstreak, "max_classic": 1 if hotstreak else None,
         })
     return comps
@@ -312,6 +332,7 @@ def eligible_entry(card, pd, ws, we):
     return {"slug": card["slug"], "player": card["anyPlayer"]["displayName"],
             "player_slug": card["anyPlayer"]["slug"], "season": card.get("seasonYear"),
             "positions": card["anyPlayer"].get("anyPositions") or [],
+            "age": pd.get("age"),
             "proj": proj, "cap_score": round(l15 if l15 else l5, 1),
             "l5": round(l5, 1), "appearances": app, "league": league, "country": country,
             "home": is_home, "opponent": away if is_home else home,
@@ -464,6 +485,9 @@ def main(argv):
         elif comp.get("country_code"):
             cc = comp["country_code"]
             pool = [e for e in pool if e.get("country") == cc]
+        if comp.get("max_age"):
+            ma = comp["max_age"]
+            pool = [e for e in pool if e.get("age") is not None and e["age"] <= ma]
         return pool
 
     # tag rarity on entries so a single global "used" set works across rarities
@@ -492,6 +516,8 @@ def main(argv):
         if comp.get("hotstreak"):
             # a legal 5-card hot streak needs >=4 in-season (+ up to 1 classic)
             return sum(1 for e in pool if not e.get("is_classic")) >= 4
+        if comp.get("max_age"):
+            return len(pool) >= comp["size"]
         if comp.get("league_prefix") or comp.get("country_code") or comp.get("league_prefixes"):
             return len(pool) >= 4
         return True
