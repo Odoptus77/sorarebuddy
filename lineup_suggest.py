@@ -303,7 +303,9 @@ def build_team(pool, used, size, cap, max_classic=None):
         if idx in chosen:
             c = dict(chosen[idx]); c["slot"] = slot
             cards.append(c)
-    complete = len(cards) == size
+    classic_n = sum(1 for c in cards if c.get("is_classic"))
+    over_classic = max_classic is not None and classic_n > max_classic
+    complete = len(cards) == size and not over_classic
     cap_used = round(sum(c["cap_score"] for c in cards), 1)
     if cards:
         cap_card = max(cards, key=lambda c: c["proj"]); cap_card["captain"] = True
