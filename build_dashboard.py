@@ -170,10 +170,10 @@ tbody tr:last-child td{border-bottom:none}
         <th class="l" data-k="rarity">Seltenheit</th>
         <th data-k="season">Season</th>
         <th data-k="purchase_eur">Kaufpreis</th>
+        <th data-k="reward_eur">Reward</th>
         <th data-k="value_eur">Akt. Wert</th>
-        <th data-k="delta_eur">Nicht realis.</th>
-        <th data-k="reward_eur">Realis. (Reward)</th>
-        <th data-k="ergebnis_eur">Ergebnis €</th>
+        <th data-k="realized_net">Reward − Kauf</th>
+        <th data-k="sale_now">Verkauf jetzt</th>
       </tr></thead>
       <tbody id="rows"></tbody>
     </table>
@@ -208,8 +208,12 @@ const cardRewards = (REWARDS && REWARDS.cards) || {};
 rows.forEach(r=>{
   const cr = cardRewards[r.card_slug];
   r.reward_eur = cr ? cr.reward_eur : 0;
-  r.ergebnis_eur = (r.value_eur!=null && r.purchase_eur!=null)
-    ? Math.round((r.value_eur - r.purchase_eur + r.reward_eur)*100)/100 : null;
+  // realized so far, net of what you paid: what the card has brought in
+  r.realized_net = (r.purchase_eur!=null)
+    ? Math.round((r.reward_eur - r.purchase_eur)*100)/100 : null;
+  // total result if you sold it now: reward − purchase + current value
+  r.sale_now = (r.value_eur!=null && r.purchase_eur!=null)
+    ? Math.round((r.reward_eur - r.purchase_eur + r.value_eur)*100)/100 : null;
 });
 
 document.getElementById("nick").textContent = DATA.nickname;
@@ -220,21 +224,21 @@ document.getElementById("asof").innerHTML = "Stand: " + DATA.as_of + "<br>" + pr
 const plClass = pl>=0?"pos":"neg";
 const rewardTotal = REWARDS ? REWARDS.totals.total_reward_eur : 0;
 if(REWARDS){
-  const unreal = pl;               // value − purchase on comparable cards (paper)
-  const real = rewardTotal;        // cash rewards actually received
-  const gesamt = real + unreal;
-  const gPct = investedBoth ? gesamt/investedBoth*100 : 0;
-  const uClass = unreal>=0?"pos":"neg";
-  const gClass = gesamt>=0?"pos":"neg";
+  const real = rewardTotal;               // cash rewards actually received
+  const broughtIn = real - invested;      // Reward − Kauf: net brought in so far
+  const saleNow = broughtIn + valueAll;   // + current value: result if sold now
+  const bClass = broughtIn>=0?"pos":"neg";
+  const sClass = saleNow>=0?"pos":"neg";
+  const sPct = invested ? saleNow/invested*100 : 0;
   document.getElementById("kpis").innerHTML = `
     <div class="kpi"><span class="label">Investiert (gekaufte Karten)</span>
-      <span class="val num">${eur(invested)}</span><span class="meta">${priced.length} Karten · Wert ${eur(valueAll)}</span></div>
-    <div class="kpi"><span class="label">Nicht realisiert (Wert − Kauf)</span>
-      <span class="val num ${uClass}">${eur(unreal)}</span><span class="meta">Papierwert auf ${both.length} Karten</span></div>
-    <div class="kpi"><span class="label">Realisiert (Cash-Rewards)</span>
+      <span class="val num">${eur(invested)}</span><span class="meta">${priced.length} Karten gekauft</span></div>
+    <div class="kpi"><span class="label">Rewards erhalten</span>
       <span class="val num pos">${eur(real)}</span><span class="meta">${REWARDS.totals.reward_lineups} Lineups mit €-Reward</span></div>
-    <div class="kpi hero"><span class="label">Gesamt-Ergebnis</span>
-      <span class="val num ${gClass}">${eur(gesamt)}</span><span class="meta">realisiert + nicht realisiert · Rendite ${pct(gPct)}</span></div>`;
+    <div class="kpi"><span class="label">Bisher eingespielt (Reward − Kauf)</span>
+      <span class="val num ${bClass}">${eur(broughtIn)}</span><span class="meta">realisiert, netto gegen Kaufpreis</span></div>
+    <div class="kpi hero"><span class="label">Bei Verkauf jetzt (+ Kartenwert)</span>
+      <span class="val num ${sClass}">${eur(saleNow)}</span><span class="meta">inkl. Kartenwert ${eur(valueAll)} · Rendite ${pct(sPct)}</span></div>`;
 } else {
   document.getElementById("kpis").innerHTML = `
     <div class="kpi"><span class="label">Investiert (gekaufte Karten)</span>
@@ -298,7 +302,7 @@ rarChips.querySelectorAll(".chip").forEach(ch=>ch.onclick=()=>{
 });
 
 // ---- table ----
-let sortKey="ergebnis_eur", sortDir=1; // 1 asc, -1 desc ; default worst first
+let sortKey="sale_now", sortDir=1; // 1 asc, -1 desc ; default worst first
 const tbody=document.getElementById("rows");
 const search=document.getElementById("search");
 const onlyPriced=document.getElementById("onlyPriced");
@@ -321,18 +325,19 @@ function render(){
   view.sort(cmp);
   tbody.innerHTML=view.map(r=>{
     const c=RARITY_COLORS[r.rarity]||"#888";
-    const dc=r.delta_eur==null?"":(r.delta_eur>=0?"pos":"neg");
-    const ec=r.ergebnis_eur==null?"":(r.ergebnis_eur>=0?"pos":"neg");
-    const ergPill=r.ergebnis_eur==null?`<span class="muted">—</span>`:`<span class="delta-pill ${ec}">${eur(r.ergebnis_eur)}</span>`;
+    const rn=r.realized_net==null?"":(r.realized_net>=0?"pos":"neg");
+    const sn=r.sale_now==null?"":(r.sale_now>=0?"pos":"neg");
+    const rnCell=r.realized_net==null?`<span class="muted">—</span>`:`<span class="${rn}">${eur(r.realized_net)}</span>`;
+    const snPill=r.sale_now==null?`<span class="muted">—</span>`:`<span class="delta-pill ${sn}">${eur(r.sale_now)}</span>`;
     return `<tr>
       <td class="l"><span class="player" title="${(r.player||'').replace(/"/g,'&quot;')}">${r.player||"—"}</span></td>
       <td class="l"><span class="rchip"><span class="dot" style="background:${c}"></span>${RARITY_LABEL[r.rarity]||r.rarity}</span></td>
       <td class="num muted">${r.season??"—"}</td>
       <td class="num">${r.purchase_eur==null?'<span class="muted">—</span>':eur(r.purchase_eur)}</td>
-      <td class="num">${eur(r.value_eur)}</td>
-      <td class="num ${dc}">${r.delta_eur==null?'<span class="muted">—</span>':eur(r.delta_eur)}</td>
       <td class="num">${r.reward_eur>0?'<span class="pos">'+eur(r.reward_eur)+'</span>':'<span class="muted">—</span>'}</td>
-      <td class="num">${ergPill}</td>
+      <td class="num">${eur(r.value_eur)}</td>
+      <td class="num">${rnCell}</td>
+      <td class="num">${snPill}</td>
     </tr>`;
   }).join("");
   document.getElementById("count").textContent = view.length + " von " + rows.length + " Karten";
@@ -350,9 +355,9 @@ search.oninput=render; onlyPriced.onchange=render;
 document.getElementById("foot").innerHTML =
   "&bdquo;Kaufpreis&ldquo; = der vom aktuellen Besitzer gezahlte Preis aus öffentlichen Transferdaten; Karten aus Tausch, Reward oder Shards haben keinen Geldpreis (—). "+
   "&bdquo;Akt. Wert&ldquo; = Median der letzten öffentlichen Verkäufe je Spieler + Seltenheit + Season — ein Schätzwert, kein Verkaufsangebot. "+
-  "&bdquo;Nicht realisiert&ldquo; = Akt. Wert − Kaufpreis (Papierwert, noch nicht verkauft). "+
-  "&bdquo;Realisiert (Reward)&ldquo; = tatsächlich erhaltene Geld-Rewards der Lineups mit genau dieser Karte (Reward ÷ gespielte Karten, aufsummiert). "+
-  "&bdquo;Ergebnis&ldquo; = realisiert + nicht realisiert = Akt. Wert − Kaufpreis + Reward. "+
+  "&bdquo;Reward&ldquo; = erhaltene Geld-Rewards der Lineups mit genau dieser Karte (Reward ÷ gespielte Karten, aufsummiert). "+
+  "&bdquo;Reward − Kauf&ldquo; = was die Karte bisher netto eingespielt hat (Reward minus Kaufpreis). "+
+  "&bdquo;Verkauf jetzt&ldquo; = Ergebnis bei sofortigem Verkauf = Reward − Kaufpreis + akt. Wert. "+
   "Common-Karten sind ausgenommen. Quelle: Sorare GraphQL API.";
 
 // theme toggle
@@ -362,7 +367,7 @@ tb.onclick=()=>{const cur=document.documentElement.getAttribute("data-theme");
   document.documentElement.setAttribute("data-theme",next);};
 
 // default sort indicator
-const dth=document.querySelector('thead th[data-k="ergebnis_eur"]');
+const dth=document.querySelector('thead th[data-k="sale_now"]');
 dth.setAttribute("aria-sort","ascending");
 render();
 </script>
