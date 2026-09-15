@@ -149,6 +149,7 @@ tr.clickable{cursor:pointer}
 .lu .players{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
 .lu .pchip{font-size:12px;background:var(--card);border:1px solid var(--line);border-radius:99px;padding:3px 10px}
 .lu .pchip.me{background:var(--accent);color:#fff;border-color:transparent;font-weight:600}
+.lu .pchip .ps{margin-left:7px;opacity:.7;font-variant-numeric:tabular-nums;font-weight:600}
 @media (max-width:720px){.kpis{grid-template-columns:repeat(2,1fr)}.badge h1{font-size:22px}}
 </style>
 
@@ -423,7 +424,8 @@ function openModal(r){
     const share=Math.round(lu.eur/n*100)/100;
     const chips=(lu.players||[]).map(p=>{
       const me=(p.displayName||"")===(r.player||"");
-      return `<span class="pchip${me?" me":""}">${p.displayName||p.slug}</span>`;
+      const sc=(p.score!=null)?`<span class="ps">${p.score.toLocaleString("de-DE",{maximumFractionDigits:1})}</span>`:"";
+      return `<span class="pchip${me?" me":""}">${p.displayName||p.slug}${sc}</span>`;
     }).join("");
     const meta=[];
     if(lu.ranking!=null) meta.push("Platz "+lu.ranking.toLocaleString("de-DE"));

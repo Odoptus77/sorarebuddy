@@ -23,7 +23,7 @@ from collections import defaultdict
 
 from sorare_client import graphql
 
-PAGE = 10          # fixtures per request (kept low: anyCard pushes query complexity)
+PAGE = 8           # fixtures per request (kept low: anyCard + scores push query complexity)
 LINEUPS = 50       # lineups per fixture (max a manager fields per gameweek)
 PACE = 0.25
 
@@ -38,7 +38,7 @@ query Fixtures($after: String, $slug: String!) {
           nodes {
             so5Leaderboard { displayName }
             so5Rankings { ranking score so5Rewards { amount { eurCents } coinAmount } }
-            so5Appearances { player { slug displayName } anyCard { slug } }
+            so5Appearances { player { slug displayName } anyCard { slug } score }
           }
         }
       }
@@ -72,7 +72,12 @@ def fetch(slug, max_fixtures):
             fixtures += 1
             for lu in fx["so5LineupsPaginated"]["nodes"]:
                 lineups += 1
-                players = [ap["player"] for ap in lu["so5Appearances"] if ap.get("player")]
+                players = []
+                for ap in lu["so5Appearances"]:
+                    if ap.get("player"):
+                        p = dict(ap["player"])
+                        p["score"] = ap.get("score")
+                        players.append(p)
                 if players:
                     lineups_with_players += 1
                 eur = 0
