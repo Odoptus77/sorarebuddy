@@ -96,11 +96,9 @@ def fetch_players(slugs):
     batch = PLAYER_BATCH
     while i < len(slugs):
         chunk = slugs[i:i + batch]
-        sel = " ".join(
-            f'p{j}: players(slugs: ["{s}"]) {{{PLAYER_FIELDS}}}'
-            for j, s in enumerate(chunk)
-        )
-        resp = graphql("{ " + sel + " }")
+        # players(slugs: [...]) accepts a list and returns an array
+        slug_list = ", ".join(f'"{s}"' for s in chunk)
+        resp = graphql("{ players(slugs: [" + slug_list + "]) {" + PLAYER_FIELDS + "} }")
         data = resp.get("data")
         if not data:
             # likely query-complexity: shrink the batch and retry this chunk
@@ -108,10 +106,9 @@ def fetch_players(slugs):
                 batch = max(4, batch // 2)
                 continue
             sys.exit(f"Player fetch failed: {resp.get('errors')}")
-        for j, s in enumerate(chunk):
-            arr = data.get(f"p{j}") or []
-            if arr:
-                out[s] = arr[0]
+        for p in (data.get("players") or []):
+            if p and p.get("slug"):
+                out[p["slug"]] = p
         i += len(chunk)
         print(f"  ...players {min(i, len(slugs))}/{len(slugs)}", file=sys.stderr)
         time.sleep(PACE)

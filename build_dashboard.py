@@ -129,6 +129,30 @@ tbody tr:last-child td{border-bottom:none}
 .rankn{font-size:11.5px;color:var(--ink-soft);font-variant-numeric:tabular-nums;margin-right:6px}
 tr.clickable{cursor:pointer}
 .trophy{margin-left:6px;font-size:11px;opacity:.85}
+/* tabs */
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:24px}
+.tab{border:none;background:transparent;color:var(--ink-soft);font:inherit;font-weight:600;
+  padding:10px 15px;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.tab:hover{color:var(--ink)}
+/* suggestions */
+.sugg-note{color:var(--ink-soft);font-size:12.5px;line-height:1.6;margin:0 2px 22px}
+.rar-block{margin-bottom:30px}
+.lineups2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
+.lucard{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);overflow:hidden}
+.lucard .h{display:flex;justify-content:space-between;align-items:baseline;gap:10px;
+  padding:14px 16px;border-bottom:1px solid var(--line);background:var(--panel)}
+.lucard .h .t{font-family:"Archivo";font-weight:800;font-size:15px}
+.lucard .h .tot{font-family:"Archivo";font-weight:800;color:var(--accent);font-size:15px;white-space:nowrap}
+.prow{display:grid;grid-template-columns:auto 1fr auto;gap:2px 12px;align-items:center;padding:11px 16px;border-bottom:1px solid var(--line)}
+.prow:last-child{border-bottom:none}
+.slotchip{grid-row:span 2;align-self:center;font-size:10px;font-weight:700;letter-spacing:.03em;
+  text-transform:uppercase;color:var(--ink-soft);background:var(--panel-2);border-radius:7px;padding:6px 6px;min-width:44px;text-align:center}
+.prow .pn{font-weight:600}
+.prow .pp{font-family:"Archivo";font-weight:800;font-variant-numeric:tabular-nums;text-align:right;grid-row:span 2;align-self:center;font-size:17px}
+.prow .pm{grid-column:2/3;font-size:11.5px;color:var(--ink-soft)}
+.capbadge{display:inline-block;background:var(--accent);color:#fff;font-size:9.5px;font-weight:800;
+  border-radius:5px;padding:1px 5px;margin-left:6px;vertical-align:middle}
 /* modal */
 .modal-back{position:fixed;inset:0;background:rgba(8,12,10,.55);display:none;
   align-items:flex-start;justify-content:center;padding:6vh 16px;z-index:60;overflow-y:auto}
@@ -169,6 +193,12 @@ tr.clickable{cursor:pointer}
     </div>
   </header>
 
+  <nav class="tabs" id="tabs" role="tablist">
+    <button class="tab" id="tab-overview" role="tab" aria-selected="true" data-view="overview">Übersicht</button>
+    <button class="tab" id="tab-suggest" role="tab" aria-selected="false" data-view="suggest" hidden>Vorschläge</button>
+  </nav>
+
+  <div id="view-overview">
   <section class="kpis" id="kpis"></section>
 
   <div class="eyebrow" style="margin:26px 2px 0">Nach Seltenheit</div>
@@ -204,6 +234,9 @@ tr.clickable{cursor:pointer}
   <div class="count" id="count"></div>
 
   <p class="foot" id="foot"></p>
+  </div><!-- /view-overview -->
+
+  <div id="view-suggest" hidden></div>
 </div>
 
 <div class="modal-back" id="modalBack" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
@@ -218,6 +251,7 @@ tr.clickable{cursor:pointer}
 <script>
 const DATA = __CLUB_DATA__;
 const REWARDS = __REWARDS_DATA__;
+const LINEUPS = __LINEUPS_DATA__;
 const RARITY_COLORS = {limited:"#f4b52a",rare:"#e0403f",super_rare:"#2f7be0",unique:"#20242a"};
 const RARITY_LABEL = {limited:"Limited",rare:"Rare",super_rare:"Super Rare",unique:"Unique"};
 const rows = DATA.rows;
@@ -451,6 +485,56 @@ document.getElementById("modalClose").onclick=closeModal;
 modalBack.addEventListener("click", e=>{ if(e.target===modalBack) closeModal(); });
 document.addEventListener("keydown", e=>{ if(e.key==="Escape") closeModal(); });
 
+// ---- tabs + lineup suggestions ----
+function showView(v){
+  document.getElementById("view-overview").hidden = (v!=="overview");
+  document.getElementById("view-suggest").hidden = (v!=="suggest");
+  document.querySelectorAll(".tab").forEach(t=>t.setAttribute("aria-selected", t.dataset.view===v?"true":"false"));
+}
+document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>showView(t.dataset.view));
+
+const SLOT_DE={Goalkeeper:"TW",Defender:"ABW",Midfielder:"MF",Forward:"ST",Extra:"Extra"};
+function fmtDate(iso){ try{return new Date(iso).toLocaleDateString("de-DE",{day:"numeric",month:"short"});}catch(e){return "";} }
+function prow(c){
+  const cap=c.captain?'<span class="capbadge">C</span>':'';
+  const ha=c.home?"H":"A";
+  const slot=c.slot||c.slot_primary||"";
+  return `<div class="prow">
+    <span class="slotchip">${SLOT_DE[slot]||slot||"–"}</span>
+    <span class="pn">${c.player}${cap}</span>
+    <span class="pp">${c.proj.toLocaleString("de-DE",{maximumFractionDigits:1})}</span>
+    <span class="pm">Ø5 ${c.avg5!=null?c.avg5.toLocaleString("de-DE"):"–"} · ${c.opponent||"?"} (${ha}) · ${c.appearances}/15 Eins.</span>
+  </div>`;
+}
+function renderSuggestions(){
+  const L=LINEUPS;
+  const per=rar=>{
+    const r=L.rarities[rar]; if(!r) return "";
+    if(!r.eligible_count) return `<div class="rar-block"><div class="eyebrow" style="margin:6px 2px 12px">${RARITY_LABEL[rar]||rar} · keine spielenden Karten im GW</div></div>`;
+    const f=r.formation;
+    const fCards=f.cards.map(prow).join("");
+    const bf=r.best_form;
+    const bfTotal=Math.round(bf.reduce((s,c)=>s+c.proj,0)+Math.max(...bf.map(c=>c.proj),0));
+    const bfCards=bf.map((c,i)=>prow(i===0?Object.assign({},c,{captain:true}):c)).join("");
+    return `<div class="rar-block">
+      <div class="eyebrow" style="margin:6px 2px 12px">${RARITY_LABEL[rar]||rar} · ${r.eligible_count} spielende Karten im GW</div>
+      <div class="lineups2">
+        <div class="lucard"><div class="h"><span class="t">Klassische Aufstellung</span><span class="tot">Σ ${Math.round(f.projected_total).toLocaleString("de-DE")}</span></div>${fCards}</div>
+        <div class="lucard"><div class="h"><span class="t">Beste Form (Top 5)</span><span class="tot">Σ ${bfTotal.toLocaleString("de-DE")}</span></div>${bfCards}</div>
+      </div>
+    </div>`;
+  };
+  document.getElementById("view-suggest").innerHTML = `
+    <div class="eyebrow" style="margin:2px 2px 4px">Aufstellungs-Vorschläge</div>
+    <h2 style="font-family:Archivo;font-size:20px;letter-spacing:-.01em;margin:0 0 8px">Spieltag ${L.fixture.gameWeek} · ${fmtDate(L.fixture.start)}–${fmtDate(L.fixture.end)}</h2>
+    <p class="sugg-note">Projizierter Score = Ø der letzten 5 SO5-Scores, gewichtet mit Einsatzquote (letzte 15) und leichtem Heimvorteil (H). Verletzte Spieler sind ausgeschlossen; nur Spieler mit Spiel in diesem GW. <b>C</b> = empfohlener Kapitän (zählt doppelt). Σ = projizierter Team-Score inkl. Kapitän. Gegnerstärke und News jenseits von Verletzungen fließen nicht ein (nicht über die API verfügbar).</p>
+    ${["limited","rare"].map(per).join("")}`;
+}
+if(LINEUPS && LINEUPS.rarities){
+  document.getElementById("tab-suggest").hidden=false;
+  renderSuggestions();
+}
+
 // default sort indicator
 const dth=document.querySelector('thead th[data-k="sale_now"]');
 dth.setAttribute("aria-sort","ascending");
@@ -465,6 +549,8 @@ def main(argv):
     ap.add_argument("--out", default="dashboard.html")
     ap.add_argument("--rewards", default=None,
                     help="optional rewards.json from rewards_by_player.py")
+    ap.add_argument("--lineups", default=None,
+                    help="optional lineups.json from lineup_suggest.py")
     args = ap.parse_args(argv)
     with open(args.json_path, encoding="utf-8") as fh:
         data = json.load(fh)
@@ -482,8 +568,14 @@ def main(argv):
             "reward_lineups": rw.get("reward_lineups", []),
         }, ensure_ascii=False)
 
+    lineups = "null"
+    if args.lineups:
+        with open(args.lineups, encoding="utf-8") as fh:
+            lineups = json.dumps(json.load(fh), ensure_ascii=False)
+
     html = TEMPLATE.replace("__CLUB_DATA__", json.dumps(data, ensure_ascii=False))
     html = html.replace("__REWARDS_DATA__", rewards)
+    html = html.replace("__LINEUPS_DATA__", lineups)
     html = html.replace("__NICK__", data.get("nickname", "Club"))
     with open(args.out, "w", encoding="utf-8") as fh:
         fh.write(html)
