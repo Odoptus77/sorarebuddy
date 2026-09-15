@@ -116,6 +116,17 @@ tbody tr:last-child td{border-bottom:none}
 .delta-pill.neg{background:var(--loss-bg);color:var(--loss)}
 .foot{color:var(--ink-soft);font-size:12px;margin-top:14px;line-height:1.6}
 .count{color:var(--ink-soft);font-size:12.5px;margin:10px 2px 0}
+/* rewards by player */
+.rewardnote{color:var(--ink-soft);font-size:12.5px;margin:0 2px 12px;line-height:1.6}
+.rewardgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px}
+.rrow{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:11px 13px;
+  box-shadow:var(--shadow);display:grid;grid-template-columns:1fr auto;gap:2px 10px;align-items:baseline}
+.rrow .rp{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rrow .rv{font-family:"Archivo";font-weight:800;color:var(--gain)}
+.rrow .rm{font-size:11.5px;color:var(--ink-soft)}
+.rrow .rbar{grid-column:1/-1;height:5px;border-radius:99px;background:var(--panel-2);overflow:hidden;margin-top:6px}
+.rrow .rbar>span{display:block;height:100%;background:var(--gain)}
+.rankn{font-size:11.5px;color:var(--ink-soft);font-variant-numeric:tabular-nums;margin-right:6px}
 @media (max-width:720px){.kpis{grid-template-columns:repeat(2,1fr)}.badge h1{font-size:22px}}
 </style>
 
@@ -140,7 +151,13 @@ tbody tr:last-child td{border-bottom:none}
   <div class="eyebrow" style="margin:26px 2px 0">Nach Seltenheit</div>
   <section class="strip" id="strip"></section>
 
-  <div class="eyebrow" style="margin:6px 2px 10px">Karten</div>
+  <section id="rewardsSection" hidden>
+    <div class="eyebrow" style="margin:26px 2px 8px">Rewards nach Spieler</div>
+    <p class="rewardnote" id="rewardnote"></p>
+    <div class="rewardgrid" id="rewardgrid"></div>
+  </section>
+
+  <div class="eyebrow" style="margin:26px 2px 10px">Karten</div>
   <div class="controls">
     <input type="search" id="search" placeholder="Spieler suchen…" aria-label="Spieler suchen">
     <div class="chips" id="rarChips"></div>
@@ -167,6 +184,7 @@ tbody tr:last-child td{border-bottom:none}
 
 <script>
 const DATA = __CLUB_DATA__;
+const REWARDS = __REWARDS_DATA__;
 const RARITY_COLORS = {limited:"#f4b52a",rare:"#e0403f",super_rare:"#2f7be0",unique:"#20242a"};
 const RARITY_LABEL = {limited:"Limited",rare:"Rare",super_rare:"Super Rare",unique:"Unique"};
 const rows = DATA.rows;
@@ -190,15 +208,31 @@ document.getElementById("cardcount").textContent = rows.length;
 document.getElementById("asof").innerHTML = "Stand: " + DATA.as_of + "<br>" + priced.length + " mit bekanntem Kaufpreis";
 
 const plClass = pl>=0?"pos":"neg";
-document.getElementById("kpis").innerHTML = `
-  <div class="kpi"><span class="label">Investiert (gekaufte Karten)</span>
-    <span class="val num">${eur(invested)}</span><span class="meta">${priced.length} Karten mit Kaufpreis</span></div>
-  <div class="kpi"><span class="label">Geschätzter Gesamtwert</span>
-    <span class="val num">${eur(valueAll)}</span><span class="meta">alle ${rows.length} Karten bewertet</span></div>
-  <div class="kpi hero"><span class="label">Gewinn / Verlust</span>
-    <span class="val num ${plClass}">${eur(pl)}</span><span class="meta">auf ${both.length} vergleichbaren Karten</span></div>
-  <div class="kpi"><span class="label">Rendite</span>
-    <span class="val num ${plClass}">${pct(plPct)}</span><span class="meta">Wert ${eur(valueBoth)} vs. ${eur(investedBoth)}</span></div>`;
+const rewardTotal = REWARDS ? REWARDS.totals.total_reward_eur : 0;
+if(REWARDS){
+  const net = valueAll + rewardTotal - invested;
+  const netPct = invested ? net/invested*100 : 0;
+  const netClass = net>=0?"pos":"neg";
+  document.getElementById("kpis").innerHTML = `
+    <div class="kpi"><span class="label">Investiert (gekaufte Karten)</span>
+      <span class="val num">${eur(invested)}</span><span class="meta">${priced.length} Karten · Buch-G/V <span class="${plClass}">${eur(pl)}</span></span></div>
+    <div class="kpi"><span class="label">Kartenwert (geschätzt)</span>
+      <span class="val num">${eur(valueAll)}</span><span class="meta">alle ${rows.length} Karten bewertet</span></div>
+    <div class="kpi"><span class="label">Cash-Rewards erhalten</span>
+      <span class="val num pos">${eur(rewardTotal)}</span><span class="meta">${REWARDS.totals.reward_lineups} Lineups · ${REWARDS.totals.lineups} gesamt</span></div>
+    <div class="kpi hero"><span class="label">Netto (Wert + Rewards − Investiert)</span>
+      <span class="val num ${netClass}">${eur(net)}</span><span class="meta">Rendite netto ${pct(netPct)}</span></div>`;
+} else {
+  document.getElementById("kpis").innerHTML = `
+    <div class="kpi"><span class="label">Investiert (gekaufte Karten)</span>
+      <span class="val num">${eur(invested)}</span><span class="meta">${priced.length} Karten mit Kaufpreis</span></div>
+    <div class="kpi"><span class="label">Geschätzter Gesamtwert</span>
+      <span class="val num">${eur(valueAll)}</span><span class="meta">alle ${rows.length} Karten bewertet</span></div>
+    <div class="kpi hero"><span class="label">Gewinn / Verlust</span>
+      <span class="val num ${plClass}">${eur(pl)}</span><span class="meta">auf ${both.length} vergleichbaren Karten</span></div>
+    <div class="kpi"><span class="label">Rendite</span>
+      <span class="val num ${plClass}">${pct(plPct)}</span><span class="meta">Wert ${eur(valueBoth)} vs. ${eur(investedBoth)}</span></div>`;
+}
 
 // ---- rarity strip ----
 const rarities = [...new Set(rows.map(r=>r.rarity))].sort((a,b)=>rows.filter(r=>r.rarity===b).length-rows.filter(r=>r.rarity===a).length);
@@ -220,6 +254,24 @@ strip.innerHTML = rarities.map(rar=>{
     <div class="meta" style="font-size:12px;color:var(--ink-soft)">${pct(rpct)} · Ø Kauf ${eur(rInv/(rb.length||1))}</div>
   </div>`;
 }).join("");
+
+// ---- rewards by player ----
+if(REWARDS && REWARDS.players && REWARDS.players.length){
+  document.getElementById("rewardsSection").hidden = false;
+  const players = REWARDS.players.slice().sort((a,b)=>b.reward_eur-a.reward_eur);
+  const maxR = players[0].reward_eur || 1;
+  document.getElementById("rewardnote").innerHTML =
+    "Jeder Geld-Reward eines Lineups wird gleichmäßig auf seine Spieler aufgeteilt (Reward ÷ Spieler) und je Spieler summiert. "+
+    "Basis: " + REWARDS.totals.reward_lineups + " von " + REWARDS.totals.lineups + " Lineups mit €-Reward, gesamt " + eur(rewardTotal) + ". "+
+    "Karten-Rewards tragen in der API keinen €-Wert und sind hier nicht enthalten.";
+  document.getElementById("rewardgrid").innerHTML = players.map((p,i)=>`
+    <div class="rrow">
+      <span class="rp"><span class="rankn">${i+1}</span>${p.player}</span>
+      <span class="rv num">${eur(p.reward_eur)}</span>
+      <span class="rm">${p.reward_lineups} Lineup${p.reward_lineups===1?"":"s"}</span>
+      <span class="rbar"><span style="width:${Math.max(3,p.reward_eur/maxR*100)}%"></span></span>
+    </div>`).join("");
+}
 
 // ---- rarity filter chips ----
 const rarChips = document.getElementById("rarChips");
@@ -303,11 +355,25 @@ def main(argv):
     ap = argparse.ArgumentParser()
     ap.add_argument("json_path")
     ap.add_argument("--out", default="dashboard.html")
+    ap.add_argument("--rewards", default=None,
+                    help="optional rewards.json from rewards_by_player.py")
     args = ap.parse_args(argv)
     with open(args.json_path, encoding="utf-8") as fh:
         data = json.load(fh)
     data.setdefault("as_of", datetime.date.today().isoformat())
+
+    rewards = "null"
+    if args.rewards:
+        with open(args.rewards, encoding="utf-8") as fh:
+            rw = json.load(fh)
+        # keep only what the page needs
+        rewards = json.dumps({
+            "totals": rw.get("totals", {}),
+            "players": rw.get("players", []),
+        }, ensure_ascii=False)
+
     html = TEMPLATE.replace("__CLUB_DATA__", json.dumps(data, ensure_ascii=False))
+    html = html.replace("__REWARDS_DATA__", rewards)
     html = html.replace("__NICK__", data.get("nickname", "Club"))
     with open(args.out, "w", encoding="utf-8") as fh:
         fh.write(html)
