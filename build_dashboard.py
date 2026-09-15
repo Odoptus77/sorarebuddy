@@ -156,6 +156,12 @@ tr.clickable{cursor:pointer}
 .capline{padding:9px 16px;font-size:12px;color:var(--ink-soft);border-bottom:1px solid var(--line);background:var(--panel)}
 .capline b{color:var(--ink);font-variant-numeric:tabular-nums}
 .lu-warn{padding:9px 16px;font-size:12px;color:var(--loss);background:var(--loss-bg);border-bottom:1px solid var(--line)}
+.comp-block{margin-bottom:24px}
+.comp-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:0 2px 10px}
+.comp-title{font-family:"Archivo";font-weight:800;font-size:16px}
+.fmt-badge{font-size:11px;font-weight:700;letter-spacing:.03em;color:var(--accent);
+  background:var(--panel-2);border-radius:6px;padding:3px 8px}
+.teams-note{font-size:12px;color:var(--ink-soft)}
 /* modal */
 .modal-back{position:fixed;inset:0;background:rgba(8,12,10,.55);display:none;
   align-items:flex-start;justify-content:center;padding:6vh 16px;z-index:60;overflow-y:auto}
