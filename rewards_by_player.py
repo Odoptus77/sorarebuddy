@@ -23,7 +23,7 @@ from collections import defaultdict
 
 from sorare_client import graphql
 
-PAGE = 20          # fixtures per request
+PAGE = 10          # fixtures per request (kept low: anyCard pushes query complexity)
 LINEUPS = 50       # lineups per fixture (max a manager fields per gameweek)
 PACE = 0.25
 
@@ -38,7 +38,7 @@ query Fixtures($after: String, $slug: String!) {
           nodes {
             so5Leaderboard { displayName }
             so5Rankings { ranking so5Rewards { amount { eurCents } coinAmount } }
-            so5Appearances { player { slug displayName } }
+            so5Appearances { player { slug displayName } anyCard { slug } }
           }
         }
       }
@@ -56,7 +56,17 @@ def fetch(slug, max_fixtures):
     reward_lineups = []          # (fixture, leaderboard, eur, players[])
     total_coins = 0
     while True:
-        resp = graphql(QUERY, {"after": after, "slug": slug})
+        resp = None
+        for attempt in range(4):
+            resp = graphql(QUERY, {"after": after, "slug": slug})
+            if resp.get("data") and resp["data"].get("so5"):
+                break
+            # transient GraphQL error (rate limit / complexity): back off and retry
+            print(f"  (retry page after transient error: "
+                  f"{resp.get('errors')})", file=sys.stderr)
+            time.sleep(2 ** attempt)
+        if not (resp.get("data") and resp["data"].get("so5")):
+            sys.exit(f"Persistent error fetching fixtures page: {resp.get('errors')}")
         conn = resp["data"]["so5"]["so5Fixtures"]
         for fx in conn["nodes"]:
             fixtures += 1
@@ -74,11 +84,14 @@ def fetch(slug, max_fixtures):
                         if rw.get("coinAmount"):
                             total_coins += rw["coinAmount"]
                 if eur > 0 and players:
+                    cards = [ap["anyCard"]["slug"] for ap in lu["so5Appearances"]
+                             if ap.get("anyCard")]
                     reward_lineups.append({
                         "fixture": fx["slug"],
                         "leaderboard": (lu.get("so5Leaderboard") or {}).get("displayName", "?"),
                         "eur": eur / 100,
                         "players": players,
+                        "cards": cards,
                     })
         print(f"  ...{fixtures} fixtures, {lineups} lineups, "
               f"{len(reward_lineups)} with € reward", file=sys.stderr)
@@ -112,6 +125,23 @@ def attribute(reward_lineups):
     return rows
 
 
+def attribute_cards(reward_lineups):
+    """Split each lineup's reward evenly across the specific CARDS played."""
+    per_card = defaultdict(lambda: {"reward_eur": 0.0, "lineups": 0})
+    for lu in reward_lineups:
+        cards = lu.get("cards") or []
+        n = len(cards)
+        if not n:
+            continue
+        share = lu["eur"] / n
+        for slug in cards:
+            per_card[slug]["reward_eur"] += share
+            per_card[slug]["lineups"] += 1
+    return {slug: {"reward_eur": round(v["reward_eur"], 2),
+                   "reward_lineups": v["lineups"]}
+            for slug, v in per_card.items()}
+
+
 def main(argv):
     ap = argparse.ArgumentParser()
     ap.add_argument("slug")
@@ -123,6 +153,7 @@ def main(argv):
     print(f"Scanning lineups for '{args.slug}'...", file=sys.stderr)
     data = fetch(args.slug, args.max_fixtures)
     rows = attribute(data["reward_lineups"])
+    cards = attribute_cards(data["reward_lineups"])
     total = round(sum(r["reward_eur"] for r in rows), 2)
 
     with open(args.out, "w", newline="", encoding="utf-8") as fh:
@@ -137,6 +168,7 @@ def main(argv):
                 "reward_lineups": len(data["reward_lineups"]),
                 "total_reward_eur": total},
                 "players": rows,
+                "cards": cards,
                 "reward_lineups": data["reward_lineups"]}, fh, ensure_ascii=False, indent=2)
 
     print(f"\n=== REWARDS BY PLAYER ({args.slug}) ===")

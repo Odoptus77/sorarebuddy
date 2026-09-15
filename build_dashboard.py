@@ -171,8 +171,9 @@ tbody tr:last-child td{border-bottom:none}
         <th data-k="season">Season</th>
         <th data-k="purchase_eur">Kaufpreis</th>
         <th data-k="value_eur">Akt. Wert</th>
-        <th data-k="delta_eur">Δ €</th>
-        <th data-k="delta_pct">Δ %</th>
+        <th data-k="delta_eur">Δ € (Buch)</th>
+        <th data-k="reward_eur">Reward</th>
+        <th data-k="ergebnis_eur">Ergebnis €</th>
       </tr></thead>
       <tbody id="rows"></tbody>
     </table>
@@ -201,6 +202,15 @@ const investedBoth = sum(both,"purchase_eur");
 const pl = valueBoth - investedBoth;
 const plPct = investedBoth ? pl/investedBoth*100 : 0;
 const valueAll = sum(rows.filter(r=>r.value_eur!=null),"value_eur");
+
+// ---- per-card reward + result (value − purchase + reward) ----
+const cardRewards = (REWARDS && REWARDS.cards) || {};
+rows.forEach(r=>{
+  const cr = cardRewards[r.card_slug];
+  r.reward_eur = cr ? cr.reward_eur : 0;
+  r.ergebnis_eur = (r.value_eur!=null && r.purchase_eur!=null)
+    ? Math.round((r.value_eur - r.purchase_eur + r.reward_eur)*100)/100 : null;
+});
 
 document.getElementById("nick").textContent = DATA.nickname;
 document.getElementById("crest").textContent = (DATA.nickname||"?").slice(0,1).toUpperCase();
@@ -285,7 +295,7 @@ rarChips.querySelectorAll(".chip").forEach(ch=>ch.onclick=()=>{
 });
 
 // ---- table ----
-let sortKey="delta_eur", sortDir=1; // 1 asc, -1 desc ; default worst first
+let sortKey="ergebnis_eur", sortDir=1; // 1 asc, -1 desc ; default worst first
 const tbody=document.getElementById("rows");
 const search=document.getElementById("search");
 const onlyPriced=document.getElementById("onlyPriced");
@@ -309,15 +319,17 @@ function render(){
   tbody.innerHTML=view.map(r=>{
     const c=RARITY_COLORS[r.rarity]||"#888";
     const dc=r.delta_eur==null?"":(r.delta_eur>=0?"pos":"neg");
-    const dpill=r.delta_eur==null?`<span class="muted">—</span>`:`<span class="delta-pill ${dc}">${eur(r.delta_eur)}</span>`;
+    const ec=r.ergebnis_eur==null?"":(r.ergebnis_eur>=0?"pos":"neg");
+    const ergPill=r.ergebnis_eur==null?`<span class="muted">—</span>`:`<span class="delta-pill ${ec}">${eur(r.ergebnis_eur)}</span>`;
     return `<tr>
       <td class="l"><span class="player" title="${(r.player||'').replace(/"/g,'&quot;')}">${r.player||"—"}</span></td>
       <td class="l"><span class="rchip"><span class="dot" style="background:${c}"></span>${RARITY_LABEL[r.rarity]||r.rarity}</span></td>
       <td class="num muted">${r.season??"—"}</td>
       <td class="num">${r.purchase_eur==null?'<span class="muted">—</span>':eur(r.purchase_eur)}</td>
       <td class="num">${eur(r.value_eur)}</td>
-      <td class="num">${dpill}</td>
-      <td class="num ${dc}">${pct(r.delta_pct)}</td>
+      <td class="num ${dc}">${r.delta_eur==null?'<span class="muted">—</span>':eur(r.delta_eur)}</td>
+      <td class="num">${r.reward_eur>0?'<span class="pos">'+eur(r.reward_eur)+'</span>':'<span class="muted">—</span>'}</td>
+      <td class="num">${ergPill}</td>
     </tr>`;
   }).join("");
   document.getElementById("count").textContent = view.length + " von " + rows.length + " Karten";
@@ -335,6 +347,8 @@ search.oninput=render; onlyPriced.onchange=render;
 document.getElementById("foot").innerHTML =
   "&bdquo;Kaufpreis&ldquo; = der vom aktuellen Besitzer gezahlte Preis aus öffentlichen Transferdaten; Karten aus Tausch, Reward oder Shards haben keinen Geldpreis (—). "+
   "&bdquo;Akt. Wert&ldquo; = Median der letzten öffentlichen Verkäufe je Spieler + Seltenheit + Season — ein Schätzwert, kein Verkaufsangebot. "+
+  "&bdquo;Reward&ldquo; = Geld-Rewards der Lineups, in denen genau diese Karte gespielt wurde (Reward ÷ gespielte Karten, aufsummiert). "+
+  "&bdquo;Ergebnis&ldquo; = Akt. Wert − Kaufpreis + Reward. "+
   "Common-Karten sind ausgenommen. Quelle: Sorare GraphQL API.";
 
 // theme toggle
@@ -344,7 +358,7 @@ tb.onclick=()=>{const cur=document.documentElement.getAttribute("data-theme");
   document.documentElement.setAttribute("data-theme",next);};
 
 // default sort indicator
-const dth=document.querySelector('thead th[data-k="delta_eur"]');
+const dth=document.querySelector('thead th[data-k="ergebnis_eur"]');
 dth.setAttribute("aria-sort","ascending");
 render();
 </script>
