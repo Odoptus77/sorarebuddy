@@ -34,6 +34,17 @@ PACE = 0.25
 POS_SLOTS = ["Goalkeeper", "Defender", "Midfielder", "Forward"]
 RARITY_TOKENS = [("super_rare", "SUPER_RARE"), ("limited", "LIMITED"),
                  ("rare", "RARE"), ("unique", "UNIQUE")]
+# IN_SEASON_<COUNTRY> competition -> club country code(s) + a readable name
+COUNTRY_MAP = {
+    "SCOTLAND": (["gb-sct"], "SPFL"),
+    "SPAIN": (["es"], "LALIGA"),
+    "ENGLAND": (["gb-eng"], "Premier League"),
+    "NETHERLANDS": (["nl"], "Eredivisie"),
+    "GERMANY": (["de"], "Bundesliga"),
+    "FRANCE": (["fr"], "Ligue 1"),
+    "ITALY": (["it"], "Serie A"),
+    "USA": (["us"], "MLS"),
+}
 
 CARDS_QUERY = """
 query Cards($slug: String!, $after: String, $rarities: [Rarity!]) {
@@ -49,7 +60,7 @@ query Cards($slug: String!, $after: String, $rarities: [Rarity!]) {
 
 PLAYER_FIELDS = """
   slug displayName anyPositions lastFifteenSo5Appearances
-  activeClub { ... on Club { name } }
+  activeClub { ... on Club { name country { code } } }
   activeInjuries { status kind }
   nextGame { date statusTyped homeTeam { ... on Club { name } } awayTeam { ... on Club { name } } }
   l5: averageScore(type: LAST_FIVE_SO5_AVERAGE_SCORE)
@@ -93,33 +104,52 @@ def fetch_competitions(fx_slug, rarities):
         rar = rarity_of(t)
         if rar not in rarities:
             continue
-        if "ALL_STAR" not in t and "CHAMPIONS" not in t:
-            continue  # skip league-specific + U21 (need player league/age)
         is_arena = "ARENA" in t
         m = re.search(r"Cap (\d+)", lb["displayName"])
         cap = int(m.group(1)) if m else None
-        fam = "Champion" if "CHAMPIONS" in t else "All Star"
-        key = (rar, "SO5" if is_arena else "SO7", cap)
-        g = groups.setdefault(key, {"families": set(), "teams_cap": 1})
-        g["families"].add(fam)
-        g["teams_cap"] = max(g["teams_cap"], min(4, lb.get("teamsCap") or 1))
+        tcap = min(4, lb.get("teamsCap") or 1)
+
+        if "ALL_STAR" in t or "CHAMPIONS" in t:
+            fam = "Champion" if "CHAMPIONS" in t else "All Star"
+            key = (rar, "SO5" if is_arena else "SO7", cap, None, False)
+            g = groups.setdefault(key, {"families": set(), "teams_cap": 1})
+            g["families"].add(fam)
+            g["teams_cap"] = max(g["teams_cap"], tcap)
+        elif t.startswith("IN_SEASON_") and not is_arena:
+            # league-specific classic competition (SO7, in-season, league filter)
+            body = t[len("IN_SEASON_"):]
+            for tok in RARITY_TOKENS:
+                body = body.replace("_" + tok[1], "")
+            country = body  # e.g. SCOTLAND, SPAIN, REST_OF_THE_WORLD
+            if country not in COUNTRY_MAP:
+                continue  # skip Rest of the World / unmapped
+            key = (rar, "SO7", None, country, True)
+            g = groups.setdefault(key, {"families": {COUNTRY_MAP[country][1]}, "teams_cap": 1})
+            g["teams_cap"] = max(g["teams_cap"], tcap)
+        # else: U21 / league arena / special -> skipped
+
     comps = []
-    for (rar, fmt, cap), g in groups.items():
-        fams = " / ".join(sorted(g["families"]))
-        if fmt == "SO7":
-            label = f"Classic · {fams}"
+    for (rar, fmt, cap, country, in_season), g in groups.items():
+        if country:
+            codes, name = COUNTRY_MAP[country]
+            label = f"Liga · {name} (In-Season)"
+        elif fmt == "SO7":
+            label = f"Classic · {' / '.join(sorted(g['families']))}"
+            codes = None
         elif cap:
-            label = f"Arena · Cap {cap}"
+            label = f"Arena · Cap {cap}"; codes = None
         else:
-            label = "Arena · Uncapped"
+            label = "Arena · Uncapped"; codes = None
         comps.append({
             "rarity": rar, "label": label, "format": fmt,
-            "size": 5 if fmt == "SO5" else 7,
-            "cap": cap, "teams_cap": g["teams_cap"],
+            "size": 5 if fmt == "SO5" else 7, "cap": cap,
+            "teams_cap": g["teams_cap"], "countries": codes,
+            "in_season": in_season,
         })
+
     def rank(c):
-        fam = 0 if c["format"] == "SO7" else 1
-        return (c["rarity"], fam, -(c["cap"] or 99999))
+        fam = 0 if c["countries"] else (1 if c["format"] == "SO7" else 2)
+        return (c["rarity"], fam, c["label"], -(c["cap"] or 99999))
     comps.sort(key=rank)
     return comps
 
@@ -179,11 +209,12 @@ def eligible_entry(card, pd, ws, we):
     away = (ng.get("awayTeam") or {}).get("name")
     is_home = club is not None and club == home
     proj = round(l5 * (0.75 + 0.25 * min(1.0, app / 15.0)) * (1.03 if is_home else 1.0), 1)
+    country = ((pd.get("activeClub") or {}).get("country") or {}).get("code")
     return {"slug": card["slug"], "player": card["anyPlayer"]["displayName"],
             "player_slug": card["anyPlayer"]["slug"], "season": card.get("seasonYear"),
             "positions": card["anyPlayer"].get("anyPositions") or [],
             "proj": proj, "cap_score": round(l15 if l15 else l5, 1),
-            "l5": round(l5, 1), "appearances": app,
+            "l5": round(l5, 1), "appearances": app, "country": country,
             "home": is_home, "opponent": away if is_home else home}
 
 
@@ -288,10 +319,19 @@ def main(argv):
     out = {"fixture": {"slug": fx["slug"], "gameWeek": fx["gameWeek"],
                        "start": fx["startDate"], "end": fx["endDate"]},
            "generated": dt.datetime.now(dt.timezone.utc).isoformat(),
+           "eligible": {r: len(pools.get(r, [])) for r in rarities},
            "competitions": []}
+
+    current_season = max((c.get("seasonYear") or 0 for c in cards), default=0)
+    print(f"Current season = {current_season}", file=sys.stderr)
 
     for comp in comps:
         pool = pools.get(comp["rarity"], [])
+        if comp.get("countries"):
+            codes = set(comp["countries"])
+            pool = [e for e in pool if e.get("country") in codes]
+        if comp.get("in_season"):
+            pool = [e for e in pool if (e.get("season") or 0) >= current_season]
         teams = []
         used = set()
         for _ in range(comp["teams_cap"]):
@@ -310,6 +350,30 @@ def main(argv):
         tt = ", ".join(f"Σ{t['projected_total']}" for t in teams) or "—"
         print(f"  {comp['rarity']} · {comp['label']} [{comp['format']}] "
               f"teams={len(teams)}/{comp['teams_cap']}: {tt}", file=sys.stderr)
+
+    # Hot Streak proxy: Sorare's Hot Streak rules aren't in the API, so we show
+    # a transparent "best form" top-5 pick per rarity (no formation / no cap).
+    for rar in rarities:
+        pool = sorted(pools.get(rar, []), key=lambda e: -e["proj"])[:5]
+        if not pool:
+            continue
+        cards = []
+        for e in pool:
+            c = dict(e)
+            c["slot"] = next((s for s in POS_SLOTS if s in c["positions"]),
+                             (c["positions"] or ["Forward"])[0])
+            cards.append(c)
+        cap_c = max(cards, key=lambda c: c["proj"]); cap_c["captain"] = True
+        team = {"cards": cards, "complete": len(cards) == 5,
+                "cap_used": round(sum(c["cap_score"] for c in cards), 1),
+                "over_cap": False,
+                "projected_total": round(sum(c["proj"] for c in cards) + cap_c["proj"], 1)}
+        out["competitions"].append({
+            "rarity": rar, "label": "Hot Streak (Näherung · beste Form)",
+            "format": "Best-5", "size": 5, "cap": None,
+            "teams_cap": 1, "countries": None, "in_season": False,
+            "eligible_count": len(pools.get(rar, [])), "teams": [team],
+            "proxy": True})
 
     with open(args.json, "w", encoding="utf-8") as fh:
         json.dump(out, fh, ensure_ascii=False, indent=2)
