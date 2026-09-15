@@ -368,7 +368,10 @@ def main(argv):
     # skip league comps with too small a pool (noise), before ordering
     comps = [c for c in comps if not (c.get("league_prefix")
              and len(comp_pool(c, sum(pools.values(), []))) < 4)]
-    comps.sort(key=lambda c: -c["_priority"])
+    # Always fill In-Season Pro Hot Streaks first (best cards), then the rest by
+    # projected strength. Within each tier, strongest lineup first.
+    comps.sort(key=lambda c: (0 if (c["mode"] == "Pro" and c.get("in_season")) else 1,
+                              -c["_priority"]))
 
     # Pass B: fill in priority order from the shrinking global pool.
     used_global = set()
