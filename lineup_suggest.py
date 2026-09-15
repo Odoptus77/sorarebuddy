@@ -453,8 +453,8 @@ def main(argv):
     def enough_pool(comp):
         pool = comp_pool(comp, all_entries)
         if comp.get("hotstreak"):
-            # need >=3 in-season league cards for a meaningful hot streak (+classic slot)
-            return sum(1 for e in pool if not e.get("is_classic")) >= 3
+            # need >=2 in-season league cards for a hot streak (+ classic slot)
+            return sum(1 for e in pool if not e.get("is_classic")) >= 2
         if comp.get("league_prefix") or comp.get("country_code"):
             return len(pool) >= 4
         return True
@@ -467,6 +467,11 @@ def main(argv):
         comp["prize_weight"] = prize_weight(comp)
         # expected reward proxy = lineup strength x prize-pool weight
         comp["_priority"] = base["projected_total"] * comp["prize_weight"]
+    for comp in comps:
+        if comp.get("hotstreak"):
+            n_ins = sum(1 for e in comp_pool(comp, all_entries) if not e.get("is_classic"))
+            print(f"  [hotstreak pool] {comp['rarity']} {comp['label']}: "
+                  f"{n_ins} in-season", file=sys.stderr)
     comps = [c for c in comps if enough_pool(c)]
     # Always fill In-Season Hot Streaks first (best cards), then the rest by
     # projected strength. Within each tier, strongest lineup first.
