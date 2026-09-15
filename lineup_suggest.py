@@ -569,8 +569,10 @@ def main(argv):
     ap.add_argument("slug")
     ap.add_argument("--json", default="lineups.json")
     ap.add_argument("--rarities", default="limited,rare")
-    ap.add_argument("--no-sofascore", action="store_true",
-                    help="skip SofaScore predicted-lineup enrichment")
+    ap.add_argument("--sofascore", action="store_true",
+                    help="opt in to SofaScore predicted-lineup enrichment "
+                         "(needs api.sofascore.com allowed; SofaScore IP-blocks "
+                         "datacenter egress, so this usually falls back)")
     args = ap.parse_args(argv)
     rarities = [r.strip() for r in args.rarities.split(",") if r.strip()]
 
@@ -614,7 +616,7 @@ def main(argv):
     # --- SofaScore predicted/confirmed XI enrichment (optional) ------------
     sofa_used = False
     all_pool_entries = [e for rar in rarities for e in pools.get(rar, [])]
-    if not args.no_sofascore and all_pool_entries:
+    if args.sofascore and all_pool_entries:
         try:
             import sofascore_lineups as sofa
             if sofa.ping():
