@@ -37,7 +37,7 @@ query Fixtures($after: String, $slug: String!) {
         so5LineupsPaginated(first: %d, userSlug: $slug) {
           nodes {
             so5Leaderboard { displayName }
-            so5Rankings { ranking so5Rewards { amount { eurCents } coinAmount } }
+            so5Rankings { ranking score so5Rewards { amount { eurCents } coinAmount } }
             so5Appearances { player { slug displayName } anyCard { slug } }
           }
         }
@@ -76,13 +76,21 @@ def fetch(slug, max_fixtures):
                 if players:
                     lineups_with_players += 1
                 eur = 0
+                rank = None
+                score = None
                 for rk in lu["so5Rankings"]:
+                    rk_eur = 0
                     for rw in rk["so5Rewards"]:
                         amt = rw.get("amount")
                         if amt and amt.get("eurCents"):
-                            eur += amt["eurCents"]
+                            rk_eur += amt["eurCents"]
                         if rw.get("coinAmount"):
                             total_coins += rw["coinAmount"]
+                    if rk_eur > 0:
+                        eur += rk_eur
+                        # capture the ranking/score of the rewarded entry
+                        rank = rk.get("ranking")
+                        score = rk.get("score")
                 if eur > 0 and players:
                     cards = [ap["anyCard"]["slug"] for ap in lu["so5Appearances"]
                              if ap.get("anyCard")]
@@ -90,6 +98,8 @@ def fetch(slug, max_fixtures):
                         "fixture": fx["slug"],
                         "leaderboard": (lu.get("so5Leaderboard") or {}).get("displayName", "?"),
                         "eur": eur / 100,
+                        "ranking": rank,
+                        "score": score,
                         "players": players,
                         "cards": cards,
                     })

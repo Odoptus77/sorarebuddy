@@ -425,9 +425,13 @@ function openModal(r){
       const me=(p.displayName||"")===(r.player||"");
       return `<span class="pchip${me?" me":""}">${p.displayName||p.slug}</span>`;
     }).join("");
+    const meta=[];
+    if(lu.ranking!=null) meta.push("Platz "+lu.ranking.toLocaleString("de-DE"));
+    if(lu.score!=null) meta.push("Score "+lu.score.toLocaleString("de-DE",{maximumFractionDigits:2}));
+    const metaLine=meta.length?`<br><span class="gw">${meta.join(" · ")}</span>`:"";
     return `<div class="lu">
       <div class="luhead">
-        <div><span class="comp">${lu.leaderboard||"?"}</span><br><span class="gw">${fmtFixture(lu.fixture)}</span></div>
+        <div><span class="comp">${lu.leaderboard||"?"}</span><br><span class="gw">${fmtFixture(lu.fixture)}</span>${metaLine}</div>
         <div class="rv">${eur(lu.eur)}<div class="rvs">Anteil dieser Karte ${eur(share)}</div></div>
       </div>
       <div class="players">${chips}</div>
