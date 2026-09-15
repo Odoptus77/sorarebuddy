@@ -281,8 +281,8 @@ document.querySelectorAll("thead th").forEach(th=>th.onclick=()=>{
 search.oninput=render; onlyPriced.onchange=render;
 
 document.getElementById("foot").innerHTML =
-  "„Kaufpreis" = der vom aktuellen Besitzer gezahlte Preis aus öffentlichen Transferdaten; Karten aus Tausch, Reward oder Shards haben keinen Geldpreis (—). "+
-  "„Akt. Wert" = Median der letzten öffentlichen Verkäufe je Spieler + Seltenheit + Season — ein Schätzwert, kein Verkaufsangebot. "+
+  "&bdquo;Kaufpreis&ldquo; = der vom aktuellen Besitzer gezahlte Preis aus öffentlichen Transferdaten; Karten aus Tausch, Reward oder Shards haben keinen Geldpreis (—). "+
+  "&bdquo;Akt. Wert&ldquo; = Median der letzten öffentlichen Verkäufe je Spieler + Seltenheit + Season — ein Schätzwert, kein Verkaufsangebot. "+
   "Common-Karten sind ausgenommen. Quelle: Sorare GraphQL API.";
 
 // theme toggle
