@@ -22,16 +22,61 @@ ios/SorareBuddy/
 
 ## Build it (needs a Mac + Xcode 15+)
 
-Claude can't compile Swift in its cloud (Linux, no Xcode), so build locally:
+Claude can't compile Swift in its **cloud** (Linux, no Xcode). Two ways to build,
+both on a Mac.
 
-1. **Xcode → File → New → Project → iOS → App.**
-   - Product Name: `SorareBuddy`
-   - Interface: **SwiftUI**, Language: **Swift**
-   - Minimum deployment: **iOS 16.0** or later
-2. Delete the auto-generated `ContentView.swift` and the `…App.swift` stub.
-3. **Drag the files from `ios/SorareBuddy/` into the project** (check "Copy items
-   if needed" and add to the app target). `SorareBuddyApp.swift` is the `@main`.
-4. Build & run on the Simulator or your iPhone.
+### Option A — one command with XcodeGen (recommended)
+
+`ios/project.yml` describes the whole app, so you don't drag files by hand:
+
+```bash
+brew install xcodegen        # once
+cd ios
+xcodegen generate            # creates SorareBuddy.xcodeproj from project.yml
+open SorareBuddy.xcodeproj   # then Run (⌘R) in Xcode
+```
+
+Or build/run from the command line without opening Xcode:
+
+```bash
+cd ios && xcodegen generate
+xcodebuild -project SorareBuddy.xcodeproj -scheme SorareBuddy \
+  -destination 'platform=iOS Simulator,name=iPhone 15' build
+# launch in the simulator:
+xcrun simctl boot "iPhone 15" 2>/dev/null; open -a Simulator
+xcodebuild -project SorareBuddy.xcodeproj -scheme SorareBuddy \
+  -destination 'platform=iOS Simulator,name=iPhone 15' -derivedDataPath build
+xcrun simctl install booted "$(find build -name 'SorareBuddy.app' -maxdepth 4 | head -1)"
+xcrun simctl launch booted com.sorarebuddy.app
+```
+
+To run on a real iPhone, set your Team ID in `project.yml`
+(`DEVELOPMENT_TEAM`) and re-run `xcodegen generate`.
+
+### Option B — manual Xcode project
+
+1. **Xcode → File → New → Project → iOS → App** (Product Name `SorareBuddy`,
+   Interface **SwiftUI**, deployment **iOS 16.0+**).
+2. Delete the generated `ContentView.swift` and the `…App.swift` stub.
+3. Drag the files from `ios/SorareBuddy/` in (check "Copy items if needed",
+   add to the app target). `SorareBuddyApp.swift` is `@main`.
+4. Build & run.
+
+## Building it *with Claude Code* (locally on the Mac)
+
+The Claude Code **cloud** can't build iOS apps, but the Claude Code **CLI on
+your Mac** can drive `xcodegen`/`xcodebuild`/the simulator. To have Claude build
+and iterate on the app for you:
+
+1. Install Claude Code locally and open this repo on your Mac
+   (`npm i -g @anthropic-ai/claude-code`, then `claude` in the repo folder — see
+   https://code.claude.com/docs).
+2. Ask it, e.g.: *"cd ios, run xcodegen, build SorareBuddy for the iPhone 15
+   simulator and fix any compile errors."* It has Xcode/simulator access there.
+
+A "new Claude Code project" = a session pointed at a repo. You can either keep
+using this repo (scope work to `ios/` and `backend/`) or split the app into its
+own repo; the app only depends on the backend's HTTP JSON, nothing else in here.
 
 ## Connect it
 

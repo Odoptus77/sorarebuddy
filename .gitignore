@@ -16,10 +16,10 @@ venv/
 backend/cache/
 sofa_teams.json
 
-# Xcode / Swift (the app project is generated locally in Xcode)
-ios/**/xcuserdata/
-ios/**/*.xcodeproj/project.xcworkspace/xcuserdata/
+# Xcode / Swift — the .xcodeproj is generated locally from ios/project.yml
+ios/SorareBuddy.xcodeproj/
 ios/build/
+ios/**/xcuserdata/
 *.xcuserstate
 DerivedData/
 
