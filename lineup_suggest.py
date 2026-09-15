@@ -128,7 +128,7 @@ def fetch_competitions(fx_slug, rarities):
             token = body  # e.g. SCOTLAND, ENGLAND_SECOND, CONTENDERS
             if token not in LEAGUE_MAP:
                 continue
-            key = (rar, "SO7", None, token, True)
+            key = (rar, "HS", None, token, True)   # HS = Hot Streak (5 cards)
             g = groups.setdefault(key, {"teams_cap": 1})
             g["teams_cap"] = max(g["teams_cap"], tcap)
         elif is_arena:
@@ -144,11 +144,14 @@ def fetch_competitions(fx_slug, rarities):
 
     comps = []
     for (rar, fmt, cap, token, in_season), g in groups.items():
-        mode = "Pro" if fmt == "SO7" else "Arena"   # Sorare 27: SO7=Pro, SO5=Arena
+        hotstreak = (fmt == "HS")
+        mode = "Arena" if fmt == "SO5" else "Pro"   # Sorare 27: Pro (SO7/Hot Streak), Arena (SO5)
+        size = 7 if fmt == "SO7" else 5             # Hot Streak & Arena = 5, Classic Pro = 7
+        fmt_label = {"HS": "Hot Streak", "SO7": "SO7", "SO5": "SO5"}[fmt]
         league_prefix = None
         if token:
             league_prefix, name = LEAGUE_MAP[token]
-            if in_season:
+            if hotstreak:
                 label = f"Pro · {name} (Hot Streak)"
             elif cap:
                 label = f"Arena · {name} · Cap {cap}"
@@ -161,10 +164,10 @@ def fetch_competitions(fx_slug, rarities):
         else:
             label = "Arena · Uncapped"
         comps.append({
-            "rarity": rar, "label": label, "format": fmt, "mode": mode,
-            "size": 5 if fmt == "SO5" else 7, "cap": cap,
-            "teams_cap": g["teams_cap"], "league_prefix": league_prefix,
-            "in_season": in_season,
+            "rarity": rar, "label": label, "format": fmt_label, "mode": mode,
+            "size": size, "cap": cap, "teams_cap": g["teams_cap"],
+            "league_prefix": league_prefix, "in_season": in_season,
+            "hotstreak": hotstreak, "max_classic": 1 if hotstreak else None,
         })
     return comps
 
@@ -243,7 +246,7 @@ def cands(pool, slot, blocked):
     return sorted(cs, key=lambda c: -c["proj"])
 
 
-def build_team(pool, used, size, cap):
+def build_team(pool, used, size, cap, max_classic=None):
     slot_list = list(POS_SLOTS) + ["EXTRA"] * (size - 4)
     chosen = {}          # slot index -> card
     blocked = set(used)
@@ -252,6 +255,28 @@ def build_team(pool, used, size, cap):
         if cs:
             chosen[idx] = cs[0]
             blocked.add(cs[0]["slug"])
+    if max_classic is not None:
+        # Hot Streak: keep at most `max_classic` classic (non-in-season) cards.
+        guard = 0
+        while sum(1 for c in chosen.values() if c.get("is_classic")) > max_classic and guard < 400:
+            guard += 1
+            best = None  # replace a classic card with the least-loss in-season alt
+            for idx, cur in chosen.items():
+                if not cur.get("is_classic"):
+                    continue
+                others = blocked - {cur["slug"]}
+                for alt in cands(pool, slot_list[idx], others):
+                    if alt.get("is_classic"):
+                        continue
+                    loss = cur["proj"] - alt["proj"]
+                    if best is None or loss < best[0]:
+                        best = (loss, idx, alt)
+            if not best:
+                break
+            _, idx, alt = best
+            blocked.discard(chosen[idx]["slug"])
+            chosen[idx] = alt
+            blocked.add(alt["slug"])
     if cap is not None:
         guard = 0
         while sum(c["cap_score"] for c in chosen.values()) > cap and guard < 400:
@@ -309,6 +334,8 @@ def main(argv):
 
     cards = fetch_cards(args.slug, rarities)
     print(f"Fetched {len(cards)} cards.", file=sys.stderr)
+    current_season = max((c.get("seasonYear") or 0 for c in cards), default=0)
+    print(f"Current season = {current_season}", file=sys.stderr)
     slugs = {c["anyPlayer"]["slug"] for c in cards if c.get("anyPlayer")}
     print(f"Fetching form/cap/next-game for {len(slugs)} players...", file=sys.stderr)
     players = fetch_players(slugs)
@@ -329,6 +356,8 @@ def main(argv):
             prev = best.get(e["player_slug"])
             if prev is None or (e["season"] or 0) > (prev["season"] or 0):
                 best[e["player_slug"]] = e
+        for e in best.values():
+            e["is_classic"] = (e.get("season") or 0) < current_season
         pools[rar] = list(best.values())
         print(f"  {rar}: {len(pools[rar])} eligible players", file=sys.stderr)
 
@@ -338,16 +367,13 @@ def main(argv):
            "eligible": {r: len(pools.get(r, [])) for r in rarities},
            "competitions": []}
 
-    current_season = max((c.get("seasonYear") or 0 for c in cards), default=0)
-    print(f"Current season = {current_season}", file=sys.stderr)
-
     def comp_pool(comp, available):
+        # league filter only; the in-season/classic rule is enforced per format
+        # (Hot Streak allows at most 1 classic; Arena allows all seasons).
         pool = [e for e in available if e["rarity_"] == comp["rarity"]]
         if comp.get("league_prefix"):
             pref = comp["league_prefix"]
             pool = [e for e in pool if (e.get("league") or "").startswith(pref)]
-        if comp.get("in_season"):
-            pool = [e for e in pool if (e.get("season") or 0) >= current_season]
         return pool
 
     # tag rarity on entries so a single global "used" set works across rarities
@@ -359,19 +385,27 @@ def main(argv):
         ko = [c["kickoff"] for t in teams for c in t["cards"] if c.get("kickoff")]
         return (min(ko), max(ko)) if ko else (None, None)
 
+    all_entries = sum(pools.values(), [])
+
+    def enough_pool(comp):
+        pool = comp_pool(comp, all_entries)
+        if comp.get("hotstreak"):
+            # need >=4 in-season league cards for a real hot streak (+1 classic slot)
+            return sum(1 for e in pool if not e.get("is_classic")) >= 4
+        if comp.get("league_prefix"):
+            return len(pool) >= 4
+        return True
+
     # ---- max-profit priority: each card used only once (global) ----
     # Pass A: standalone strength of each competition's best single team.
     for comp in comps:
-        base = build_team(comp_pool(comp, sum(pools.values(), [])), set(),
-                          comp["size"], comp["cap"])
+        base = build_team(comp_pool(comp, all_entries), set(),
+                          comp["size"], comp["cap"], comp.get("max_classic"))
         comp["_priority"] = base["projected_total"] * (1.15 if comp["mode"] == "Pro" else 1.0)
-    # skip league comps with too small a pool (noise), before ordering
-    comps = [c for c in comps if not (c.get("league_prefix")
-             and len(comp_pool(c, sum(pools.values(), []))) < 4)]
-    # Always fill In-Season Pro Hot Streaks first (best cards), then the rest by
+    comps = [c for c in comps if enough_pool(c)]
+    # Always fill In-Season Hot Streaks first (best cards), then the rest by
     # projected strength. Within each tier, strongest lineup first.
-    comps.sort(key=lambda c: (0 if (c["mode"] == "Pro" and c.get("in_season")) else 1,
-                              -c["_priority"]))
+    comps.sort(key=lambda c: (0 if c.get("hotstreak") else 1, -c["_priority"]))
 
     # Pass B: fill in priority order from the shrinking global pool.
     used_global = set()
@@ -381,7 +415,7 @@ def main(argv):
         for _ in range(comp["teams_cap"]):
             avail = [e for e in pools[comp["rarity"]] if e["slug"] not in used_local]
             pool = comp_pool(comp, avail)
-            t = build_team(pool, set(), comp["size"], comp["cap"])
+            t = build_team(pool, set(), comp["size"], comp["cap"], comp.get("max_classic"))
             if not t["cards"]:
                 break
             if not t["complete"] and teams:
@@ -392,6 +426,10 @@ def main(argv):
                 break
         for t in teams:
             t.pop("used", None)
+            if comp.get("hotstreak"):
+                for c in t["cards"]:
+                    if c.get("is_classic"):
+                        c["classic"] = True
         if not teams:
             continue
         used_global = used_local
