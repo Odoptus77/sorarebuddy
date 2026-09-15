@@ -34,16 +34,21 @@ PACE = 0.25
 POS_SLOTS = ["Goalkeeper", "Defender", "Midfielder", "Forward"]
 RARITY_TOKENS = [("super_rare", "SUPER_RARE"), ("limited", "LIMITED"),
                  ("rare", "RARE"), ("unique", "UNIQUE")]
-# IN_SEASON_<COUNTRY> competition -> club country code(s) + a readable name
-COUNTRY_MAP = {
-    "SCOTLAND": (["gb-sct"], "SPFL"),
-    "SPAIN": (["es"], "LALIGA"),
-    "ENGLAND": (["gb-eng"], "Premier League"),
-    "NETHERLANDS": (["nl"], "Eredivisie"),
-    "GERMANY": (["de"], "Bundesliga"),
-    "FRANCE": (["fr"], "Ligue 1"),
-    "ITALY": (["it"], "Serie A"),
-    "USA": (["us"], "MLS"),
+# IN_SEASON_<TOKEN> competition -> (domesticLeague slug prefix, readable name).
+# Matched with str.startswith so e.g. "bundesliga" excludes "2-bundesliga".
+LEAGUE_MAP = {
+    "ENGLAND": ("premier-league", "Premier League"),
+    "ENGLAND_SECOND": ("championship", "Championship"),
+    "SPAIN": ("laliga", "LALIGA"),
+    "GERMANY": ("bundesliga", "Bundesliga"),
+    "FRANCE": ("ligue-1", "Ligue 1"),
+    "ITALY": ("serie-a", "Serie A"),
+    "NETHERLANDS": ("eredivisie", "Eredivisie"),
+    "SCOTLAND": ("premiership", "SPFL"),
+    "JUPILER": ("jupiler", "Jupiler Pro League"),
+    "PORTUGAL": ("liga-portugal", "Liga Portugal"),
+    "USA": ("major-league-soccer", "MLS"),
+    "MLS": ("major-league-soccer", "MLS"),
 }
 
 CARDS_QUERY = """
@@ -60,7 +65,7 @@ query Cards($slug: String!, $after: String, $rarities: [Rarity!]) {
 
 PLAYER_FIELDS = """
   slug displayName anyPositions lastFifteenSo5Appearances
-  activeClub { ... on Club { name country { code } } }
+  activeClub { ... on Club { name domesticLeague { slug } } }
   activeInjuries { status kind }
   nextGame { date statusTyped homeTeam { ... on Club { name } } awayTeam { ... on Club { name } } }
   l5: averageScore(type: LAST_FIVE_SO5_AVERAGE_SCORE)
@@ -120,35 +125,35 @@ def fetch_competitions(fx_slug, rarities):
             body = t[len("IN_SEASON_"):]
             for tok in RARITY_TOKENS:
                 body = body.replace("_" + tok[1], "")
-            country = body  # e.g. SCOTLAND, SPAIN, REST_OF_THE_WORLD
-            if country not in COUNTRY_MAP:
-                continue  # skip Rest of the World / unmapped
-            key = (rar, "SO7", None, country, True)
-            g = groups.setdefault(key, {"families": {COUNTRY_MAP[country][1]}, "teams_cap": 1})
+            token = body  # e.g. SCOTLAND, ENGLAND_SECOND, CONTENDERS
+            if token not in LEAGUE_MAP:
+                continue  # skip Contenders / Rest of the World / unmapped
+            key = (rar, "SO7", None, token, True)
+            g = groups.setdefault(key, {"teams_cap": 1})
             g["teams_cap"] = max(g["teams_cap"], tcap)
         # else: U21 / league arena / special -> skipped
 
     comps = []
-    for (rar, fmt, cap, country, in_season), g in groups.items():
-        if country:
-            codes, name = COUNTRY_MAP[country]
+    for (rar, fmt, cap, token, in_season), g in groups.items():
+        league_prefix = None
+        if token:
+            league_prefix, name = LEAGUE_MAP[token]
             label = f"Liga · {name} (In-Season)"
         elif fmt == "SO7":
             label = f"Classic · {' / '.join(sorted(g['families']))}"
-            codes = None
         elif cap:
-            label = f"Arena · Cap {cap}"; codes = None
+            label = f"Arena · Cap {cap}"
         else:
-            label = "Arena · Uncapped"; codes = None
+            label = "Arena · Uncapped"
         comps.append({
             "rarity": rar, "label": label, "format": fmt,
             "size": 5 if fmt == "SO5" else 7, "cap": cap,
-            "teams_cap": g["teams_cap"], "countries": codes,
+            "teams_cap": g["teams_cap"], "league_prefix": league_prefix,
             "in_season": in_season,
         })
 
     def rank(c):
-        fam = 0 if c["countries"] else (1 if c["format"] == "SO7" else 2)
+        fam = 0 if c["league_prefix"] else (1 if c["format"] == "SO7" else 2)
         return (c["rarity"], fam, c["label"], -(c["cap"] or 99999))
     comps.sort(key=rank)
     return comps
@@ -209,12 +214,12 @@ def eligible_entry(card, pd, ws, we):
     away = (ng.get("awayTeam") or {}).get("name")
     is_home = club is not None and club == home
     proj = round(l5 * (0.75 + 0.25 * min(1.0, app / 15.0)) * (1.03 if is_home else 1.0), 1)
-    country = ((pd.get("activeClub") or {}).get("country") or {}).get("code")
+    league = ((pd.get("activeClub") or {}).get("domesticLeague") or {}).get("slug")
     return {"slug": card["slug"], "player": card["anyPlayer"]["displayName"],
             "player_slug": card["anyPlayer"]["slug"], "season": card.get("seasonYear"),
             "positions": card["anyPlayer"].get("anyPositions") or [],
             "proj": proj, "cap_score": round(l15 if l15 else l5, 1),
-            "l5": round(l5, 1), "appearances": app, "country": country,
+            "l5": round(l5, 1), "appearances": app, "league": league,
             "home": is_home, "opponent": away if is_home else home}
 
 
@@ -327,9 +332,9 @@ def main(argv):
 
     for comp in comps:
         pool = pools.get(comp["rarity"], [])
-        if comp.get("countries"):
-            codes = set(comp["countries"])
-            pool = [e for e in pool if e.get("country") in codes]
+        if comp.get("league_prefix"):
+            pref = comp["league_prefix"]
+            pool = [e for e in pool if (e.get("league") or "").startswith(pref)]
         if comp.get("in_season"):
             pool = [e for e in pool if (e.get("season") or 0) >= current_season]
         teams = []
@@ -344,8 +349,12 @@ def main(argv):
             used |= t["used"]
         for t in teams:
             t.pop("used", None)
+        # league competitions only shown if a full team is fieldable (reduce noise)
+        if comp.get("league_prefix") and not any(t.get("complete") for t in teams):
+            continue
         out["competitions"].append({**{k: comp[k] for k in
                                     ("rarity", "label", "format", "size", "cap", "teams_cap")},
+                                    "in_season": comp.get("in_season", False),
                                     "eligible_count": len(pool), "teams": teams})
         tt = ", ".join(f"Σ{t['projected_total']}" for t in teams) or "—"
         print(f"  {comp['rarity']} · {comp['label']} [{comp['format']}] "

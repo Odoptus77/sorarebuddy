@@ -535,7 +535,7 @@ function renderSuggestions(){
     const compBlocks=cs.map(comp=>{
       const teams=comp.teams||[];
       const proxyNote=comp.proxy?`<div class="capline">Näherung — Sorares Hot-Streak-Regeln sind nicht über die API abrufbar; hier die 5 formstärksten spielenden Karten.</div>`:"";
-      const poolNote=(comp.countries||comp.in_season)?` · ${comp.eligible_count} passende Karten`:"";
+      const poolNote=comp.in_season?` · ${comp.eligible_count} passende Karten`:"";
       const body = teams.length
         ? `<div class="lineups2">${teams.map((t,i)=>teamCard(comp,t,i)).join("")}</div>`
         : `<div class="lu-warn" style="border-radius:12px">Kein vollständiges Team möglich (zu wenige passende spielende Karten).</div>`;
