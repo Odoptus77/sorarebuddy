@@ -393,6 +393,47 @@ def start_probability(pd, we):
     return max(0.0, min(0.98, round(prob, 3))), mins
 
 
+def apply_sofascore(entries, index):
+    """Fuse SofaScore predicted/confirmed XIs into each entry's start_prob.
+    Confirmed lineups override the model; predicted lineups blend with it.
+    Returns (n_confirmed, n_predicted) for logging."""
+    from sofascore_lineups import _norm
+    n_conf = n_pred = 0
+    for e in entries:
+        info = index.get(e.get("club_name"))
+        if not info or not info.get("players"):
+            continue
+        xi = info["players"]
+        pn = _norm(e["player"])
+        started = xi.get(pn)
+        if started is None and e.get("player"):
+            # last-name fallback, only if it maps to exactly one XI player
+            ln = _norm(e["player"].split()[-1])
+            if len(ln) >= 4:
+                hits = [(nm, st) for nm, st in xi.items() if nm.endswith(ln) or ln in nm]
+                if len(hits) == 1:
+                    started = hits[0][1]
+        conf = info.get("confirmed")
+        if started is None:
+            if conf:                      # teamsheet out and player not on it
+                e["start_prob"] = min(e["start_prob"], 0.10)
+                e["sofa_status"] = "confirmed_out"
+                e["ev"] = round(e["proj"] * e["start_prob"], 1)
+                n_conf += 1
+            continue
+        if conf:
+            e["start_prob"] = 0.95 if started else 0.08
+            e["sofa_status"] = "confirmed_start" if started else "confirmed_bench"
+            n_conf += 1
+        else:
+            target = 0.85 if started else 0.18
+            e["start_prob"] = round(0.35 * e["start_prob"] + 0.65 * target, 3)
+            e["sofa_status"] = "pred_start" if started else "pred_bench"
+            n_pred += 1
+        e["ev"] = round(e["proj"] * e["start_prob"], 1)
+    return n_conf, n_pred
+
+
 def eligible_entry(card, pd, ws, we):
     ng = pd.get("nextGame")
     if not ng or not ng.get("date"):
@@ -422,8 +463,8 @@ def eligible_entry(card, pd, ws, we):
     return {"slug": card["slug"], "player": card["anyPlayer"]["displayName"],
             "player_slug": card["anyPlayer"]["slug"], "season": card.get("seasonYear"),
             "positions": card["anyPlayer"].get("anyPositions") or [],
-            "age": pd.get("age"),
-            "proj": proj, "ev": ev, "start_prob": start_prob,
+            "age": pd.get("age"), "club_name": club.get("name"),
+            "proj": proj, "ev": ev, "start_prob": start_prob, "sofa_status": None,
             "recent_mins": [mp for _, mp in recent_mins],
             "injured": bool(pd.get("activeInjuries")),
             "cap_score": round(l15 if l15 else l5, 1),
@@ -528,6 +569,8 @@ def main(argv):
     ap.add_argument("slug")
     ap.add_argument("--json", default="lineups.json")
     ap.add_argument("--rarities", default="limited,rare")
+    ap.add_argument("--no-sofascore", action="store_true",
+                    help="skip SofaScore predicted-lineup enrichment")
     args = ap.parse_args(argv)
     rarities = [r.strip() for r in args.rarities.split(",") if r.strip()]
 
@@ -567,6 +610,27 @@ def main(argv):
             e["is_classic"] = (e.get("season") or 0) < current_season
         pools[rar] = list(best.values())
         print(f"  {rar}: {len(pools[rar])} eligible players", file=sys.stderr)
+
+    # --- SofaScore predicted/confirmed XI enrichment (optional) ------------
+    sofa_used = False
+    all_pool_entries = [e for rar in rarities for e in pools.get(rar, [])]
+    if not args.no_sofascore and all_pool_entries:
+        try:
+            import sofascore_lineups as sofa
+            if sofa.ping():
+                clubs = {e.get("club_name") for e in all_pool_entries if e.get("club_name")}
+                print(f"SofaScore: resolving XIs for {len(clubs)} clubs...", file=sys.stderr)
+                index = sofa.build_club_index(clubs)
+                nc, npd = apply_sofascore(all_pool_entries, index)
+                sofa_used = True
+                print(f"SofaScore applied: {nc} confirmed, {npd} predicted signals",
+                      file=sys.stderr)
+            else:
+                print("SofaScore not reachable — falling back to Sorare-only model "
+                      "(allow api.sofascore.com in the network policy).", file=sys.stderr)
+        except Exception as e:
+            print(f"SofaScore enrichment skipped: {type(e).__name__}: {str(e)[:160]}",
+                  file=sys.stderr)
 
     out = {"fixture": {"slug": fx["slug"], "gameWeek": fx["gameWeek"],
                        "start": fx["startDate"], "end": fx["endDate"]},
@@ -692,6 +756,7 @@ def main(argv):
         print(f"  {comp['rarity']} · {comp['label']} [{comp['mode']}] "
               f"teams={len(teams)}/{comp['teams_cap']}: {tt}", file=sys.stderr)
 
+    out["sofascore"] = sofa_used
     out["cards_used"] = len(used_global)
     out["total_projected"] = round(
         sum(t["projected_total"] for c in out["competitions"] for t in c["teams"]), 1)

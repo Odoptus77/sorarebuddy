@@ -521,6 +521,13 @@ const SLOT_DE={Goalkeeper:"TW",Defender:"ABW",Midfielder:"MF",Forward:"ST",Extra
 function fmtDate(iso){ try{return new Date(iso).toLocaleDateString("de-DE",{day:"numeric",month:"short"});}catch(e){return "";} }
 function fmtDT(iso){ try{return new Date(iso).toLocaleString("de-DE",{weekday:"short",day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"});}catch(e){return "";} }
 function startCls(p){ return p>=0.75?"hi":(p>=0.5?"mid":"lo"); }
+const SOFA_DE={confirmed_start:["bestätigt: Start","hi"],confirmed_bench:["bestätigt: Bank","lo"],
+  confirmed_out:["nicht im Kader","lo"],pred_start:["voraussichtl. Start","mid"],pred_bench:["voraussichtl. Bank","lo"]};
+function sofaTag(c){
+  const s=c.sofa_status; if(!s||!SOFA_DE[s]) return "";
+  const [txt,cls]=SOFA_DE[s];
+  return ` · <span class="safe"><b class="${cls}">SofaScore: ${txt}</b></span>`;
+}
 function startChip(p){
   if(p==null) return "";
   return `<span class="pchip ${startCls(p)}" title="Startelf-Wahrscheinlichkeit">${Math.round(p*100)}%</span>`;
@@ -547,7 +554,7 @@ function prow(c){
     <span class="slotchip">${SLOT_DE[slot]||slot||"–"}</span>
     <span class="pn">${c.player}${cap}${cl}${chip}</span>
     <span class="pp">${c.proj.toLocaleString("de-DE",{maximumFractionDigits:1})}${ev}</span>
-    <span class="pm">L5 ${c.l5!=null?c.l5.toLocaleString("de-DE"):"–"} · ${c.opponent||"?"} (${ha}) · Cap ${c.cap_score!=null?c.cap_score.toLocaleString("de-DE"):"–"} · ${minsHtml(c.recent_mins)}</span>
+    <span class="pm">L5 ${c.l5!=null?c.l5.toLocaleString("de-DE"):"–"} · ${c.opponent||"?"} (${ha}) · Cap ${c.cap_score!=null?c.cap_score.toLocaleString("de-DE"):"–"} · ${minsHtml(c.recent_mins)}${sofaTag(c)}</span>
   </div>`;
 }
 function teamCard(comp, team, idx){
@@ -598,6 +605,9 @@ function renderSuggestions(){
       <b>${h.in_season}/${h.needed||4}</b> ${ok?'✓ spielbar':'· fehlen '+miss}</span>`;
   }).join("");
   const hsBlock=hso.length?`<div class="eyebrow" style="margin:4px 2px 8px">Hot-Streak-Überblick (In-Season-Tiefe · 4 nötig + 1 Classic)</div><div class="hswrap">${hsChips}</div>`:"";
+  const sofaBanner = L.sofascore
+    ? `<div class="capline" style="border-radius:12px;margin:0 0 12px;border:1px solid var(--line)"><span class="safe"><b class="hi">✓ Voraussichtliche Aufstellungen (SofaScore) aktiv</b> — bestätigte Teamsheets überschreiben den Score, voraussichtliche Elf fließt gewichtet ein.</span></div>`
+    : `<div class="lu-warn" style="border-radius:12px;margin:0 0 12px">Externe voraussichtliche Aufstellungen (SofaScore) sind <b>nicht aktiv</b> — Score basiert nur auf Sorare-Daten (Minuten/Einsatzquote/Verletzungen). Zum Aktivieren <b>api.sofascore.com</b> in der Netzwerk-Policy freigeben. Hinweis: voraussichtliche Elf erscheint meist erst 1–2 Tage vor Anpfiff.</div>`;
   document.getElementById("view-suggest").innerHTML = `
     <div class="eyebrow" style="margin:2px 2px 4px">Bestmögliches Gesamt-Setup (Sorare 27)</div>
     <h2 style="font-family:Archivo;font-size:20px;letter-spacing:-.01em;margin:0 0 6px">Spieltag ${L.fixture.gameWeek} · ${fmtDate(L.fixture.start)}–${fmtDate(L.fixture.end)}</h2>
@@ -607,8 +617,9 @@ function renderSuggestions(){
       <div class="kpi"><span class="label">Karten eingesetzt</span><span class="val num">${L.cards_used??"—"}</span><span class="meta">jede Karte nur einmal (global)</span></div>
       <div class="kpi hero"><span class="label">Aufstellungen</span><span class="val num">${(L.competitions||[]).reduce((s,c)=>s+(c.teams||[]).length,0)}</span><span class="meta">nach erwartetem Ertrag priorisiert</span></div>
     </div>
+    ${sofaBanner}
     ${hsBlock}
-    <p class="sugg-note"><b>Startelf-Score (Prediction):</b> der farbige %-Chip je Karte ist die geschätzte <b>Startwahrscheinlichkeit</b> — gemischt aus <b>zuletzt gespielten Minuten</b> (stärkstes Signal, jüngste Spiele höher gewichtet; die Zahlen bei „Min" = Minuten der letzten Spiele, <b class="mins"><b>grün</b></b> = Start ≥60′, <span class="mins"><span class="s">gelb</span></span> = Teileinsatz, <span class="mins"><span class="x">rot</span></span> = Kurz-/kein Einsatz), <b>Einsatzquote</b> (letzte 15 SO5) und dem <b>Verletzungs-Feed</b> mit Rückkehrdatum (gegengeprüft mit den Minuten). <b>Team 1 = sichere Aufstellung</b> (nur nahezu sichere Starter, Schwelle 75 %); jedes weitere Team senkt die Schwelle (55/40/25 %), darf also <b>riskieren</b>. Ausgewählt wird nach <b>Erwartungswert EV = projizierte Punkte × Startwahrscheinlichkeit</b>. <b>Externe Prediction-/News-Seiten sind durch die Netzwerk-Policy blockiert</b> — der Score nutzt daher nur Sorare-Daten.<br><br><b>Max-Profit-Aufteilung:</b> jede Karte wird <b>nur einmal</b> im ganzen GW eingesetzt; zuerst die <b>In-Season Hot Streaks (Pro)</b>, danach die übrigen nach <b>EV × Pool-Gewicht</b>. Das <b>Pool-Gewicht</b> (z. B. Pool ×2,6) schätzt den relativen Preispool je Wettbewerb (Rare ≈ 2× Limited, Pro > Arena, Champion/Top-Ligen größer) — anpassbar, keine exakten Auszahlungen. <b>Pro = SO7</b> (7 Karten, Hot Streaks 5), <b>Arena = SO5</b> (Cap: Σ L15-Scores ≤ Cap). <b>⏱</b> = frühester Anstoß (Deadline); <b>Contender</b> nutzt das späteste Spielende seiner Ligen. Projizierter Score = L5-Form × Einsatzquote × Heimvorteil (H); <b>C</b> = Kapitän (×2). <b>Näherung:</b> exakte Step-Clock/Contender-Gruppierung noch nicht abgebildet.</p>
+    <p class="sugg-note"><b>Startelf-Score (Prediction):</b> der farbige %-Chip je Karte ist die geschätzte <b>Startwahrscheinlichkeit</b> — gemischt aus <b>zuletzt gespielten Minuten</b> (stärkstes Signal, jüngste Spiele höher gewichtet; die Zahlen bei „Min" = Minuten der letzten Spiele, <b class="mins"><b>grün</b></b> = Start ≥60′, <span class="mins"><span class="s">gelb</span></span> = Teileinsatz, <span class="mins"><span class="x">rot</span></span> = Kurz-/kein Einsatz), <b>Einsatzquote</b> (letzte 15 SO5) und dem <b>Verletzungs-Feed</b> mit Rückkehrdatum (gegengeprüft mit den Minuten). <b>Team 1 = sichere Aufstellung</b> (nur nahezu sichere Starter, Schwelle 75 %); jedes weitere Team senkt die Schwelle (55/40/25 %), darf also <b>riskieren</b>. Ausgewählt wird nach <b>Erwartungswert EV = projizierte Punkte × Startwahrscheinlichkeit</b>. Ist die <b>SofaScore</b>-Quelle freigeschaltet (Banner oben), <b>überschreibt</b> ein bestätigter Teamsheet den Score und die <b>voraussichtliche Elf</b> fließt gewichtet ein (Tag „SofaScore: …" je Karte); sonst nur Sorare-Daten.<br><br><b>Max-Profit-Aufteilung:</b> jede Karte wird <b>nur einmal</b> im ganzen GW eingesetzt; zuerst die <b>In-Season Hot Streaks (Pro)</b>, danach die übrigen nach <b>EV × Pool-Gewicht</b>. Das <b>Pool-Gewicht</b> (z. B. Pool ×2,6) schätzt den relativen Preispool je Wettbewerb (Rare ≈ 2× Limited, Pro > Arena, Champion/Top-Ligen größer) — anpassbar, keine exakten Auszahlungen. <b>Pro = SO7</b> (7 Karten, Hot Streaks 5), <b>Arena = SO5</b> (Cap: Σ L15-Scores ≤ Cap). <b>⏱</b> = frühester Anstoß (Deadline); <b>Contender</b> nutzt das späteste Spielende seiner Ligen. Projizierter Score = L5-Form × Einsatzquote × Heimvorteil (H); <b>C</b> = Kapitän (×2). <b>Näherung:</b> exakte Step-Clock/Contender-Gruppierung noch nicht abgebildet.</p>
     ${blocks}`;
 }
 if(LINEUPS && (LINEUPS.competitions||LINEUPS.rarities)){

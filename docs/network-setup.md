@@ -55,6 +55,35 @@ Wenn API-Credentials nicht verfügbar sind:
 Bei Weg A muss der Key lokal vorliegen (`.env.local`, siehe `.env.example`),
 weil der Proxy dann nichts injiziert.
 
+## SofaScore – voraussichtliche Aufstellungen freigeben
+
+Für die **predicted-lineup**-Anreicherung des Startelf-Scores muss zusätzlich
+`api.sofascore.com` erreichbar sein. SofaScore braucht **keinen** API-Key, es
+genügt also, die Domain in die Allowlist aufzunehmen (kein Credential nötig):
+
+1. Umgebung bearbeiten → **Network access** auf **Custom** stellen.
+2. Unter **Allowed domains** eine Zeile hinzufügen: `api.sofascore.com`
+   (die bestehende Zeile `api.sorare.com` bleibt stehen).
+3. Häkchen bei **„Also include default list of common package managers"** gesetzt lassen.
+4. Speichern → **neue** Sitzung starten.
+
+Testen (neue Sitzung):
+
+```bash
+python3 sofascore_lineups.py --ping                 # -> OK
+python3 sofascore_lineups.py "Real Madrid"          # zeigt die nächste (voraussichtl.) Elf
+```
+
+Danach zieht `lineup_suggest.py` die Aufstellungen automatisch (ohne Flag) ein;
+mit `--no-sofascore` lässt sich das abschalten. Hinweise:
+
+- Die **voraussichtliche** Elf erscheint bei SofaScore meist erst **1–2 Tage**
+  vor Anpfiff, die **bestätigte** ~1 h vorher. Vorher liefert die Quelle nichts
+  und der Score nutzt weiter die Sorare-Signale.
+- Die API ist **inoffiziell** und nur für Privatnutzung gedacht; sie kann sich
+  ändern oder die Server-IP zeitweise per Cloudflare (403) blocken. Der Code
+  fällt in dem Fall geräuschlos auf das Sorare-Modell zurück.
+
 ## Sicherheit
 
 - Wurde der Key jemals geteilt (z. B. im Chat), **rotiere** ihn in den
