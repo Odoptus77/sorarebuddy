@@ -506,11 +506,12 @@ const SLOT_DE={Goalkeeper:"TW",Defender:"ABW",Midfielder:"MF",Forward:"ST",Extra
 function fmtDate(iso){ try{return new Date(iso).toLocaleDateString("de-DE",{day:"numeric",month:"short"});}catch(e){return "";} }
 function prow(c){
   const cap=c.captain?'<span class="capbadge">C</span>':'';
+  const cl=c.classic?'<span class="capbadge" style="background:var(--flat)">Classic</span>':'';
   const ha=c.home?"H":"A";
   const slot=c.slot||c.slot_primary||"";
   return `<div class="prow">
     <span class="slotchip">${SLOT_DE[slot]||slot||"–"}</span>
-    <span class="pn">${c.player}${cap}</span>
+    <span class="pn">${c.player}${cap}${cl}</span>
     <span class="pp">${c.proj.toLocaleString("de-DE",{maximumFractionDigits:1})}</span>
     <span class="pm">L5 ${c.l5!=null?c.l5.toLocaleString("de-DE"):"–"} · ${c.opponent||"?"} (${ha}) · Cap ${c.cap_score!=null?c.cap_score.toLocaleString("de-DE"):"–"}</span>
   </div>`;
@@ -534,7 +535,7 @@ function renderSuggestions(){
     const el=(L.eligible&&L.eligible[rar]!=null)?L.eligible[rar]:(cs[0]?cs[0].eligible_count:0);
     const compBlocks=cs.map(comp=>{
       const teams=comp.teams||[];
-      const proxyNote=comp.proxy?`<div class="capline">Näherung — Sorares Hot-Streak-Regeln sind nicht über die API abrufbar; hier die 5 formstärksten spielenden Karten.</div>`:"";
+      const proxyNote=comp.proxy?`<div class="capline">Näherung — Sorares Hot-Streak-Regeln sind nicht über die API abrufbar; In-Season-Basis mit einer erlaubten Classic-Karte (markiert), sonst die formstärksten spielenden Karten.</div>`:"";
       const poolNote=comp.in_season?` · ${comp.eligible_count} passende Karten`:"";
       const body = teams.length
         ? `<div class="lineups2">${teams.map((t,i)=>teamCard(comp,t,i)).join("")}</div>`
@@ -553,7 +554,7 @@ function renderSuggestions(){
   document.getElementById("view-suggest").innerHTML = `
     <div class="eyebrow" style="margin:2px 2px 4px">Bestmögliches Setup nach Wettbewerb</div>
     <h2 style="font-family:Archivo;font-size:20px;letter-spacing:-.01em;margin:0 0 8px">Spieltag ${L.fixture.gameWeek} · ${fmtDate(L.fixture.start)}–${fmtDate(L.fixture.end)}</h2>
-    <p class="sugg-note"><b>Classic = SO7</b> (7 Karten, uncapped), <b>Arena = SO5</b> (5 Karten, Cap: Summe der L15-Scores ≤ Cap), <b>Liga (In-Season) = SO7</b> mit Liga-Filter (nur aktuelle-Season-Karten von Spielern dieser Liga). Pro Wettbewerb bis zu <b>teamsCap</b> Teams mit jeweils unterschiedlichen Karten (eine Karte darf in verschiedenen Wettbewerben erneut eingesetzt werden). Projizierter Score = L5-Form × Einsatzquote × leichter Heimvorteil (H); Verletzte ausgeschlossen; nur Spieler mit Spiel im GW. <b>C</b> = Kapitän (zählt doppelt), Σ = Team-Score inkl. Kapitän. <b>Hot Streak</b> ist als Modus nicht über die API abrufbar — als Näherung zeigen wir die formstärkste Auswahl. <b>Nicht enthalten:</b> U21-Wettbewerbe sowie Gegnerstärke/News außer Verletzungen.</p>
+    <p class="sugg-note"><b>Classic = SO7</b> (7 Karten, uncapped), <b>Arena = SO5</b> (5 Karten, Cap: Summe der L15-Scores ≤ Cap), <b>Liga (In-Season) = SO7</b> (nur aktuelle-Season-Karten dieser Liga), <b>Liga-Arena = SO5</b> (Liga-Filter über alle Seasons, mit Cap). Pro Wettbewerb bis zu <b>teamsCap</b> Teams mit jeweils unterschiedlichen Karten (eine Karte darf in verschiedenen Wettbewerben erneut eingesetzt werden). Projizierter Score = L5-Form × Einsatzquote × leichter Heimvorteil (H); Verletzte ausgeschlossen; nur Spieler mit Spiel im GW. <b>C</b> = Kapitän (zählt doppelt), Σ = Team-Score inkl. Kapitän. <b>Hot Streak</b> ist als Modus nicht über die API abrufbar — als Näherung zeigen wir die formstärkste Auswahl. <b>Nicht enthalten:</b> U21-Wettbewerbe sowie Gegnerstärke/News außer Verletzungen.</p>
     ${blocks}`;
 }
 if(LINEUPS && (LINEUPS.competitions||LINEUPS.rarities)){

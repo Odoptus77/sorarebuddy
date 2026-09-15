@@ -127,18 +127,32 @@ def fetch_competitions(fx_slug, rarities):
                 body = body.replace("_" + tok[1], "")
             token = body  # e.g. SCOTLAND, ENGLAND_SECOND, CONTENDERS
             if token not in LEAGUE_MAP:
-                continue  # skip Contenders / Rest of the World / unmapped
+                continue
             key = (rar, "SO7", None, token, True)
             g = groups.setdefault(key, {"teams_cap": 1})
             g["teams_cap"] = max(g["teams_cap"], tcap)
-        # else: U21 / league arena / special -> skipped
+        elif is_arena:
+            # league arena (SO5, cap, league filter, all seasons)
+            m2 = re.match(r"ALL_SEASONS_(.+?)_ARENA", t)
+            token = m2.group(1) if m2 else None
+            if token not in LEAGUE_MAP:
+                continue  # U21 arena / unmapped
+            key = (rar, "SO5", cap, token, False)
+            g = groups.setdefault(key, {"teams_cap": 1})
+            g["teams_cap"] = max(g["teams_cap"], tcap)
+        # else: U21 classic / special -> skipped
 
     comps = []
     for (rar, fmt, cap, token, in_season), g in groups.items():
         league_prefix = None
         if token:
             league_prefix, name = LEAGUE_MAP[token]
-            label = f"Liga · {name} (In-Season)"
+            if in_season:
+                label = f"Liga · {name} (In-Season)"
+            elif cap:
+                label = f"Liga-Arena · {name} · Cap {cap}"
+            else:
+                label = f"Liga-Arena · {name} · Uncapped"
         elif fmt == "SO7":
             label = f"Classic · {' / '.join(sorted(g['families']))}"
         elif cap:
@@ -361,10 +375,22 @@ def main(argv):
         print(f"  {comp['rarity']} · {comp['label']} [{comp['format']}] "
               f"teams={len(teams)}/{comp['teams_cap']}: {tt}", file=sys.stderr)
 
-    # Hot Streak proxy: Sorare's Hot Streak rules aren't in the API, so we show
-    # a transparent "best form" top-5 pick per rarity (no formation / no cap).
+    # Hot Streak proxy: Sorare's Hot Streak rules aren't in the API. Hot Streak is
+    # an in-season mode where you may field ONE Classic (other-season) card, so we
+    # pick the best in-season form 5 but allow a single classic wildcard if it beats
+    # the weakest in-season pick.
     for rar in rarities:
-        pool = sorted(pools.get(rar, []), key=lambda e: -e["proj"])[:5]
+        allp = sorted(pools.get(rar, []), key=lambda e: -e["proj"])
+        ins = [e for e in allp if (e.get("season") or 0) >= current_season]
+        classic = [e for e in allp if (e.get("season") or 0) < current_season]
+        pool = ins[:5]
+        if classic and (len(pool) < 5 or classic[0]["proj"] > pool[-1]["proj"]):
+            wild = dict(classic[0]); wild["classic"] = True
+            if len(pool) == 5:
+                pool[-1] = wild
+            else:
+                pool.append(wild)
+        pool = sorted(pool, key=lambda e: -e["proj"])
         if not pool:
             continue
         cards = []
