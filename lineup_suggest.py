@@ -1,14 +1,18 @@
 #!/usr/bin/env python3
-"""Suggest Sorare lineups for the upcoming gameweek from a manager's own cards.
+"""Suggest Sorare lineups per competition (cap tier) for the upcoming gameweek.
 
-Public data only (no OAuth). For each owned card (Limited/Rare) whose player has
-a game in the upcoming gameweek, project an expected SO5 score from recent form,
-appearance rate and home/away, excluding injured players. Then build, per rarity:
-  - a classic formation XI (GK, DEF, MID, FWD + Extra) with a captain pick
-  - a "best form" top 5 (highest projections, ignoring position rules)
+Public data only (no OAuth). Reads the upcoming gameweek's competition structure
+(leaderboards), then for each rarity the manager owns builds a lineup for each
+cap tier present (Uncapped, Cap 260, Cap 220, ...), respecting:
+  - rarity
+  - the SO5 formation (GK, DEF, MID, FWD + Extra)
+  - the cap: sum of the five cards' L15 average score must stay <= cap
+maximising the projected score (recent form x appearance rate x home edge),
+excluding injured players and players without a game in the gameweek.
 
-Honest limits: opponent strength and non-injury news are not in the Sorare API,
-so the projection uses form + availability + home/away only.
+Honest limits: league-specific (e.g. SPFL, LALIGA) and Under-21 competitions are
+NOT built here, because they need per-player league/age data not fetched. Opponent
+strength and non-injury news are not in the Sorare API.
 
 Usage:
     python3 lineup_suggest.py <manager-slug> [--json lineups.json] [--rarities limited,rare]
@@ -16,7 +20,7 @@ Usage:
 import argparse
 import datetime as dt
 import json
-import statistics
+import re
 import sys
 import time
 
@@ -26,20 +30,29 @@ CARD_PAGE = 50
 PLAYER_BATCH = 20
 PACE = 0.25
 POS_SLOTS = ["Goalkeeper", "Defender", "Midfielder", "Forward"]
+RARITY_TOKENS = [("super_rare", "SUPER_RARE"), ("limited", "LIMITED"),
+                 ("rare", "RARE"), ("unique", "UNIQUE")]
 
 CARDS_QUERY = """
 query Cards($slug: String!, $after: String, $rarities: [Rarity!]) {
   user(slug: $slug) {
     cards(first: %d, after: $after, rarities: $rarities) {
       pageInfo { hasNextPage endCursor }
-      nodes {
-        slug rarityTyped seasonYear
-        anyPlayer { slug displayName anyPositions }
-      }
+      nodes { slug rarityTyped seasonYear
+        anyPlayer { slug displayName anyPositions } }
     }
   }
 }
 """ % CARD_PAGE
+
+PLAYER_FIELDS = """
+  slug displayName anyPositions lastFifteenSo5Appearances
+  activeClub { ... on Club { name } }
+  activeInjuries { status kind }
+  nextGame { date statusTyped homeTeam { ... on Club { name } } awayTeam { ... on Club { name } } }
+  l5: averageScore(type: LAST_FIVE_SO5_AVERAGE_SCORE)
+  l15: averageScore(type: LAST_FIFTEEN_SO5_AVERAGE_SCORE)
+"""
 
 
 def get_upcoming_fixture():
@@ -47,25 +60,43 @@ def get_upcoming_fixture():
               slug gameWeek aasmState startDate endDate } } } }"""
     nodes = graphql(q)["data"]["so5"]["so5Fixtures"]["nodes"]
     now = dt.datetime.now(dt.timezone.utc)
-    upcoming = []
+    up = []
     for n in nodes:
         try:
             start = dt.datetime.fromisoformat(n["startDate"].replace("Z", "+00:00"))
         except Exception:
             continue
         if start > now:
-            upcoming.append((start, n))
-    upcoming.sort(key=lambda x: x[0])
-    if not upcoming:
-        # fall back to the most recent opened fixture
-        opened = [n for n in nodes if n["aasmState"] == "opened"]
-        return opened[0] if opened else nodes[0]
-    return upcoming[0][1]
+            up.append((start, n))
+    up.sort(key=lambda x: x[0])
+    return up[0][1] if up else nodes[0]
+
+
+def rarity_of(lb_type):
+    for rar, tok in RARITY_TOKENS:
+        if tok in lb_type:
+            return rar
+    return None
+
+
+def fetch_competitions(fx_slug, rarities):
+    """Return, per rarity, the set of cap tiers present (None = uncapped)."""
+    q = ('{ so5 { so5Fixture(slug: "%s") { so5Leaderboards { displayName so5LeaderboardType } } } }'
+         % fx_slug)
+    lbs = graphql(q)["data"]["so5"]["so5Fixture"]["so5Leaderboards"]
+    caps = {r: set() for r in rarities}
+    for lb in lbs:
+        rar = rarity_of(lb["so5LeaderboardType"])
+        if rar not in caps:
+            continue
+        m = re.search(r"Cap (\d+)", lb["displayName"])
+        if m:
+            caps[rar].add(int(m.group(1)))
+    return caps
 
 
 def fetch_cards(slug, rarities):
-    cards = []
-    after = None
+    cards, after = [], None
     while True:
         conn = graphql(CARDS_QUERY, {"slug": slug, "after": after, "rarities": rarities})
         conn = conn["data"]["user"]["cards"]
@@ -77,31 +108,14 @@ def fetch_cards(slug, rarities):
     return cards
 
 
-PLAYER_FIELDS = """
-  slug displayName anyPositions lastFifteenSo5Appearances
-  activeClub { ... on Club { name } }
-  activeInjuries { status kind expectedEndDate }
-  nextGame { date statusTyped
-    homeTeam { ... on Club { name } }
-    awayTeam { ... on Club { name } } }
-  playerGameScores(last: 5) { score anyGame { statusTyped } }
-"""
-
-
 def fetch_players(slugs):
-    """Fetch form/injury/next-game for many players, batched with aliases."""
-    out = {}
-    slugs = list(slugs)
-    i = 0
-    batch = PLAYER_BATCH
+    out, slugs, i, batch = {}, list(slugs), 0, PLAYER_BATCH
     while i < len(slugs):
         chunk = slugs[i:i + batch]
-        # players(slugs: [...]) accepts a list and returns an array
         slug_list = ", ".join(f'"{s}"' for s in chunk)
         resp = graphql("{ players(slugs: [" + slug_list + "]) {" + PLAYER_FIELDS + "} }")
         data = resp.get("data")
         if not data:
-            # likely query-complexity: shrink the batch and retry this chunk
             if batch > 4:
                 batch = max(4, batch // 2)
                 continue
@@ -115,75 +129,96 @@ def fetch_players(slugs):
     return out
 
 
-def project(pdata, window_start, window_end):
-    """Return (projection, meta) or (None, meta) if not eligible this GW."""
-    meta = {"injured": bool(pdata.get("activeInjuries")),
-            "appearances": pdata.get("lastFifteenSo5Appearances") or 0}
-    scores = [g["score"] for g in (pdata.get("playerGameScores") or [])
-              if g.get("score") is not None
-              and (g.get("anyGame") or {}).get("statusTyped") == "played"]
-    meta["last5"] = scores
-    meta["avg5"] = round(statistics.mean(scores), 1) if scores else None
-
-    ng = pdata.get("nextGame")
+def eligible_entry(card, pd, ws, we):
+    """Return a lineup entry dict if the card's player is eligible, else None."""
+    if pd.get("activeInjuries"):
+        return None
+    ng = pd.get("nextGame")
     if not ng or not ng.get("date"):
-        meta["eligible"] = False
-        return None, meta
+        return None
     try:
         gd = dt.datetime.fromisoformat(ng["date"].replace("Z", "+00:00"))
     except Exception:
-        meta["eligible"] = False
-        return None, meta
-    if not (window_start <= gd <= window_end):
-        meta["eligible"] = False
-        return None, meta
-
-    club = (pdata.get("activeClub") or {}).get("name")
+        return None
+    if not (ws <= gd <= we):
+        return None
+    l5 = pd.get("l5")
+    l15 = pd.get("l15")
+    if not l5:
+        return None
+    app = pd.get("lastFifteenSo5Appearances") or 0
+    club = (pd.get("activeClub") or {}).get("name")
     home = (ng.get("homeTeam") or {}).get("name")
     away = (ng.get("awayTeam") or {}).get("name")
-    is_home = (club is not None and club == home)
-    opp = away if is_home else home
-    meta.update({"eligible": True, "home": is_home, "opponent": opp,
-                 "kickoff": ng["date"]})
-
-    if meta["injured"] or not scores:
-        return (0.0 if meta["injured"] else None), meta
-
-    base = statistics.mean(scores)
-    app_rate = min(1.0, (meta["appearances"] or 0) / 15.0)
-    proj = base * (0.75 + 0.25 * app_rate) * (1.03 if is_home else 1.0)
-    return round(proj, 1), meta
+    is_home = club is not None and club == home
+    proj = round(l5 * (0.75 + 0.25 * min(1.0, app / 15.0)) * (1.03 if is_home else 1.0), 1)
+    return {
+        "slug": card["slug"], "player": card["anyPlayer"]["displayName"],
+        "player_slug": card["anyPlayer"]["slug"], "season": card.get("seasonYear"),
+        "positions": card["anyPlayer"].get("anyPositions") or [],
+        "proj": proj, "cap_score": round(l15 if l15 else l5, 1),
+        "l5": round(l5, 1), "appearances": app,
+        "home": is_home, "opponent": away if is_home else home,
+    }
 
 
-def primary_slot(positions):
-    for slot in POS_SLOTS:
-        if slot in (positions or []):
-            return slot
-    return (positions or ["Forward"])[0]
+def cands_for(pool, slot, used):
+    if slot == "EXTRA":
+        cs = [c for c in pool if c["slug"] not in used]
+    else:
+        cs = [c for c in pool if c["slug"] not in used and slot in c["positions"]]
+    return sorted(cs, key=lambda c: -c["proj"])
 
 
-def build_formation(pool):
-    """pool: list of card dicts with 'proj' and 'positions'. Greedy GK/DEF/MID/FWD/Extra."""
-    chosen = []
+def build_lineup(pool, cap):
+    """Greedy best formation, then repair down to the cap by cheapest-loss swaps."""
+    slots = POS_SLOTS + ["EXTRA"]
+    chosen = {}
     used = set()
-    for slot in POS_SLOTS:
-        cands = [c for c in pool if c["slug"] not in used and slot in c["positions"]]
-        cands.sort(key=lambda c: c["proj"], reverse=True)
-        if cands:
-            pick = dict(cands[0]); pick["slot"] = slot
-            chosen.append(pick); used.add(pick["slug"])
-    # Extra: best remaining of any position
-    rest = [c for c in pool if c["slug"] not in used]
-    rest.sort(key=lambda c: c["proj"], reverse=True)
-    if rest:
-        pick = dict(rest[0]); pick["slot"] = "Extra"
-        chosen.append(pick); used.add(pick["slug"])
-    if chosen:
-        cap = max(chosen, key=lambda c: c["proj"])
-        cap["captain"] = True
-    total = round(sum(c["proj"] for c in chosen)
-                  + max((c["proj"] for c in chosen), default=0), 1)  # captain ~ double
-    return {"cards": chosen, "projected_total": total}
+    for slot in slots:
+        cs = cands_for(pool, slot, used)
+        if cs:
+            chosen[slot] = cs[0]
+            used.add(cs[0]["slug"])
+    if not chosen:
+        return None
+    if cap is not None:
+        guard = 0
+        while sum(c["cap_score"] for c in chosen.values()) > cap and guard < 300:
+            guard += 1
+            best = None  # (ratio, slot, alt)
+            for slot, cur in chosen.items():
+                others = used - {cur["slug"]}
+                for alt in cands_for(pool, slot, others):
+                    saved = cur["cap_score"] - alt["cap_score"]
+                    if saved <= 0:
+                        continue
+                    loss = cur["proj"] - alt["proj"]        # may be negative (win)
+                    ratio = loss / saved
+                    if best is None or ratio < best[0]:
+                        best = (ratio, slot, alt)
+            if not best:
+                break
+            _, slot, alt = best
+            used.discard(chosen[slot]["slug"])
+            chosen[slot] = alt
+            used.add(alt["slug"])
+    cards = []
+    for slot in slots:
+        if slot in chosen:
+            c = dict(chosen[slot]); c["slot"] = slot
+            cards.append(c)
+    if cards:
+        cap_used = round(sum(c["cap_score"] for c in cards), 1)
+        captain = max(cards, key=lambda c: c["proj"])
+        captain["captain"] = True
+        proj_total = round(sum(c["proj"] for c in cards) + captain["proj"], 1)
+    else:
+        cap_used, proj_total = 0, 0
+    return {"cards": cards, "cap": cap, "cap_used": cap_used,
+            "projected_total": proj_total,
+            "complete": len(cards) == 5,
+            "over_cap": cap is not None and cap_used > cap}
 
 
 def main(argv):
@@ -199,67 +234,57 @@ def main(argv):
     we = dt.datetime.fromisoformat(fx["endDate"].replace("Z", "+00:00"))
     print(f"Upcoming GW {fx['gameWeek']} ({fx['slug']}) {ws.date()}–{we.date()}", file=sys.stderr)
 
+    caps_by_rarity = fetch_competitions(fx["slug"], rarities)
+    print(f"Caps present: {caps_by_rarity}", file=sys.stderr)
+
     cards = fetch_cards(args.slug, rarities)
     print(f"Fetched {len(cards)} cards.", file=sys.stderr)
     slugs = {c["anyPlayer"]["slug"] for c in cards if c.get("anyPlayer")}
-    print(f"Fetching form/next-game for {len(slugs)} players...", file=sys.stderr)
+    print(f"Fetching form/cap/next-game for {len(slugs)} players...", file=sys.stderr)
     players = fetch_players(slugs)
-
-    # project each player once
-    proj_cache = {}
-    for s, pd in players.items():
-        proj_cache[s] = project(pd, ws, we)
 
     result = {"fixture": {"slug": fx["slug"], "gameWeek": fx["gameWeek"],
                           "start": fx["startDate"], "end": fx["endDate"]},
               "generated": dt.datetime.now(dt.timezone.utc).isoformat(),
-              "rarities": {}}
+              "competitions": []}
 
     for rar in rarities:
-        # one card per player (highest season), eligible + projectable
+        # one eligible card per player (best season)
         best_by_player = {}
         for c in cards:
             if c["rarityTyped"] != rar or not c.get("anyPlayer"):
                 continue
-            ps = c["anyPlayer"]["slug"]
-            proj, meta = proj_cache.get(ps, (None, {}))
-            if proj is None or not meta.get("eligible") or meta.get("injured"):
+            pd = players.get(c["anyPlayer"]["slug"])
+            if not pd:
                 continue
-            entry = {
-                "slug": c["slug"], "player": c["anyPlayer"]["displayName"],
-                "player_slug": ps, "season": c.get("seasonYear"),
-                "positions": c["anyPlayer"].get("anyPositions") or [],
-                "proj": proj, "avg5": meta.get("avg5"), "last5": meta.get("last5"),
-                "appearances": meta.get("appearances"),
-                "home": meta.get("home"), "opponent": meta.get("opponent"),
-                "kickoff": meta.get("kickoff"),
-            }
-            prev = best_by_player.get(ps)
-            if prev is None or (entry["season"] or 0) > (prev["season"] or 0):
-                best_by_player[ps] = entry
+            e = eligible_entry(c, pd, ws, we)
+            if not e:
+                continue
+            prev = best_by_player.get(e["player_slug"])
+            if prev is None or (e["season"] or 0) > (prev["season"] or 0):
+                best_by_player[e["player_slug"]] = e
         pool = list(best_by_player.values())
-        for c in pool:
-            c["slot_primary"] = primary_slot(c["positions"])
-        formation = build_formation(pool)
-        best_form = sorted(pool, key=lambda c: c["proj"], reverse=True)[:5]
-        result["rarities"][rar] = {
-            "eligible_count": len(pool),
-            "formation": formation,
-            "best_form": best_form,
-        }
-        print(f"  {rar}: {len(pool)} eligible players", file=sys.stderr)
+        if not pool:
+            continue
+        # tiers: uncapped + each cap present, high->low
+        tiers = [(None, "All Star / Champion (uncapped)")]
+        for cap in sorted(caps_by_rarity.get(rar, set()), reverse=True):
+            tiers.append((cap, f"Cap {cap}"))
+        for cap, label in tiers:
+            lu = build_lineup(pool, cap)
+            if not lu:
+                continue
+            result["competitions"].append({
+                "rarity": rar, "label": label, "cap": cap,
+                "eligible_count": len(pool), **lu})
+            print(f"  {rar} · {label}: Σ{lu['projected_total']} "
+                  f"cap {lu['cap_used']}/{cap if cap else '∞'} "
+                  f"{'OK' if lu['complete'] and not lu['over_cap'] else 'partial/over'}",
+                  file=sys.stderr)
 
     with open(args.json, "w", encoding="utf-8") as fh:
         json.dump(result, fh, ensure_ascii=False, indent=2)
-    print(f"Wrote {args.json}", file=sys.stderr)
-    for rar in rarities:
-        f = result["rarities"][rar]["formation"]
-        print(f"\n=== {rar.upper()} — Formation (proj total ~{f['projected_total']}) ===")
-        for c in f["cards"]:
-            cap = " (C)" if c.get("captain") else ""
-            ha = "H" if c.get("home") else "A"
-            print(f"  {c['slot']:11} {c['player'][:22]:22} proj {c['proj']:5}  "
-                  f"avg5 {c['avg5']}  vs {c.get('opponent','?')} ({ha}){cap}")
+    print(f"Wrote {args.json} ({len(result['competitions'])} competitions)", file=sys.stderr)
 
 
 if __name__ == "__main__":

@@ -153,6 +153,9 @@ tr.clickable{cursor:pointer}
 .prow .pm{grid-column:2/3;font-size:11.5px;color:var(--ink-soft)}
 .capbadge{display:inline-block;background:var(--accent);color:#fff;font-size:9.5px;font-weight:800;
   border-radius:5px;padding:1px 5px;margin-left:6px;vertical-align:middle}
+.capline{padding:9px 16px;font-size:12px;color:var(--ink-soft);border-bottom:1px solid var(--line);background:var(--panel)}
+.capline b{color:var(--ink);font-variant-numeric:tabular-nums}
+.lu-warn{padding:9px 16px;font-size:12px;color:var(--loss);background:var(--loss-bg);border-bottom:1px solid var(--line)}
 /* modal */
 .modal-back{position:fixed;inset:0;background:rgba(8,12,10,.55);display:none;
   align-items:flex-start;justify-content:center;padding:6vh 16px;z-index:60;overflow-y:auto}
@@ -503,34 +506,38 @@ function prow(c){
     <span class="slotchip">${SLOT_DE[slot]||slot||"–"}</span>
     <span class="pn">${c.player}${cap}</span>
     <span class="pp">${c.proj.toLocaleString("de-DE",{maximumFractionDigits:1})}</span>
-    <span class="pm">Ø5 ${c.avg5!=null?c.avg5.toLocaleString("de-DE"):"–"} · ${c.opponent||"?"} (${ha}) · ${c.appearances}/15 Eins.</span>
+    <span class="pm">L5 ${c.l5!=null?c.l5.toLocaleString("de-DE"):"–"} · ${c.opponent||"?"} (${ha}) · Cap ${c.cap_score!=null?c.cap_score.toLocaleString("de-DE"):"–"}</span>
   </div>`;
 }
 function renderSuggestions(){
   const L=LINEUPS;
-  const per=rar=>{
-    const r=L.rarities[rar]; if(!r) return "";
-    if(!r.eligible_count) return `<div class="rar-block"><div class="eyebrow" style="margin:6px 2px 12px">${RARITY_LABEL[rar]||rar} · keine spielenden Karten im GW</div></div>`;
-    const f=r.formation;
-    const fCards=f.cards.map(prow).join("");
-    const bf=r.best_form;
-    const bfTotal=Math.round(bf.reduce((s,c)=>s+c.proj,0)+Math.max(...bf.map(c=>c.proj),0));
-    const bfCards=bf.map((c,i)=>prow(i===0?Object.assign({},c,{captain:true}):c)).join("");
+  const comps=L.competitions||[];
+  const rars=[...new Set(comps.map(c=>c.rarity))];
+  const blocks=rars.map(rar=>{
+    const cs=comps.filter(c=>c.rarity===rar);
+    const el=cs[0]?cs[0].eligible_count:0;
+    const cards=cs.map(comp=>{
+      const capUse=comp.cap?`${comp.cap_used} / ${comp.cap}`:`${comp.cap_used} (uncapped)`;
+      const warn=comp.over_cap
+        ? `<div class="lu-warn">⚠ Cap nicht erfüllbar — bestes Lineup liegt bei ${comp.cap_used} > ${comp.cap} (zu wenige günstige ${RARITY_LABEL[rar]}-Karten).</div>`
+        : (!comp.complete ? `<div class="lu-warn">⚠ Unvollständig — nicht genug spielende Karten für alle Positionen.</div>` : "");
+      const rows=comp.cards.map(prow).join("");
+      return `<div class="lucard">
+        <div class="h"><span class="t">${comp.label}</span><span class="tot">Σ ${Math.round(comp.projected_total).toLocaleString("de-DE")}</span></div>
+        <div class="capline">Cap-Nutzung: <b>${capUse}</b></div>
+        ${warn}${rows}</div>`;
+    }).join("");
     return `<div class="rar-block">
-      <div class="eyebrow" style="margin:6px 2px 12px">${RARITY_LABEL[rar]||rar} · ${r.eligible_count} spielende Karten im GW</div>
-      <div class="lineups2">
-        <div class="lucard"><div class="h"><span class="t">Klassische Aufstellung</span><span class="tot">Σ ${Math.round(f.projected_total).toLocaleString("de-DE")}</span></div>${fCards}</div>
-        <div class="lucard"><div class="h"><span class="t">Beste Form (Top 5)</span><span class="tot">Σ ${bfTotal.toLocaleString("de-DE")}</span></div>${bfCards}</div>
-      </div>
-    </div>`;
-  };
+      <div class="eyebrow" style="margin:6px 2px 12px">${RARITY_LABEL[rar]||rar} · ${el} spielende Karten im GW</div>
+      <div class="lineups2">${cards}</div></div>`;
+  }).join("");
   document.getElementById("view-suggest").innerHTML = `
-    <div class="eyebrow" style="margin:2px 2px 4px">Aufstellungs-Vorschläge</div>
+    <div class="eyebrow" style="margin:2px 2px 4px">Aufstellungs-Vorschläge nach Wettbewerb</div>
     <h2 style="font-family:Archivo;font-size:20px;letter-spacing:-.01em;margin:0 0 8px">Spieltag ${L.fixture.gameWeek} · ${fmtDate(L.fixture.start)}–${fmtDate(L.fixture.end)}</h2>
-    <p class="sugg-note">Projizierter Score = Ø der letzten 5 SO5-Scores, gewichtet mit Einsatzquote (letzte 15) und leichtem Heimvorteil (H). Verletzte Spieler sind ausgeschlossen; nur Spieler mit Spiel in diesem GW. <b>C</b> = empfohlener Kapitän (zählt doppelt). Σ = projizierter Team-Score inkl. Kapitän. Gegnerstärke und News jenseits von Verletzungen fließen nicht ein (nicht über die API verfügbar).</p>
-    ${["limited","rare"].map(per).join("")}`;
+    <p class="sugg-note">Je Rarität ein Lineup pro Cap-Tier der Sorare-Arena. Regeln: SO5-Formation (TW·ABW·MF·ST·Extra), und die Summe der L15-Scores (&bdquo;Cap&ldquo;) bleibt ≤ Tier-Cap. Projizierter Score = L5-Form × Einsatzquote × leichter Heimvorteil (H); Verletzte ausgeschlossen; nur Spieler mit Spiel im GW. <b>C</b> = Kapitän (zählt doppelt), Σ = Team-Score inkl. Kapitän. <b>Nicht enthalten:</b> liga-spezifische (SPFL, LALIGA …) und U21-Wettbewerbe (brauchen Liga/Alter je Spieler) sowie Gegnerstärke/News außer Verletzungen.</p>
+    ${blocks}`;
 }
-if(LINEUPS && LINEUPS.rarities){
+if(LINEUPS && (LINEUPS.competitions||LINEUPS.rarities)){
   document.getElementById("tab-suggest").hidden=false;
   renderSuggestions();
 }
