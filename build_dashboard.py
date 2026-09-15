@@ -127,6 +127,28 @@ tbody tr:last-child td{border-bottom:none}
 .rrow .rbar{grid-column:1/-1;height:5px;border-radius:99px;background:var(--panel-2);overflow:hidden;margin-top:6px}
 .rrow .rbar>span{display:block;height:100%;background:var(--gain)}
 .rankn{font-size:11.5px;color:var(--ink-soft);font-variant-numeric:tabular-nums;margin-right:6px}
+tr.clickable{cursor:pointer}
+.trophy{margin-left:6px;font-size:11px;opacity:.85}
+/* modal */
+.modal-back{position:fixed;inset:0;background:rgba(8,12,10,.55);display:none;
+  align-items:flex-start;justify-content:center;padding:6vh 16px;z-index:60;overflow-y:auto}
+.modal-back.open{display:flex}
+.modal{position:relative;background:var(--card);color:var(--ink);border:1px solid var(--line);
+  border-radius:16px;max-width:660px;width:100%;box-shadow:var(--shadow);padding:22px 22px 24px}
+.modal h3{font-family:"Archivo";font-size:21px;letter-spacing:-.01em;padding-right:32px}
+.modal .msub{color:var(--ink-soft);font-size:13px;margin:4px 0 8px}
+.mclose{position:absolute;top:12px;right:14px;border:none;background:transparent;color:var(--ink-soft);
+  font-size:26px;line-height:1;cursor:pointer;padding:2px 6px;border-radius:8px}
+.mclose:hover{background:var(--panel-2);color:var(--ink)}
+.lu{border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-top:12px;background:var(--panel)}
+.lu .luhead{display:flex;justify-content:space-between;gap:12px;align-items:baseline;flex-wrap:wrap}
+.lu .comp{font-weight:700}
+.lu .gw{color:var(--ink-soft);font-size:12px}
+.lu .rv{font-family:"Archivo";font-weight:800;color:var(--gain);white-space:nowrap}
+.lu .rvs{font-size:11.5px;color:var(--ink-soft);font-weight:500}
+.lu .players{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.lu .pchip{font-size:12px;background:var(--card);border:1px solid var(--line);border-radius:99px;padding:3px 10px}
+.lu .pchip.me{background:var(--accent);color:#fff;border-color:transparent;font-weight:600}
 @media (max-width:720px){.kpis{grid-template-columns:repeat(2,1fr)}.badge h1{font-size:22px}}
 </style>
 
@@ -183,6 +205,15 @@ tbody tr:last-child td{border-bottom:none}
   <p class="foot" id="foot"></p>
 </div>
 
+<div class="modal-back" id="modalBack" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+  <div class="modal" role="document">
+    <button class="mclose" id="modalClose" type="button" aria-label="Schließen">×</button>
+    <h3 id="modalTitle"></h3>
+    <div class="msub" id="modalSub"></div>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
 <script>
 const DATA = __CLUB_DATA__;
 const REWARDS = __REWARDS_DATA__;
@@ -215,6 +246,13 @@ rows.forEach(r=>{
   r.sale_now = (r.value_eur!=null && r.purchase_eur!=null)
     ? Math.round((r.reward_eur - r.purchase_eur + r.value_eur)*100)/100 : null;
 });
+
+// index: card slug -> reward lineups it appeared in, and slug -> row
+const rewardLineups = (REWARDS && REWARDS.reward_lineups) || [];
+const lineupsByCard = {};
+rewardLineups.forEach(lu=>(lu.cards||[]).forEach(cs=>{(lineupsByCard[cs]=lineupsByCard[cs]||[]).push(lu);}));
+const rowBySlug = {};
+rows.forEach(r=>{rowBySlug[r.card_slug]=r;});
 
 document.getElementById("nick").textContent = DATA.nickname;
 document.getElementById("crest").textContent = (DATA.nickname||"?").slice(0,1).toUpperCase();
@@ -329,8 +367,9 @@ function render(){
     const sn=r.sale_now==null?"":(r.sale_now>=0?"pos":"neg");
     const rnCell=r.realized_net==null?`<span class="muted">—</span>`:`<span class="${rn}">${eur(r.realized_net)}</span>`;
     const snPill=r.sale_now==null?`<span class="muted">—</span>`:`<span class="delta-pill ${sn}">${eur(r.sale_now)}</span>`;
-    return `<tr>
-      <td class="l"><span class="player" title="${(r.player||'').replace(/"/g,'&quot;')}">${r.player||"—"}</span></td>
+    const clickable = r.reward_eur>0 && (lineupsByCard[r.card_slug]||[]).length>0;
+    return `<tr ${clickable?`class="clickable" data-slug="${r.card_slug}" title="Reward-Lineups ansehen"`:""}>
+      <td class="l"><span class="player" title="${(r.player||'').replace(/"/g,'&quot;')}">${r.player||"—"}</span>${clickable?'<span class="trophy">🏆</span>':''}</td>
       <td class="l"><span class="rchip"><span class="dot" style="background:${c}"></span>${RARITY_LABEL[r.rarity]||r.rarity}</span></td>
       <td class="num muted">${r.season??"—"}</td>
       <td class="num">${r.purchase_eur==null?'<span class="muted">—</span>':eur(r.purchase_eur)}</td>
@@ -353,6 +392,7 @@ document.querySelectorAll("thead th").forEach(th=>th.onclick=()=>{
 search.oninput=render; onlyPriced.onchange=render;
 
 document.getElementById("foot").innerHTML =
+  "Tipp: Karten mit 🏆 anklicken, um die Lineups zu sehen, mit denen der Reward gewonnen wurde. "+
   "&bdquo;Kaufpreis&ldquo; = der vom aktuellen Besitzer gezahlte Preis aus öffentlichen Transferdaten; Karten aus Tausch, Reward oder Shards haben keinen Geldpreis (—). "+
   "&bdquo;Akt. Wert&ldquo; = Median der letzten öffentlichen Verkäufe je Spieler + Seltenheit + Season — ein Schätzwert, kein Verkaufsangebot. "+
   "&bdquo;Reward&ldquo; = erhaltene Geld-Rewards der Lineups mit genau dieser Karte (Reward ÷ gespielte Karten, aufsummiert). "+
@@ -365,6 +405,45 @@ const tb=document.getElementById("themebtn");
 tb.onclick=()=>{const cur=document.documentElement.getAttribute("data-theme");
   const next=cur==="dark"?"light":(cur==="light"?"dark":(matchMedia("(prefers-color-scheme:dark)").matches?"light":"dark"));
   document.documentElement.setAttribute("data-theme",next);};
+
+// ---- reward lineup modal ----
+const modalBack=document.getElementById("modalBack");
+function fmtFixture(slug){
+  return (slug||"").replace(/^football-/,"").replace(/-/g," ")
+    .replace(/\b([a-z]{3})\b/g, m=>m.charAt(0).toUpperCase()+m.slice(1));
+}
+function openModal(r){
+  const lus=(lineupsByCard[r.card_slug]||[]).slice();
+  document.getElementById("modalTitle").textContent =
+    (r.player||"?")+" · "+(RARITY_LABEL[r.rarity]||r.rarity)+(r.season?(" · "+r.season):"");
+  document.getElementById("modalSub").innerHTML =
+    "Reward für diese Karte: <b class='pos'>"+eur(r.reward_eur)+"</b> aus "+lus.length+" Lineup"+(lus.length===1?"":"s")+" — so wurde er gewonnen:";
+  document.getElementById("modalBody").innerHTML = lus.map(lu=>{
+    const n=(lu.cards&&lu.cards.length)||5;
+    const share=Math.round(lu.eur/n*100)/100;
+    const chips=(lu.players||[]).map(p=>{
+      const me=(p.displayName||"")===(r.player||"");
+      return `<span class="pchip${me?" me":""}">${p.displayName||p.slug}</span>`;
+    }).join("");
+    return `<div class="lu">
+      <div class="luhead">
+        <div><span class="comp">${lu.leaderboard||"?"}</span><br><span class="gw">${fmtFixture(lu.fixture)}</span></div>
+        <div class="rv">${eur(lu.eur)}<div class="rvs">Anteil dieser Karte ${eur(share)}</div></div>
+      </div>
+      <div class="players">${chips}</div>
+    </div>`;
+  }).join("");
+  modalBack.classList.add("open");
+  document.getElementById("modalClose").focus();
+}
+function closeModal(){modalBack.classList.remove("open");}
+document.getElementById("rows").addEventListener("click", e=>{
+  const tr=e.target.closest("tr.clickable"); if(!tr) return;
+  const r=rowBySlug[tr.dataset.slug]; if(r) openModal(r);
+});
+document.getElementById("modalClose").onclick=closeModal;
+modalBack.addEventListener("click", e=>{ if(e.target===modalBack) closeModal(); });
+document.addEventListener("keydown", e=>{ if(e.key==="Escape") closeModal(); });
 
 // default sort indicator
 const dth=document.querySelector('thead th[data-k="sale_now"]');
@@ -394,6 +473,7 @@ def main(argv):
             "totals": rw.get("totals", {}),
             "players": rw.get("players", []),
             "cards": rw.get("cards", {}),
+            "reward_lineups": rw.get("reward_lineups", []),
         }, ensure_ascii=False)
 
     html = TEMPLATE.replace("__CLUB_DATA__", json.dumps(data, ensure_ascii=False))
