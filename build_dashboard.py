@@ -509,6 +509,16 @@ function prow(c){
     <span class="pm">L5 ${c.l5!=null?c.l5.toLocaleString("de-DE"):"–"} · ${c.opponent||"?"} (${ha}) · Cap ${c.cap_score!=null?c.cap_score.toLocaleString("de-DE"):"–"}</span>
   </div>`;
 }
+function teamCard(comp, team, idx){
+  const capUse = comp.cap ? `Cap ${team.cap_used} / ${comp.cap}` : `Cap ${team.cap_used} (uncapped)`;
+  const warn = team.over_cap
+    ? `<div class="lu-warn">⚠ Cap nicht erfüllbar — bestes Team liegt bei ${team.cap_used} > ${comp.cap}.</div>`
+    : (!team.complete ? `<div class="lu-warn">⚠ Unvollständig — nicht genug spielende Karten (${team.cards.length}/${comp.size}).</div>` : "");
+  const rows = team.cards.map(prow).join("");
+  return `<div class="lucard">
+    <div class="h"><span class="t">Team ${idx+1}</span><span class="tot">Σ ${Math.round(team.projected_total).toLocaleString("de-DE")}</span></div>
+    <div class="capline">${capUse}</div>${warn}${rows}</div>`;
+}
 function renderSuggestions(){
   const L=LINEUPS;
   const comps=L.competitions||[];
@@ -516,25 +526,26 @@ function renderSuggestions(){
   const blocks=rars.map(rar=>{
     const cs=comps.filter(c=>c.rarity===rar);
     const el=cs[0]?cs[0].eligible_count:0;
-    const cards=cs.map(comp=>{
-      const capUse=comp.cap?`${comp.cap_used} / ${comp.cap}`:`${comp.cap_used} (uncapped)`;
-      const warn=comp.over_cap
-        ? `<div class="lu-warn">⚠ Cap nicht erfüllbar — bestes Lineup liegt bei ${comp.cap_used} > ${comp.cap} (zu wenige günstige ${RARITY_LABEL[rar]}-Karten).</div>`
-        : (!comp.complete ? `<div class="lu-warn">⚠ Unvollständig — nicht genug spielende Karten für alle Positionen.</div>` : "");
-      const rows=comp.cards.map(prow).join("");
-      return `<div class="lucard">
-        <div class="h"><span class="t">${comp.label}</span><span class="tot">Σ ${Math.round(comp.projected_total).toLocaleString("de-DE")}</span></div>
-        <div class="capline">Cap-Nutzung: <b>${capUse}</b></div>
-        ${warn}${rows}</div>`;
+    const compBlocks=cs.map(comp=>{
+      const teams=comp.teams||[];
+      const body = teams.length
+        ? `<div class="lineups2">${teams.map((t,i)=>teamCard(comp,t,i)).join("")}</div>`
+        : `<div class="lu-warn" style="border-radius:12px">Kein vollständiges Team möglich (zu wenige spielende Karten).</div>`;
+      return `<div class="comp-block">
+        <div class="comp-head">
+          <span class="comp-title">${comp.label}</span>
+          <span class="fmt-badge">${comp.format} · ${comp.size} Karten</span>
+          <span class="teams-note">bis ${comp.teams_cap} Team${comp.teams_cap>1?"s":""}${teams.length?` · ${teams.length} gebaut`:""}</span>
+        </div>${body}</div>`;
     }).join("");
     return `<div class="rar-block">
-      <div class="eyebrow" style="margin:6px 2px 12px">${RARITY_LABEL[rar]||rar} · ${el} spielende Karten im GW</div>
-      <div class="lineups2">${cards}</div></div>`;
+      <div class="eyebrow" style="margin:18px 2px 12px">${RARITY_LABEL[rar]||rar} · ${el} spielende Karten im GW</div>
+      ${compBlocks}</div>`;
   }).join("");
   document.getElementById("view-suggest").innerHTML = `
-    <div class="eyebrow" style="margin:2px 2px 4px">Aufstellungs-Vorschläge nach Wettbewerb</div>
+    <div class="eyebrow" style="margin:2px 2px 4px">Bestmögliches Setup nach Wettbewerb</div>
     <h2 style="font-family:Archivo;font-size:20px;letter-spacing:-.01em;margin:0 0 8px">Spieltag ${L.fixture.gameWeek} · ${fmtDate(L.fixture.start)}–${fmtDate(L.fixture.end)}</h2>
-    <p class="sugg-note">Je Rarität ein Lineup pro Cap-Tier der Sorare-Arena. Regeln: SO5-Formation (TW·ABW·MF·ST·Extra), und die Summe der L15-Scores (&bdquo;Cap&ldquo;) bleibt ≤ Tier-Cap. Projizierter Score = L5-Form × Einsatzquote × leichter Heimvorteil (H); Verletzte ausgeschlossen; nur Spieler mit Spiel im GW. <b>C</b> = Kapitän (zählt doppelt), Σ = Team-Score inkl. Kapitän. <b>Nicht enthalten:</b> liga-spezifische (SPFL, LALIGA …) und U21-Wettbewerbe (brauchen Liga/Alter je Spieler) sowie Gegnerstärke/News außer Verletzungen.</p>
+    <p class="sugg-note"><b>Classic = SO7</b> (7 Karten, uncapped), <b>Arena = SO5</b> (5 Karten, mit Cap: Summe der L15-Scores ≤ Cap). Pro Wettbewerb bis zu <b>teamsCap</b> Teams mit jeweils unterschiedlichen Karten (eine Karte darf in verschiedenen Wettbewerben erneut eingesetzt werden). Projizierter Score = L5-Form × Einsatzquote × leichter Heimvorteil (H); Verletzte ausgeschlossen; nur Spieler mit Spiel im GW. <b>C</b> = Kapitän (zählt doppelt), Σ = Team-Score inkl. Kapitän. <b>Nicht enthalten:</b> liga-spezifische (SPFL, LALIGA …) und U21-Wettbewerbe sowie Gegnerstärke/News außer Verletzungen.</p>
     ${blocks}`;
 }
 if(LINEUPS && (LINEUPS.competitions||LINEUPS.rarities)){

@@ -1,18 +1,20 @@
 #!/usr/bin/env python3
-"""Suggest Sorare lineups per competition (cap tier) for the upcoming gameweek.
+"""Suggest the best Sorare setup for the upcoming gameweek, per competition.
 
-Public data only (no OAuth). Reads the upcoming gameweek's competition structure
-(leaderboards), then for each rarity the manager owns builds a lineup for each
-cap tier present (Uncapped, Cap 260, Cap 220, ...), respecting:
-  - rarity
-  - the SO5 formation (GK, DEF, MID, FWD + Extra)
-  - the cap: sum of the five cards' L15 average score must stay <= cap
-maximising the projected score (recent form x appearance rate x home edge),
+Public data only (no OAuth). Reads the gameweek's competition structure and
+builds the best lineup(s) for each general competition, respecting:
+  - format: Classic = SO7 (7 cards), Arena = SO5 (5 cards)
+  - the SO5/SO7 formation (GK, DEF, MID, FWD, + Extra(s))
+  - the cap (Arena only): sum of the cards' L15 average score <= cap
+  - teamsCap: up to N teams per competition, each using DISTINCT cards
+maximising projected score (recent form x appearance rate x home edge),
 excluding injured players and players without a game in the gameweek.
 
-Honest limits: league-specific (e.g. SPFL, LALIGA) and Under-21 competitions are
-NOT built here, because they need per-player league/age data not fetched. Opponent
-strength and non-injury news are not in the Sorare API.
+Only the general All Star / Champion competitions are built (no per-player
+league or age filter needed). League-specific (SPFL, LALIGA, ...) and Under-21
+competitions are skipped. Opponent strength and non-injury news aren't in the
+API. A card may be reused across DIFFERENT competitions (Sorare allows this);
+within one competition's multiple teams the cards are distinct.
 
 Usage:
     python3 lineup_suggest.py <manager-slug> [--json lineups.json] [--rarities limited,rare]
@@ -55,9 +57,15 @@ PLAYER_FIELDS = """
 """
 
 
+def rarity_of(t):
+    for rar, tok in RARITY_TOKENS:
+        if tok in t:
+            return rar
+    return None
+
+
 def get_upcoming_fixture():
-    q = """{ so5 { so5Fixtures(first: 8) { nodes {
-              slug gameWeek aasmState startDate endDate } } } }"""
+    q = "{ so5 { so5Fixtures(first: 8) { nodes { slug gameWeek aasmState startDate endDate } } } }"
     nodes = graphql(q)["data"]["so5"]["so5Fixtures"]["nodes"]
     now = dt.datetime.now(dt.timezone.utc)
     up = []
@@ -72,27 +80,48 @@ def get_upcoming_fixture():
     return up[0][1] if up else nodes[0]
 
 
-def rarity_of(lb_type):
-    for rar, tok in RARITY_TOKENS:
-        if tok in lb_type:
-            return rar
-    return None
-
-
 def fetch_competitions(fx_slug, rarities):
-    """Return, per rarity, the set of cap tiers present (None = uncapped)."""
-    q = ('{ so5 { so5Fixture(slug: "%s") { so5Leaderboards { displayName so5LeaderboardType } } } }'
+    """Return the general (All Star / Champion) competitions to build, per rarity."""
+    q = ('{ so5 { so5Fixture(slug: "%s") { so5Leaderboards { displayName so5LeaderboardType teamsCap } } } }'
          % fx_slug)
     lbs = graphql(q)["data"]["so5"]["so5Fixture"]["so5Leaderboards"]
-    caps = {r: set() for r in rarities}
+    # collapse to distinct (rarity, format, cap) — that triple determines the
+    # optimal lineup; several named competitions share it.
+    groups = {}
     for lb in lbs:
-        rar = rarity_of(lb["so5LeaderboardType"])
-        if rar not in caps:
+        t = lb["so5LeaderboardType"]
+        rar = rarity_of(t)
+        if rar not in rarities:
             continue
+        if "ALL_STAR" not in t and "CHAMPIONS" not in t:
+            continue  # skip league-specific + U21 (need player league/age)
+        is_arena = "ARENA" in t
         m = re.search(r"Cap (\d+)", lb["displayName"])
-        if m:
-            caps[rar].add(int(m.group(1)))
-    return caps
+        cap = int(m.group(1)) if m else None
+        fam = "Champion" if "CHAMPIONS" in t else "All Star"
+        key = (rar, "SO5" if is_arena else "SO7", cap)
+        g = groups.setdefault(key, {"families": set(), "teams_cap": 1})
+        g["families"].add(fam)
+        g["teams_cap"] = max(g["teams_cap"], min(4, lb.get("teamsCap") or 1))
+    comps = []
+    for (rar, fmt, cap), g in groups.items():
+        fams = " / ".join(sorted(g["families"]))
+        if fmt == "SO7":
+            label = f"Classic · {fams}"
+        elif cap:
+            label = f"Arena · Cap {cap}"
+        else:
+            label = "Arena · Uncapped"
+        comps.append({
+            "rarity": rar, "label": label, "format": fmt,
+            "size": 5 if fmt == "SO5" else 7,
+            "cap": cap, "teams_cap": g["teams_cap"],
+        })
+    def rank(c):
+        fam = 0 if c["format"] == "SO7" else 1
+        return (c["rarity"], fam, -(c["cap"] or 99999))
+    comps.sort(key=rank)
+    return comps
 
 
 def fetch_cards(slug, rarities):
@@ -130,7 +159,6 @@ def fetch_players(slugs):
 
 
 def eligible_entry(card, pd, ws, we):
-    """Return a lineup entry dict if the card's player is eligible, else None."""
     if pd.get("activeInjuries"):
         return None
     ng = pd.get("nextGame")
@@ -142,8 +170,7 @@ def eligible_entry(card, pd, ws, we):
         return None
     if not (ws <= gd <= we):
         return None
-    l5 = pd.get("l5")
-    l15 = pd.get("l15")
+    l5, l15 = pd.get("l5"), pd.get("l15")
     if not l5:
         return None
     app = pd.get("lastFifteenSo5Appearances") or 0
@@ -152,73 +179,69 @@ def eligible_entry(card, pd, ws, we):
     away = (ng.get("awayTeam") or {}).get("name")
     is_home = club is not None and club == home
     proj = round(l5 * (0.75 + 0.25 * min(1.0, app / 15.0)) * (1.03 if is_home else 1.0), 1)
-    return {
-        "slug": card["slug"], "player": card["anyPlayer"]["displayName"],
-        "player_slug": card["anyPlayer"]["slug"], "season": card.get("seasonYear"),
-        "positions": card["anyPlayer"].get("anyPositions") or [],
-        "proj": proj, "cap_score": round(l15 if l15 else l5, 1),
-        "l5": round(l5, 1), "appearances": app,
-        "home": is_home, "opponent": away if is_home else home,
-    }
+    return {"slug": card["slug"], "player": card["anyPlayer"]["displayName"],
+            "player_slug": card["anyPlayer"]["slug"], "season": card.get("seasonYear"),
+            "positions": card["anyPlayer"].get("anyPositions") or [],
+            "proj": proj, "cap_score": round(l15 if l15 else l5, 1),
+            "l5": round(l5, 1), "appearances": app,
+            "home": is_home, "opponent": away if is_home else home}
 
 
-def cands_for(pool, slot, used):
+def cands(pool, slot, blocked):
     if slot == "EXTRA":
-        cs = [c for c in pool if c["slug"] not in used]
+        cs = [c for c in pool if c["slug"] not in blocked
+              and any(p in POS_SLOTS[1:] for p in c["positions"])]  # non-GK
     else:
-        cs = [c for c in pool if c["slug"] not in used and slot in c["positions"]]
+        cs = [c for c in pool if c["slug"] not in blocked and slot in c["positions"]]
     return sorted(cs, key=lambda c: -c["proj"])
 
 
-def build_lineup(pool, cap):
-    """Greedy best formation, then repair down to the cap by cheapest-loss swaps."""
-    slots = POS_SLOTS + ["EXTRA"]
-    chosen = {}
-    used = set()
-    for slot in slots:
-        cs = cands_for(pool, slot, used)
+def build_team(pool, used, size, cap):
+    slot_list = list(POS_SLOTS) + ["EXTRA"] * (size - 4)
+    chosen = {}          # slot index -> card
+    blocked = set(used)
+    for idx, slot in enumerate(slot_list):
+        cs = cands(pool, slot, blocked)
         if cs:
-            chosen[slot] = cs[0]
-            used.add(cs[0]["slug"])
-    if not chosen:
-        return None
+            chosen[idx] = cs[0]
+            blocked.add(cs[0]["slug"])
     if cap is not None:
         guard = 0
-        while sum(c["cap_score"] for c in chosen.values()) > cap and guard < 300:
+        while sum(c["cap_score"] for c in chosen.values()) > cap and guard < 400:
             guard += 1
-            best = None  # (ratio, slot, alt)
-            for slot, cur in chosen.items():
-                others = used - {cur["slug"]}
-                for alt in cands_for(pool, slot, others):
+            best = None
+            for idx, cur in chosen.items():
+                slot = slot_list[idx]
+                others = blocked - {cur["slug"]}
+                for alt in cands(pool, slot, others):
                     saved = cur["cap_score"] - alt["cap_score"]
                     if saved <= 0:
                         continue
-                    loss = cur["proj"] - alt["proj"]        # may be negative (win)
-                    ratio = loss / saved
+                    ratio = (cur["proj"] - alt["proj"]) / saved
                     if best is None or ratio < best[0]:
-                        best = (ratio, slot, alt)
+                        best = (ratio, idx, alt)
             if not best:
                 break
-            _, slot, alt = best
-            used.discard(chosen[slot]["slug"])
-            chosen[slot] = alt
-            used.add(alt["slug"])
+            _, idx, alt = best
+            blocked.discard(chosen[idx]["slug"])
+            chosen[idx] = alt
+            blocked.add(alt["slug"])
     cards = []
-    for slot in slots:
-        if slot in chosen:
-            c = dict(chosen[slot]); c["slot"] = slot
+    for idx, slot in enumerate(slot_list):
+        if idx in chosen:
+            c = dict(chosen[idx]); c["slot"] = slot
             cards.append(c)
+    complete = len(cards) == size
+    cap_used = round(sum(c["cap_score"] for c in cards), 1)
     if cards:
-        cap_used = round(sum(c["cap_score"] for c in cards), 1)
-        captain = max(cards, key=lambda c: c["proj"])
-        captain["captain"] = True
-        proj_total = round(sum(c["proj"] for c in cards) + captain["proj"], 1)
+        cap_card = max(cards, key=lambda c: c["proj"]); cap_card["captain"] = True
+        proj_total = round(sum(c["proj"] for c in cards) + cap_card["proj"], 1)
     else:
-        cap_used, proj_total = 0, 0
-    return {"cards": cards, "cap": cap, "cap_used": cap_used,
+        proj_total = 0
+    return {"cards": cards, "complete": complete, "cap_used": cap_used,
+            "over_cap": cap is not None and cap_used > cap,
             "projected_total": proj_total,
-            "complete": len(cards) == 5,
-            "over_cap": cap is not None and cap_used > cap}
+            "used": {c["slug"] for c in cards}}
 
 
 def main(argv):
@@ -234,8 +257,8 @@ def main(argv):
     we = dt.datetime.fromisoformat(fx["endDate"].replace("Z", "+00:00"))
     print(f"Upcoming GW {fx['gameWeek']} ({fx['slug']}) {ws.date()}–{we.date()}", file=sys.stderr)
 
-    caps_by_rarity = fetch_competitions(fx["slug"], rarities)
-    print(f"Caps present: {caps_by_rarity}", file=sys.stderr)
+    comps = fetch_competitions(fx["slug"], rarities)
+    print(f"{len(comps)} competitions to build.", file=sys.stderr)
 
     cards = fetch_cards(args.slug, rarities)
     print(f"Fetched {len(cards)} cards.", file=sys.stderr)
@@ -243,14 +266,10 @@ def main(argv):
     print(f"Fetching form/cap/next-game for {len(slugs)} players...", file=sys.stderr)
     players = fetch_players(slugs)
 
-    result = {"fixture": {"slug": fx["slug"], "gameWeek": fx["gameWeek"],
-                          "start": fx["startDate"], "end": fx["endDate"]},
-              "generated": dt.datetime.now(dt.timezone.utc).isoformat(),
-              "competitions": []}
-
+    # eligible pool per rarity (one best-season card per player)
+    pools = {}
     for rar in rarities:
-        # one eligible card per player (best season)
-        best_by_player = {}
+        best = {}
         for c in cards:
             if c["rarityTyped"] != rar or not c.get("anyPlayer"):
                 continue
@@ -260,31 +279,41 @@ def main(argv):
             e = eligible_entry(c, pd, ws, we)
             if not e:
                 continue
-            prev = best_by_player.get(e["player_slug"])
+            prev = best.get(e["player_slug"])
             if prev is None or (e["season"] or 0) > (prev["season"] or 0):
-                best_by_player[e["player_slug"]] = e
-        pool = list(best_by_player.values())
-        if not pool:
-            continue
-        # tiers: uncapped + each cap present, high->low
-        tiers = [(None, "All Star / Champion (uncapped)")]
-        for cap in sorted(caps_by_rarity.get(rar, set()), reverse=True):
-            tiers.append((cap, f"Cap {cap}"))
-        for cap, label in tiers:
-            lu = build_lineup(pool, cap)
-            if not lu:
-                continue
-            result["competitions"].append({
-                "rarity": rar, "label": label, "cap": cap,
-                "eligible_count": len(pool), **lu})
-            print(f"  {rar} · {label}: Σ{lu['projected_total']} "
-                  f"cap {lu['cap_used']}/{cap if cap else '∞'} "
-                  f"{'OK' if lu['complete'] and not lu['over_cap'] else 'partial/over'}",
-                  file=sys.stderr)
+                best[e["player_slug"]] = e
+        pools[rar] = list(best.values())
+        print(f"  {rar}: {len(pools[rar])} eligible players", file=sys.stderr)
+
+    out = {"fixture": {"slug": fx["slug"], "gameWeek": fx["gameWeek"],
+                       "start": fx["startDate"], "end": fx["endDate"]},
+           "generated": dt.datetime.now(dt.timezone.utc).isoformat(),
+           "competitions": []}
+
+    for comp in comps:
+        pool = pools.get(comp["rarity"], [])
+        teams = []
+        used = set()
+        for _ in range(comp["teams_cap"]):
+            t = build_team(pool, used, comp["size"], comp["cap"])
+            if not t["cards"] or not t["complete"]:
+                if not teams and t["cards"]:
+                    teams.append(t)  # keep a partial first team to show what's missing
+                break
+            teams.append(t)
+            used |= t["used"]
+        for t in teams:
+            t.pop("used", None)
+        out["competitions"].append({**{k: comp[k] for k in
+                                    ("rarity", "label", "format", "size", "cap", "teams_cap")},
+                                    "eligible_count": len(pool), "teams": teams})
+        tt = ", ".join(f"Σ{t['projected_total']}" for t in teams) or "—"
+        print(f"  {comp['rarity']} · {comp['label']} [{comp['format']}] "
+              f"teams={len(teams)}/{comp['teams_cap']}: {tt}", file=sys.stderr)
 
     with open(args.json, "w", encoding="utf-8") as fh:
-        json.dump(result, fh, ensure_ascii=False, indent=2)
-    print(f"Wrote {args.json} ({len(result['competitions'])} competitions)", file=sys.stderr)
+        json.dump(out, fh, ensure_ascii=False, indent=2)
+    print(f"Wrote {args.json}", file=sys.stderr)
 
 
 if __name__ == "__main__":
