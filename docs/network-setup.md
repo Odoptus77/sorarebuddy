@@ -58,14 +58,25 @@ weil der Proxy dann nichts injiziert.
 ## SofaScore – voraussichtliche Aufstellungen freigeben
 
 Für die **predicted-lineup**-Anreicherung des Startelf-Scores muss zusätzlich
-`api.sofascore.com` erreichbar sein. SofaScore braucht **keinen** API-Key, es
-genügt also, die Domain in die Allowlist aufzunehmen (kein Credential nötig):
+`api.sofascore.com` erreichbar sein. SofaScore braucht **keinen** API-Key.
+
+**Variante 1 (empfohlen — ändert das Netzwerk-Level nicht):** eine zweite
+API-Credential nur zum Freischalten der Domain anlegen (analog zur Sorare-Einrichtung):
+
+1. Umgebung bearbeiten → **API credentials** → **Add credential**.
+2. **Allowed websites:** `api.sofascore.com`.
+3. Falls das Formular einen Header verlangt: einen harmlosen setzen, z. B.
+   Name `X-Client`, Value `sorarebuddy` (SofaScore ignoriert ihn). Ein echter
+   Key ist **nicht** nötig.
+4. **Connect** → **neue** Sitzung starten. Die Sorare-Credential bleibt bestehen.
+
+**Variante 2 (Custom-Netzwerk):**
 
 1. Umgebung bearbeiten → **Network access** auf **Custom** stellen.
-2. Unter **Allowed domains** eine Zeile hinzufügen: `api.sofascore.com`
-   (die bestehende Zeile `api.sorare.com` bleibt stehen).
+2. Unter **Allowed domains** eine Zeile hinzufügen: `api.sofascore.com`.
 3. Häkchen bei **„Also include default list of common package managers"** gesetzt lassen.
-4. Speichern → **neue** Sitzung starten.
+4. Speichern → **neue** Sitzung starten. Die Sorare-Credential injiziert den
+   `APIKEY` weiterhin, `api.sorare.com` bleibt also erreichbar.
 
 Testen (neue Sitzung):
 
