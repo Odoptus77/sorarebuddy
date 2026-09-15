@@ -172,8 +172,9 @@ struct LineupCard: Codable, Identifiable {
 }
 
 // MARK: - Bundle (all three in one response)
+// Named DashboardBundle to avoid shadowing Foundation.Bundle.
 
-struct Bundle: Codable {
+struct DashboardBundle: Codable {
     let club: Club
     let rewards: Rewards
     let lineups: Lineups

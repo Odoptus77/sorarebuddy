@@ -71,9 +71,9 @@ struct APIClient {
         catch { throw APIError.decoding(String(describing: error)) }
     }
 
-    func bundle() async throws -> Bundle {
+    func bundle() async throws -> DashboardBundle {
         let data = try await request("/api/bundle", query: commonQuery())
-        do { return try decoder().decode(Bundle.self, from: data) }
+        do { return try decoder().decode(DashboardBundle.self, from: data) }
         catch { throw APIError.decoding(String(describing: error)) }
     }
 }
