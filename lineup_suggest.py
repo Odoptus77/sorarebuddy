@@ -40,16 +40,19 @@ LEAGUE_MAP = {
     "ENGLAND": ("premier-league", "Premier League"),
     "ENGLAND_SECOND": ("championship", "Championship"),
     "SPAIN": ("laliga", "LALIGA"),
-    "GERMANY": ("bundesliga", "Bundesliga"),
+    "GERMANY": ("bundesliga-de", "Bundesliga"),
     "FRANCE": ("ligue-1", "Ligue 1"),
     "ITALY": ("serie-a", "Serie A"),
     "NETHERLANDS": ("eredivisie", "Eredivisie"),
-    "SCOTLAND": ("premiership", "SPFL"),
+    "SCOTLAND": ("premiership-gb-sct", "SPFL"),
     "JUPILER": ("jupiler", "Jupiler Pro League"),
-    "PORTUGAL": ("liga-portugal", "Liga Portugal"),
-    "USA": ("major-league-soccer", "MLS"),
-    "MLS": ("major-league-soccer", "MLS"),
+    "PORTUGAL": ("primeira-liga", "Liga Portugal"),
+    "USA": ("mlspa", "MLS"),
+    "MLS": ("mlspa", "MLS"),
 }
+# Contender groups these leagues (Sorare 27); classic slot allows ANY league.
+CONTENDER_LEAGUES = ("austrian-bundesliga", "2-bundesliga", "ligue-2",
+                     "hnl", "prva-hnl", "1-hnl", "supersport-hnl")
 # Fallback: IN_SEASON_<COUNTRY> token -> club country code, for leagues without a
 # precise slug in LEAGUE_MAP (one top-flight per country is filtered by country).
 COUNTRY_ISO = {
@@ -93,8 +96,10 @@ def prize_weight(comp):
     rw = RARITY_WEIGHT.get(comp["rarity"], 1.0)
     mw = MODE_WEIGHT.get(comp["mode"], 1.0)
     pref = comp.get("league_prefix")
-    if pref:
-        fam = FAMILY_TOP_LEAGUE if pref.startswith(TOP_LEAGUE_PREFIXES) else FAMILY_OTHER_LEAGUE
+    if comp.get("contender"):
+        fam = 0.9                       # grouped competition, smaller pools
+    elif pref or comp.get("country_code"):
+        fam = FAMILY_TOP_LEAGUE if (pref and pref.startswith(TOP_LEAGUE_PREFIXES)) else FAMILY_OTHER_LEAGUE
     elif comp["mode"] == "Pro":
         fam = FAMILY_FLAGSHIP
     else:
@@ -171,22 +176,26 @@ def fetch_competitions(fx_slug, rarities):
             g["families"].add(fam)
             g["teams_cap"] = max(g["teams_cap"], tcap)
         elif t.startswith("IN_SEASON_") and not is_arena:
-            # league-specific classic competition (SO7, in-season, league filter)
+            # league Hot Streak (5 cards, in-season, league filter)
             body = t[len("IN_SEASON_"):]
             for tok in RARITY_TOKENS:
                 body = body.replace("_" + tok[1], "")
-            token = body  # e.g. SCOTLAND, ENGLAND_SECOND, JAPAN, CONTENDERS
-            if resolve_league(token) is None:
-                continue  # Contender / Rest of the World / unmapped
-            key = (rar, "HS", None, token, True)   # HS = Hot Streak (5 cards)
+            for suf in ("_PVP", "_PVE", "_PVH"):
+                body = body.replace(suf, "")
+            token = body.strip("_")           # SCOTLAND, JAPAN, CONTENDERS, ...
+            if token not in ("CONTENDERS",) and resolve_league(token) is None:
+                continue
+            key = (rar, "HS", None, token, True)
             g = groups.setdefault(key, {"teams_cap": 1})
             g["teams_cap"] = max(g["teams_cap"], tcap)
         elif is_arena:
             # league arena (SO5, cap, league filter, all seasons)
             m2 = re.match(r"ALL_SEASONS_(.+?)_ARENA", t)
-            token = m2.group(1) if m2 else None
-            if not token or resolve_league(token) is None:
+            token = (m2.group(1) if m2 else "").strip("_")
+            if token not in ("CONTENDER", "CONTENDERS") and resolve_league(token) is None:
                 continue  # U21 arena / unmapped
+            if token == "CONTENDER":
+                token = "CONTENDERS"
             key = (rar, "SO5", cap, token, False)
             g = groups.setdefault(key, {"teams_cap": 1})
             g["teams_cap"] = max(g["teams_cap"], tcap)
@@ -200,7 +209,19 @@ def fetch_competitions(fx_slug, rarities):
         fmt_label = {"HS": "Hot Streak", "SO7": "SO7", "SO5": "SO5"}[fmt]
         league_prefix = None
         country_code = None
-        if token:
+        league_prefixes = None
+        contender = False
+        if token == "CONTENDERS":
+            contender = True
+            league_prefixes = list(CONTENDER_LEAGUES)
+            name = "Contender"
+            if hotstreak:
+                label = "Pro · Contender (Hot Streak)"
+            elif cap:
+                label = f"Arena · Contender · Cap {cap}"
+            else:
+                label = "Arena · Contender · Uncapped"
+        elif token:
             kind, value, name = resolve_league(token)
             if kind == "league":
                 league_prefix = value
@@ -222,6 +243,7 @@ def fetch_competitions(fx_slug, rarities):
             "rarity": rar, "label": label, "format": fmt_label, "mode": mode,
             "size": size, "cap": cap, "teams_cap": g["teams_cap"],
             "league_prefix": league_prefix, "country_code": country_code,
+            "league_prefixes": league_prefixes, "contender": contender,
             "in_season": in_season,
             "hotstreak": hotstreak, "max_classic": 1 if hotstreak else None,
         })
@@ -431,7 +453,11 @@ def main(argv):
         # league filter only; the in-season/classic rule is enforced per format
         # (Hot Streak allows at most 1 classic; Arena allows all seasons).
         pool = [e for e in available if e["rarity_"] == comp["rarity"]]
-        if comp.get("league_prefix"):
+        lps = comp.get("league_prefixes")
+        if lps:
+            pool = [e for e in pool
+                    if any((e.get("league") or "").startswith(p) for p in lps)]
+        elif comp.get("league_prefix"):
             pref = comp["league_prefix"]
             pool = [e for e in pool if (e.get("league") or "").startswith(pref)]
         elif comp.get("country_code"):
@@ -450,19 +476,29 @@ def main(argv):
 
     all_entries = sum(pools.values(), [])
 
+    def build_pool(comp, avail):
+        # Contender Hot Streak: 4 in-season Contender-league cards + 1 classic
+        # from ANY league (blog rule), so widen the pool with all classics.
+        if comp.get("contender") and comp.get("hotstreak"):
+            ins = [e for e in comp_pool(comp, avail) if not e.get("is_classic")]
+            classics = [e for e in avail if e.get("is_classic")
+                        and e["rarity_"] == comp["rarity"]]
+            return ins + classics
+        return comp_pool(comp, avail)
+
     def enough_pool(comp):
         pool = comp_pool(comp, all_entries)
         if comp.get("hotstreak"):
             # a legal 5-card hot streak needs >=4 in-season (+ up to 1 classic)
             return sum(1 for e in pool if not e.get("is_classic")) >= 4
-        if comp.get("league_prefix") or comp.get("country_code"):
+        if comp.get("league_prefix") or comp.get("country_code") or comp.get("league_prefixes"):
             return len(pool) >= 4
         return True
 
     # ---- max-profit priority: each card used only once (global) ----
     # Pass A: standalone strength of each competition's best single team.
     for comp in comps:
-        base = build_team(comp_pool(comp, all_entries), set(),
+        base = build_team(build_pool(comp, all_entries), set(),
                           comp["size"], comp["cap"], comp.get("max_classic"))
         comp["prize_weight"] = prize_weight(comp)
         # expected reward proxy = lineup strength x prize-pool weight
@@ -488,7 +524,7 @@ def main(argv):
         used_local = set(used_global)
         for _ in range(comp["teams_cap"]):
             avail = [e for e in pools[comp["rarity"]] if e["slug"] not in used_local]
-            pool = comp_pool(comp, avail)
+            pool = build_pool(comp, avail)
             t = build_team(pool, set(), comp["size"], comp["cap"], comp.get("max_classic"))
             if not t["cards"]:
                 break
