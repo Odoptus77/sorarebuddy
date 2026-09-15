@@ -171,8 +171,8 @@ tbody tr:last-child td{border-bottom:none}
         <th data-k="season">Season</th>
         <th data-k="purchase_eur">Kaufpreis</th>
         <th data-k="value_eur">Akt. Wert</th>
-        <th data-k="delta_eur">Δ € (Buch)</th>
-        <th data-k="reward_eur">Reward</th>
+        <th data-k="delta_eur">Nicht realis.</th>
+        <th data-k="reward_eur">Realis. (Reward)</th>
         <th data-k="ergebnis_eur">Ergebnis €</th>
       </tr></thead>
       <tbody id="rows"></tbody>
@@ -220,18 +220,21 @@ document.getElementById("asof").innerHTML = "Stand: " + DATA.as_of + "<br>" + pr
 const plClass = pl>=0?"pos":"neg";
 const rewardTotal = REWARDS ? REWARDS.totals.total_reward_eur : 0;
 if(REWARDS){
-  const net = valueAll + rewardTotal - invested;
-  const netPct = invested ? net/invested*100 : 0;
-  const netClass = net>=0?"pos":"neg";
+  const unreal = pl;               // value − purchase on comparable cards (paper)
+  const real = rewardTotal;        // cash rewards actually received
+  const gesamt = real + unreal;
+  const gPct = investedBoth ? gesamt/investedBoth*100 : 0;
+  const uClass = unreal>=0?"pos":"neg";
+  const gClass = gesamt>=0?"pos":"neg";
   document.getElementById("kpis").innerHTML = `
     <div class="kpi"><span class="label">Investiert (gekaufte Karten)</span>
-      <span class="val num">${eur(invested)}</span><span class="meta">${priced.length} Karten · Buch-G/V <span class="${plClass}">${eur(pl)}</span></span></div>
-    <div class="kpi"><span class="label">Kartenwert (geschätzt)</span>
-      <span class="val num">${eur(valueAll)}</span><span class="meta">alle ${rows.length} Karten bewertet</span></div>
-    <div class="kpi"><span class="label">Cash-Rewards erhalten</span>
-      <span class="val num pos">${eur(rewardTotal)}</span><span class="meta">${REWARDS.totals.reward_lineups} Lineups · ${REWARDS.totals.lineups} gesamt</span></div>
-    <div class="kpi hero"><span class="label">Netto (Wert + Rewards − Investiert)</span>
-      <span class="val num ${netClass}">${eur(net)}</span><span class="meta">Rendite netto ${pct(netPct)}</span></div>`;
+      <span class="val num">${eur(invested)}</span><span class="meta">${priced.length} Karten · Wert ${eur(valueAll)}</span></div>
+    <div class="kpi"><span class="label">Nicht realisiert (Wert − Kauf)</span>
+      <span class="val num ${uClass}">${eur(unreal)}</span><span class="meta">Papierwert auf ${both.length} Karten</span></div>
+    <div class="kpi"><span class="label">Realisiert (Cash-Rewards)</span>
+      <span class="val num pos">${eur(real)}</span><span class="meta">${REWARDS.totals.reward_lineups} Lineups mit €-Reward</span></div>
+    <div class="kpi hero"><span class="label">Gesamt-Ergebnis</span>
+      <span class="val num ${gClass}">${eur(gesamt)}</span><span class="meta">realisiert + nicht realisiert · Rendite ${pct(gPct)}</span></div>`;
 } else {
   document.getElementById("kpis").innerHTML = `
     <div class="kpi"><span class="label">Investiert (gekaufte Karten)</span>
@@ -347,8 +350,9 @@ search.oninput=render; onlyPriced.onchange=render;
 document.getElementById("foot").innerHTML =
   "&bdquo;Kaufpreis&ldquo; = der vom aktuellen Besitzer gezahlte Preis aus öffentlichen Transferdaten; Karten aus Tausch, Reward oder Shards haben keinen Geldpreis (—). "+
   "&bdquo;Akt. Wert&ldquo; = Median der letzten öffentlichen Verkäufe je Spieler + Seltenheit + Season — ein Schätzwert, kein Verkaufsangebot. "+
-  "&bdquo;Reward&ldquo; = Geld-Rewards der Lineups, in denen genau diese Karte gespielt wurde (Reward ÷ gespielte Karten, aufsummiert). "+
-  "&bdquo;Ergebnis&ldquo; = Akt. Wert − Kaufpreis + Reward. "+
+  "&bdquo;Nicht realisiert&ldquo; = Akt. Wert − Kaufpreis (Papierwert, noch nicht verkauft). "+
+  "&bdquo;Realisiert (Reward)&ldquo; = tatsächlich erhaltene Geld-Rewards der Lineups mit genau dieser Karte (Reward ÷ gespielte Karten, aufsummiert). "+
+  "&bdquo;Ergebnis&ldquo; = realisiert + nicht realisiert = Akt. Wert − Kaufpreis + Reward. "+
   "Common-Karten sind ausgenommen. Quelle: Sorare GraphQL API.";
 
 // theme toggle
