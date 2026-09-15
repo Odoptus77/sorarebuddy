@@ -384,6 +384,7 @@ def main(argv):
         rewards = json.dumps({
             "totals": rw.get("totals", {}),
             "players": rw.get("players", []),
+            "cards": rw.get("cards", {}),
         }, ensure_ascii=False)
 
     html = TEMPLATE.replace("__CLUB_DATA__", json.dumps(data, ensure_ascii=False))
