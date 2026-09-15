@@ -137,6 +137,12 @@ tr.clickable{cursor:pointer}
 .tab:hover{color:var(--ink)}
 /* suggestions */
 .sugg-note{color:var(--ink-soft);font-size:12.5px;line-height:1.6;margin:0 2px 22px}
+.hswrap{display:flex;flex-wrap:wrap;gap:8px;margin:0 2px 20px}
+.hschip{font-size:12px;border:1px solid var(--line);border-radius:10px;padding:7px 11px;background:var(--card);line-height:1.4}
+.hschip b{font-variant-numeric:tabular-nums}
+.hschip.ok{border-color:var(--gain);color:var(--gain)}
+.hschip.ok b{color:var(--gain)}
+.hschip.no{color:var(--ink-soft)}
 .rar-block{margin-bottom:30px}
 .lineups2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
 .lucard{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);overflow:hidden}
@@ -554,6 +560,14 @@ function renderSuggestions(){
       ${compBlocks}</div>`;
   }).join("");
   const totS=L.total_projected!=null?Math.round(L.total_projected).toLocaleString("de-DE"):"—";
+  const hso=L.hotstreak_overview||[];
+  const hsChips=hso.map(h=>{
+    const ok=h.fieldable;
+    const miss=Math.max(0,(h.needed||4)-h.in_season);
+    return `<span class="hschip ${ok?'ok':'no'}">${(RARITY_LABEL[h.rarity]||h.rarity)} · ${h.label.replace('Pro · ','').replace(' (Hot Streak)','')}
+      <b>${h.in_season}/${h.needed||4}</b> ${ok?'✓ spielbar':'· fehlen '+miss}</span>`;
+  }).join("");
+  const hsBlock=hso.length?`<div class="eyebrow" style="margin:4px 2px 8px">Hot-Streak-Überblick (In-Season-Tiefe · 4 nötig + 1 Classic)</div><div class="hswrap">${hsChips}</div>`:"";
   document.getElementById("view-suggest").innerHTML = `
     <div class="eyebrow" style="margin:2px 2px 4px">Bestmögliches Gesamt-Setup (Sorare 27)</div>
     <h2 style="font-family:Archivo;font-size:20px;letter-spacing:-.01em;margin:0 0 6px">Spieltag ${L.fixture.gameWeek} · ${fmtDate(L.fixture.start)}–${fmtDate(L.fixture.end)}</h2>
@@ -562,6 +576,7 @@ function renderSuggestions(){
       <div class="kpi"><span class="label">Karten eingesetzt</span><span class="val num">${L.cards_used??"—"}</span><span class="meta">jede Karte nur einmal (global)</span></div>
       <div class="kpi hero"><span class="label">Aufstellungen</span><span class="val num">${(L.competitions||[]).reduce((s,c)=>s+(c.teams||[]).length,0)}</span><span class="meta">nach maximalem Ertrag priorisiert</span></div>
     </div>
+    ${hsBlock}
     <p class="sugg-note"><b>Max-Profit-Aufteilung:</b> jede Karte wird <b>nur einmal</b> im ganzen GW eingesetzt; zuerst werden die <b>In-Season Hot Streaks (Pro)</b> befüllt, danach die übrigen Wettbewerbe nach <b>erwartetem Ertrag = projizierte Punkte × Pool-Gewicht</b>. Das <b>Pool-Gewicht</b> (z. B. Pool ×2,6) schätzt den relativen Preispool je Wettbewerb (Rare ≈ 2× Limited, Pro > Arena, Champion/Top-Ligen größer) aus den Blog-Zahlen — anpassbar, keine exakten Auszahlungen. <b>Pro = SO7</b> (7 Karten, Hot Streaks), <b>Arena = SO5</b> (5 Karten, Cap: Σ L15-Scores ≤ Cap). <b>⏱</b> = frühester Anstoß (Einsatz-Deadline); Wettbewerbe haben unterschiedliche Deadlines — <b>Contender</b> nutzt das späteste Spielende seiner Ligen. Projizierter Score = L5-Form × Einsatzquote × Heimvorteil (H); Verletzte ausgeschlossen; <b>C</b> = Kapitän (×2). <b>Näherungen:</b> Preispools (separater Blog) fließen nicht ein — „Profit" = projizierte Punkte; U21 sowie exakte Step-Clock/Contender-Gruppierung sind noch nicht abgebildet.</p>
     ${blocks}`;
 }
