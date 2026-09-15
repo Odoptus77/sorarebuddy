@@ -537,6 +537,7 @@ function renderSuggestions(){
     const compBlocks=cs.map(comp=>{
       const teams=comp.teams||[];
       const dl=comp.deadline_first?` · ⏱ ab ${fmtDT(comp.deadline_first)}`:"";
+      const pw=comp.prize_weight?`<span class="fmt-badge" style="color:var(--gain)">Pool ×${comp.prize_weight.toLocaleString("de-DE")}</span>`:"";
       const body = teams.length
         ? `<div class="lineups2">${teams.map((t,i)=>teamCard(comp,t,i)).join("")}</div>`
         : `<div class="lu-warn" style="border-radius:12px">Kein vollständiges Team möglich.</div>`;
@@ -544,6 +545,7 @@ function renderSuggestions(){
         <div class="comp-head">
           <span class="comp-title">${comp.label}</span>
           <span class="fmt-badge">${comp.format}${comp.size?` · ${comp.size} Karten`:""}</span>
+          ${pw}
           <span class="teams-note">bis ${comp.teams_cap} Team${comp.teams_cap>1?"s":""}${teams.length?` · ${teams.length} gebaut`:""}${dl}</span>
         </div>${body}</div>`;
     }).join("");
@@ -560,7 +562,7 @@ function renderSuggestions(){
       <div class="kpi"><span class="label">Karten eingesetzt</span><span class="val num">${L.cards_used??"—"}</span><span class="meta">jede Karte nur einmal (global)</span></div>
       <div class="kpi hero"><span class="label">Aufstellungen</span><span class="val num">${(L.competitions||[]).reduce((s,c)=>s+(c.teams||[]).length,0)}</span><span class="meta">nach maximalem Ertrag priorisiert</span></div>
     </div>
-    <p class="sugg-note"><b>Max-Profit-Aufteilung:</b> jede Karte wird <b>nur einmal</b> im ganzen GW eingesetzt; zuerst werden die <b>In-Season Hot Streaks (Pro)</b> mit den besten Karten befüllt, danach Champion/All-Star und die Arenas. <b>Pro = SO7</b> (7 Karten, Hot Streaks), <b>Arena = SO5</b> (5 Karten, Cap: Σ L15-Scores ≤ Cap). <b>⏱</b> = frühester Anstoß (Einsatz-Deadline); Wettbewerbe haben unterschiedliche Deadlines — <b>Contender</b> nutzt das späteste Spielende seiner Ligen. Projizierter Score = L5-Form × Einsatzquote × Heimvorteil (H); Verletzte ausgeschlossen; <b>C</b> = Kapitän (×2). <b>Näherungen:</b> Preispools (separater Blog) fließen nicht ein — „Profit" = projizierte Punkte; U21 sowie exakte Step-Clock/Contender-Gruppierung sind noch nicht abgebildet.</p>
+    <p class="sugg-note"><b>Max-Profit-Aufteilung:</b> jede Karte wird <b>nur einmal</b> im ganzen GW eingesetzt; zuerst werden die <b>In-Season Hot Streaks (Pro)</b> befüllt, danach die übrigen Wettbewerbe nach <b>erwartetem Ertrag = projizierte Punkte × Pool-Gewicht</b>. Das <b>Pool-Gewicht</b> (z. B. Pool ×2,6) schätzt den relativen Preispool je Wettbewerb (Rare ≈ 2× Limited, Pro > Arena, Champion/Top-Ligen größer) aus den Blog-Zahlen — anpassbar, keine exakten Auszahlungen. <b>Pro = SO7</b> (7 Karten, Hot Streaks), <b>Arena = SO5</b> (5 Karten, Cap: Σ L15-Scores ≤ Cap). <b>⏱</b> = frühester Anstoß (Einsatz-Deadline); Wettbewerbe haben unterschiedliche Deadlines — <b>Contender</b> nutzt das späteste Spielende seiner Ligen. Projizierter Score = L5-Form × Einsatzquote × Heimvorteil (H); Verletzte ausgeschlossen; <b>C</b> = Kapitän (×2). <b>Näherungen:</b> Preispools (separater Blog) fließen nicht ein — „Profit" = projizierte Punkte; U21 sowie exakte Step-Clock/Contender-Gruppierung sind noch nicht abgebildet.</p>
     ${blocks}`;
 }
 if(LINEUPS && (LINEUPS.competitions||LINEUPS.rarities)){

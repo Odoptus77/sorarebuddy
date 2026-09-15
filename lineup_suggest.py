@@ -51,6 +51,33 @@ LEAGUE_MAP = {
     "MLS": ("major-league-soccer", "MLS"),
 }
 
+# --- Prize-pool weighting (editable) --------------------------------------
+# Relative prize weight per competition, used to turn "best lineup" into
+# "best expected reward". Derived from the Sorare 27 blog figures (Rare ~2x
+# Limited: e.g. $6k vs $12k Pro, $5k vs $10k Arena; Pro slightly above Arena;
+# Champion/All-Star and the big leagues carry the largest pools). Not exact
+# payouts — adjust these numbers to match the official prize-pool tables.
+RARITY_WEIGHT = {"limited": 1.0, "rare": 2.0, "super_rare": 5.0, "unique": 8.0}
+MODE_WEIGHT = {"Pro": 1.25, "Arena": 1.0}
+TOP_LEAGUE_PREFIXES = ("premier-league", "bundesliga", "laliga", "ligue-1")
+FAMILY_TOP_LEAGUE = 1.3      # biggest league pools
+FAMILY_OTHER_LEAGUE = 1.0
+FAMILY_FLAGSHIP = 1.5        # Champion / All Star (Pro)
+FAMILY_ALLSTAR_ARENA = 1.2   # All-Star arena
+
+
+def prize_weight(comp):
+    rw = RARITY_WEIGHT.get(comp["rarity"], 1.0)
+    mw = MODE_WEIGHT.get(comp["mode"], 1.0)
+    pref = comp.get("league_prefix")
+    if pref:
+        fam = FAMILY_TOP_LEAGUE if pref.startswith(TOP_LEAGUE_PREFIXES) else FAMILY_OTHER_LEAGUE
+    elif comp["mode"] == "Pro":
+        fam = FAMILY_FLAGSHIP
+    else:
+        fam = FAMILY_ALLSTAR_ARENA
+    return round(rw * mw * fam, 2)
+
 CARDS_QUERY = """
 query Cards($slug: String!, $after: String, $rarities: [Rarity!]) {
   user(slug: $slug) {
@@ -403,7 +430,9 @@ def main(argv):
     for comp in comps:
         base = build_team(comp_pool(comp, all_entries), set(),
                           comp["size"], comp["cap"], comp.get("max_classic"))
-        comp["_priority"] = base["projected_total"] * (1.15 if comp["mode"] == "Pro" else 1.0)
+        comp["prize_weight"] = prize_weight(comp)
+        # expected reward proxy = lineup strength x prize-pool weight
+        comp["_priority"] = base["projected_total"] * comp["prize_weight"]
     comps = [c for c in comps if enough_pool(c)]
     # Always fill In-Season Hot Streaks first (best cards), then the rest by
     # projected strength. Within each tier, strongest lineup first.
@@ -439,6 +468,7 @@ def main(argv):
         out["competitions"].append({**{k: comp[k] for k in
                                     ("rarity", "label", "format", "mode", "size", "cap", "teams_cap")},
                                     "in_season": comp.get("in_season", False),
+                                    "prize_weight": comp.get("prize_weight"),
                                     "deadline_first": w0, "deadline_last": w1,
                                     "teams": teams})
         tt = ", ".join(f"Σ{t['projected_total']}" for t in teams) or "—"
