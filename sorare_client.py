@@ -22,6 +22,7 @@ Docs: https://developers.sorare.com/  and  https://github.com/sorare/api
 import json
 import os
 import sys
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -50,7 +51,7 @@ def load_env(path=".env.local"):
             os.environ.setdefault(key, value)
 
 
-def graphql(query, variables=None):
+def graphql(query, variables=None, retries=3, timeout=45):
     """Execute a GraphQL request and return the parsed JSON response.
 
     The API key is optional here: if SORARE_API_KEY is set we send it in the
@@ -59,6 +60,9 @@ def graphql(query, variables=None):
     "API credential" that attaches the APIKEY header for api.sorare.com after
     the request leaves the session's VM. That way the key never has to live
     in the repo or the session at all.
+
+    Transient network errors (timeouts, dropped connections) are retried with
+    exponential backoff before giving up.
     """
     payload = json.dumps({"query": query, "variables": variables or {}}).encode()
     headers = {
@@ -72,24 +76,32 @@ def graphql(query, variables=None):
     if access_token:
         headers["Authorization"] = f"Bearer {access_token}"
     req = urllib.request.Request(
-        GRAPHQL_ENDPOINT,
-        data=payload,
-        headers=headers,
-        method="POST",
+        GRAPHQL_ENDPOINT, data=payload, headers=headers, method="POST"
     )
-    try:
-        with urllib.request.urlopen(req, timeout=30) as resp:
-            return json.loads(resp.read().decode())
-    except urllib.error.HTTPError as exc:
-        body = exc.read().decode(errors="replace")
-        sys.exit(f"HTTP {exc.code} from Sorare API:\n{body}")
-    except urllib.error.URLError as exc:
-        sys.exit(
-            f"Network error reaching {GRAPHQL_ENDPOINT}: {exc.reason}\n"
-            "If you are on Claude Code on the web, the environment's network "
-            "policy may block api.sorare.com. Run this locally or use an "
-            "environment whose egress policy allows it."
-        )
+    last_err = None
+    for attempt in range(retries):
+        try:
+            with urllib.request.urlopen(req, timeout=timeout) as resp:
+                return json.loads(resp.read().decode())
+        except urllib.error.HTTPError as exc:
+            body = exc.read().decode(errors="replace")
+            # 429/5xx are worth retrying; other HTTP errors are terminal.
+            if exc.code in (429, 500, 502, 503, 504) and attempt < retries - 1:
+                last_err = f"HTTP {exc.code}"
+                time.sleep(2 ** attempt)
+                continue
+            sys.exit(f"HTTP {exc.code} from Sorare API:\n{body}")
+        except (urllib.error.URLError, TimeoutError) as exc:
+            last_err = getattr(exc, "reason", exc)
+            if attempt < retries - 1:
+                time.sleep(2 ** attempt)
+                continue
+            sys.exit(
+                f"Network error reaching {GRAPHQL_ENDPOINT}: {last_err}\n"
+                "If you are on Claude Code on the web, the environment's network "
+                "policy may block api.sorare.com. Run this locally or use an "
+                "environment whose egress policy allows it."
+            )
 
 
 # --- Convenience queries -------------------------------------------------
