@@ -349,8 +349,9 @@ def main(argv):
             used |= t["used"]
         for t in teams:
             t.pop("used", None)
-        # league competitions only shown if a full team is fieldable (reduce noise)
-        if comp.get("league_prefix") and not any(t.get("complete") for t in teams):
+        # league competitions: show when there is a meaningful pool (>=4 cards),
+        # even if the 7-card team can't be completed (best partial is still useful)
+        if comp.get("league_prefix") and len(pool) < 4:
             continue
         out["competitions"].append({**{k: comp[k] for k in
                                     ("rarity", "label", "format", "size", "cap", "teams_cap")},
