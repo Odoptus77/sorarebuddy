@@ -12,6 +12,17 @@ __pycache__/
 venv/
 .pytest_cache/
 
+# Backend cache + SofaScore team-id cache (runtime data)
+backend/cache/
+sofa_teams.json
+
+# Xcode / Swift (the app project is generated locally in Xcode)
+ios/**/xcuserdata/
+ios/**/*.xcodeproj/project.xcworkspace/xcuserdata/
+ios/build/
+*.xcuserstate
+DerivedData/
+
 # OS / editor
 .DS_Store
 .idea/
