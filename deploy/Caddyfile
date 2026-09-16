@@ -1,0 +1,8 @@
+# Caddy reverse proxy with automatic HTTPS (Let's Encrypt).
+# Replace the domain, put this at /etc/caddy/Caddyfile, then: systemctl reload caddy
+# Requires an A/AAAA record for the domain pointing at this VPS, ports 80+443 open.
+
+sorarebuddy.example.com {
+	encode zstd gzip
+	reverse_proxy 127.0.0.1:8080
+}

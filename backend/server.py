@@ -49,6 +49,9 @@ CACHE_TTL = int(os.environ.get("CACHE_TTL", "1800"))
 APP_TOKEN = os.environ.get("APP_TOKEN", "")
 DEFAULT_SLUG = os.environ.get("DEFAULT_SLUG", "")
 PORT = int(os.environ.get("PORT", "8080"))
+# Behind a reverse proxy (Caddy/nginx) bind to loopback only; set BIND=0.0.0.0
+# to expose the port directly (e.g. local dev / simulator on the LAN).
+BIND = os.environ.get("BIND", "0.0.0.0")
 JOB_TIMEOUT = int(os.environ.get("JOB_TIMEOUT", "600"))
 
 os.makedirs(CACHE_DIR, exist_ok=True)
@@ -113,10 +116,13 @@ def _run_script(script, slug, extra=None):
 
 
 def _producer(kind, slug, rarities):
+    # club/rewards also emit a CSV (--out); send it to /dev/null so nothing is
+    # written into the (possibly read-only) app dir. Only the JSON is consumed.
     if kind == "club":
-        return _run_script("club_overview.py", slug, ["--rarities", rarities])
+        return _run_script("club_overview.py", slug,
+                           ["--rarities", rarities, "--out", os.devnull])
     if kind == "rewards":
-        return _run_script("rewards_by_player.py", slug)
+        return _run_script("rewards_by_player.py", slug, ["--out", os.devnull])
     if kind == "lineups":
         return _run_script("lineup_suggest.py", slug, ["--rarities", rarities])
     raise ValueError(kind)
@@ -241,8 +247,8 @@ class Handler(BaseHTTPRequestHandler):
 
 
 def main():
-    srv = ThreadingHTTPServer(("0.0.0.0", PORT), Handler)
-    sys.stderr.write(f"sorarebuddy backend on :{PORT}  (ttl={CACHE_TTL}s, "
+    srv = ThreadingHTTPServer((BIND, PORT), Handler)
+    sys.stderr.write(f"sorarebuddy backend on {BIND}:{PORT}  (ttl={CACHE_TTL}s, "
                      f"auth={'on' if APP_TOKEN else 'off'})\n")
     try:
         srv.serve_forever()

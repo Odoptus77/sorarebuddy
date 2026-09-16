@@ -1,0 +1,29 @@
+[Unit]
+Description=sorarebuddy backend API
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=sorarebuddy
+Group=sorarebuddy
+WorkingDirectory=/opt/sorarebuddy
+EnvironmentFile=/etc/sorarebuddy/env
+ExecStart=/usr/bin/python3 backend/server.py
+Restart=on-failure
+RestartSec=3
+
+# --- hardening ---
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+ProtectControlGroups=true
+ProtectKernelTunables=true
+RestrictSUIDSGID=true
+# writable state (cache) lives here -> /var/lib/sorarebuddy
+StateDirectory=sorarebuddy
+CacheDirectory=sorarebuddy
+
+[Install]
+WantedBy=multi-user.target
