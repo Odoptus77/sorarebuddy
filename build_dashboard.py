@@ -55,6 +55,13 @@ header.top{display:flex;justify-content:space-between;align-items:flex-end;gap:1
 .badge h1{font-size:26px;font-weight:800;letter-spacing:-.01em}
 .badge .sub{color:var(--ink-soft);font-size:13px}
 .asof{text-align:right;color:var(--ink-soft);font-size:12.5px}
+.topctrls{position:relative;display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:flex-end}
+.cfgpanel{position:absolute;top:40px;right:0;z-index:30;width:290px;background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:12px;display:flex;flex-direction:column;gap:8px}
+.cfgpanel label{display:flex;flex-direction:column;font-size:11px;color:var(--ink-soft);gap:3px}
+.cfgpanel input{padding:7px 9px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);font-size:13px}
+.cfghint{font-size:11px;color:var(--ink-soft);line-height:1.35}
+.theme-btn[aria-busy="true"]{opacity:.6;pointer-events:none}
+.sb-toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:50;background:var(--ink);color:var(--card);padding:10px 16px;border-radius:10px;font-size:13px;box-shadow:var(--shadow);max-width:90vw}
 .theme-btn{border:1px solid var(--line);background:var(--card);color:var(--ink);
   border-radius:9px;padding:7px 11px;font:inherit;font-size:13px;cursor:pointer}
 
@@ -211,9 +218,19 @@ tr.clickable{cursor:pointer}
         <div class="sub"><span id="cardcount"></span> handelbare Karten · Wert geschätzt aus letzten Verkäufen</div>
       </div>
     </div>
-    <div>
+    <div class="topctrls">
+      <button class="theme-btn" id="refreshbtn" type="button" title="Verein & Lineups neu laden">⟳ Aktualisieren</button>
+      <button class="theme-btn" id="cfgbtn" type="button" title="Backend einrichten">⚙</button>
       <button class="theme-btn" id="themebtn" type="button">Theme</button>
       <div class="asof" id="asof"></div>
+      <div class="cfgpanel" id="cfgpanel" hidden>
+        <label>Backend-URL<input id="cfgurl" placeholder="https://dein-backend"></label>
+        <label>Manager-Slug<input id="cfgslug" placeholder="nicktd7"></label>
+        <label>Seltenheiten<input id="cfgrar" placeholder="limited,rare"></label>
+        <label>App-Token (optional)<input id="cfgtoken" type="password" placeholder=""></label>
+        <button class="theme-btn" id="cfgsave" type="button">Speichern</button>
+        <div class="cfghint">Das Backend (<code>server.py</code>) muss per HTTPS erreichbar sein. Ohne Backend zeigt das Dashboard den zuletzt veröffentlichten Stand.</div>
+      </div>
     </div>
   </header>
 
@@ -273,9 +290,15 @@ tr.clickable{cursor:pointer}
 </div>
 
 <script>
-const DATA = __CLUB_DATA__;
-const REWARDS = __REWARDS_DATA__;
-const LINEUPS = __LINEUPS_DATA__;
+let DATA = __CLUB_DATA__;
+let REWARDS = __REWARDS_DATA__;
+let LINEUPS = __LINEUPS_DATA__;
+// If a live refresh saved fresher data this tab session, use it instead of the
+// embedded snapshot (a full reload re-derives every view from these).
+try {
+  const _ov = JSON.parse(sessionStorage.getItem("sb_bundle") || "null");
+  if (_ov && _ov.club && _ov.lineups) { DATA = _ov.club; REWARDS = _ov.rewards; LINEUPS = _ov.lineups; }
+} catch (e) {}
 const RARITY_COLORS = {limited:"#f4b52a",rare:"#e0403f",super_rare:"#2f7be0",unique:"#20242a"};
 const RARITY_LABEL = {limited:"Limited",rare:"Rare",super_rare:"Super Rare",unique:"Unique"};
 const rows = DATA.rows;
@@ -316,7 +339,10 @@ rows.forEach(r=>{rowBySlug[r.card_slug]=r;});
 document.getElementById("nick").textContent = DATA.nickname;
 document.getElementById("crest").textContent = (DATA.nickname||"?").slice(0,1).toUpperCase();
 document.getElementById("cardcount").textContent = rows.length;
-document.getElementById("asof").innerHTML = "Stand: " + DATA.as_of + "<br>" + priced.length + " mit bekanntem Kaufpreis";
+document.getElementById("asof").innerHTML = "Stand: " + (function(){
+  try { var s=(LINEUPS&&LINEUPS.generated)||DATA.as_of; if(!s) return new Date().toLocaleString("de-DE");
+        var d=new Date(s); return isNaN(d.getTime())?s:d.toLocaleString("de-DE"); }
+  catch(e){ return DATA.as_of||""; } })() + "<br>" + priced.length + " mit bekanntem Kaufpreis";
 
 const plClass = pl>=0?"pos":"neg";
 const rewardTotal = REWARDS ? REWARDS.totals.total_reward_eur : 0;
@@ -464,6 +490,55 @@ const tb=document.getElementById("themebtn");
 tb.onclick=()=>{const cur=document.documentElement.getAttribute("data-theme");
   const next=cur==="dark"?"light":(cur==="light"?"dark":(matchMedia("(prefers-color-scheme:dark)").matches?"light":"dark"));
   document.documentElement.setAttribute("data-theme",next);};
+
+// ---- live refresh (fetches from the backend and reloads with fresh data) ----
+function sbToast(msg){
+  var t=document.createElement("div"); t.className="sb-toast"; t.textContent=msg;
+  document.body.appendChild(t); setTimeout(function(){t.remove();}, 4200);
+}
+function sbCfg(){
+  var g=function(k,d){ try{return localStorage.getItem(k)||d;}catch(e){return d;} };
+  return { url:g("sb_url",""), slug:g("sb_slug",(DATA.nickname||"").toLowerCase()),
+           rar:g("sb_rar","limited,rare"), token:g("sb_token","") };
+}
+(function(){
+  var cfg=sbCfg();
+  var panel=document.getElementById("cfgpanel");
+  var url=document.getElementById("cfgurl"), slug=document.getElementById("cfgslug"),
+      rar=document.getElementById("cfgrar"), tok=document.getElementById("cfgtoken");
+  url.value=cfg.url; slug.value=cfg.slug; rar.value=cfg.rar; tok.value=cfg.token;
+  document.getElementById("cfgbtn").onclick=function(){ panel.hidden=!panel.hidden; };
+  document.getElementById("cfgsave").onclick=function(){
+    try{
+      localStorage.setItem("sb_url", url.value.trim().replace(/\/+$/,""));
+      localStorage.setItem("sb_slug", slug.value.trim().toLowerCase());
+      localStorage.setItem("sb_rar", rar.value.trim()||"limited,rare");
+      localStorage.setItem("sb_token", tok.value.trim());
+    }catch(e){}
+    panel.hidden=true; sbToast("Gespeichert.");
+  };
+  document.getElementById("refreshbtn").onclick=async function(){
+    var c=sbCfg();
+    if(!c.url){ panel.hidden=false; sbToast("Bitte zuerst die Backend-URL eintragen."); return; }
+    var btn=this; btn.setAttribute("aria-busy","true"); var old=btn.textContent; btn.textContent="⟳ lädt…";
+    try{
+      var u=new URL(c.url.replace(/\/+$/,"")+"/api/bundle");
+      u.searchParams.set("slug", c.slug); u.searchParams.set("rarities", c.rar);
+      u.searchParams.set("refresh","1");
+      var h={}; if(c.token) h["Authorization"]="Bearer "+c.token;
+      var r=await fetch(u.toString(), {headers:h});
+      if(!r.ok){ throw new Error("HTTP "+r.status); }
+      var b=await r.json();
+      if(!b || !b.club || !b.lineups){ throw new Error("unerwartete Antwort"); }
+      try{ sessionStorage.setItem("sb_bundle", JSON.stringify(b)); }
+      catch(e){ throw new Error("Speicher nicht verfügbar"); }
+      sbToast("Aktualisiert – lade neu…"); location.reload();
+    }catch(e){
+      btn.removeAttribute("aria-busy"); btn.textContent=old;
+      sbToast("Refresh fehlgeschlagen: "+e.message);
+    }
+  };
+})();
 
 // ---- reward lineup modal ----
 const modalBack=document.getElementById("modalBack");
