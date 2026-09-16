@@ -45,34 +45,36 @@ struct APIClient {
         return data
     }
 
-    private func commonQuery() -> [String: String] {
-        ["slug": config.managerSlug.lowercased(), "rarities": config.rarities]
+    private func commonQuery(force: Bool) -> [String: String] {
+        var q = ["slug": config.managerSlug.lowercased(), "rarities": config.rarities]
+        if force { q["refresh"] = "1" }   // bypass the backend cache, refetch from Sorare
+        return q
     }
 
     func health() async -> Bool {
         (try? await request("/health", query: [:])) != nil
     }
 
-    func club() async throws -> Club {
-        let data = try await request("/api/club", query: commonQuery())
+    func club(force: Bool = false) async throws -> Club {
+        let data = try await request("/api/club", query: commonQuery(force: force))
         do { return try decoder().decode(Club.self, from: data) }
         catch { throw APIError.decoding(String(describing: error)) }
     }
 
-    func rewards() async throws -> Rewards {
-        let data = try await request("/api/rewards", query: commonQuery())
+    func rewards(force: Bool = false) async throws -> Rewards {
+        let data = try await request("/api/rewards", query: commonQuery(force: force))
         do { return try decoder().decode(Rewards.self, from: data) }
         catch { throw APIError.decoding(String(describing: error)) }
     }
 
-    func lineups() async throws -> Lineups {
-        let data = try await request("/api/lineups", query: commonQuery())
+    func lineups(force: Bool = false) async throws -> Lineups {
+        let data = try await request("/api/lineups", query: commonQuery(force: force))
         do { return try decoder().decode(Lineups.self, from: data) }
         catch { throw APIError.decoding(String(describing: error)) }
     }
 
-    func bundle() async throws -> Bundle {
-        let data = try await request("/api/bundle", query: commonQuery())
+    func bundle(force: Bool = false) async throws -> Bundle {
+        let data = try await request("/api/bundle", query: commonQuery(force: force))
         do { return try decoder().decode(Bundle.self, from: data) }
         catch { throw APIError.decoding(String(describing: error)) }
     }
@@ -90,14 +92,16 @@ final class Store: ObservableObject {
     let config: AppConfig
     init(config: AppConfig) { self.config = config }
 
-    func refresh() async {
+    /// force = true bypasses the backend cache and refetches from Sorare
+    /// (the explicit Refresh button); false uses the cache (launch / pull).
+    func refresh(force: Bool = false) async {
         loading = true; error = nil
         let api = APIClient(config: config)
         do {
             // fetch in parallel; each endpoint is independently cached server-side
-            async let c = api.club()
-            async let r = api.rewards()
-            async let l = api.lineups()
+            async let c = api.club(force: force)
+            async let r = api.rewards(force: force)
+            async let l = api.lineups(force: force)
             let (club, rewards, lineups) = try await (c, r, l)
             self.club = club; self.rewards = rewards; self.lineups = lineups
         } catch {

@@ -9,13 +9,13 @@ struct RootView: View {
         TabView {
             NavigationStack {
                 content { ClubView() }
-                    .toolbar { settingsButton }
+                    .toolbar { refreshButton; settingsButton }
             }
             .tabItem { Label("Verein", systemImage: "person.3.fill") }
 
             NavigationStack {
                 content { SuggestionsView() }
-                    .toolbar { settingsButton }
+                    .toolbar { refreshButton; settingsButton }
             }
             .tabItem { Label("Vorschläge", systemImage: "sparkles") }
         }
@@ -42,6 +42,22 @@ struct RootView: View {
     private var settingsButton: some ToolbarContent {
         ToolbarItem(placement: .topBarTrailing) {
             Button { showSettings = true } label: { Image(systemName: "gearshape") }
+        }
+    }
+
+    // Explicit refresh: forces a fresh Sorare fetch (club players + lineups).
+    private var refreshButton: some ToolbarContent {
+        ToolbarItem(placement: .topBarLeading) {
+            Button {
+                Task { await store.refresh(force: true) }
+            } label: {
+                if store.loading {
+                    ProgressView()
+                } else {
+                    Image(systemName: "arrow.clockwise")
+                }
+            }
+            .disabled(store.loading)
         }
     }
 

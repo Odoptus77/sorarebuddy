@@ -42,6 +42,10 @@ Each result is cached on disk (`CACHE_DIR`, default `backend/cache`) for
 `CACHE_TTL` seconds (default 1800). A **stale** entry is served instantly while
 a fresh copy is computed in the background; only a **cold** cache blocks.
 
+Add `&refresh=1` (or `&force=1`) to any `/api/...` route to **bypass the cache**
+and recompute now — this is what the app's Refresh button sends, so a tap
+refetches the club players and lineups from Sorare instead of serving cache.
+
 A cold `rewards`/`club` run scans hundreds of players/fixtures and can take
 several minutes. **Prewarm** so the app never waits:
 

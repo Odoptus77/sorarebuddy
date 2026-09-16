@@ -122,10 +122,17 @@ def _producer(kind, slug, rarities):
     raise ValueError(kind)
 
 
-def get_data(kind, slug, rarities):
+def get_data(kind, slug, rarities, force=False):
     """Return (data, age_seconds). Serves fresh cache directly; serves stale
-    while refreshing in the background; blocks only on a cold miss."""
+    while refreshing in the background; blocks only on a cold miss.
+    force=True skips the cache and recomputes now (single-flight)."""
     key = f"{kind}|{slug}|{rarities}"
+    if force:
+        lk = _lock_for(key)
+        with lk:
+            fresh = _producer(kind, slug, rarities)
+            _write_cache(key, fresh)
+            return fresh, 0.0
     data, age = _read_cache(key)
     if data is not None and age is not None and age < CACHE_TTL:
         return data, age
@@ -191,22 +198,23 @@ class Handler(BaseHTTPRequestHandler):
         q = parse_qs(u.query)
         slug = (q.get("slug", [DEFAULT_SLUG])[0] or "").strip().lower()
         rarities = (q.get("rarities", ["limited,rare"])[0] or "limited,rare").strip()
+        force = (q.get("refresh", q.get("force", ["0"]))[0] or "0").lower() in ("1", "true", "yes")
         if not slug:
             return self._send(400, {"error": "missing slug"})
         try:
             if path == "/api/club":
-                data, age = get_data("club", slug, rarities)
+                data, age = get_data("club", slug, rarities, force)
                 return self._send(200, data, age)
             if path == "/api/rewards":
-                data, age = get_data("rewards", slug, rarities)
+                data, age = get_data("rewards", slug, rarities, force)
                 return self._send(200, data, age)
             if path == "/api/lineups":
-                data, age = get_data("lineups", slug, rarities)
+                data, age = get_data("lineups", slug, rarities, force)
                 return self._send(200, data, age)
             if path == "/api/bundle":
-                club, a1 = get_data("club", slug, rarities)
-                rewards, a2 = get_data("rewards", slug, rarities)
-                lineups, a3 = get_data("lineups", slug, rarities)
+                club, a1 = get_data("club", slug, rarities, force)
+                rewards, a2 = get_data("rewards", slug, rarities, force)
+                lineups, a3 = get_data("lineups", slug, rarities, force)
                 return self._send(200, {"club": club, "rewards": rewards,
                                         "lineups": lineups},
                                   max(a1 or 0, a2 or 0, a3 or 0))
