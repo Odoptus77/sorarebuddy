@@ -1,5 +1,9 @@
 # Deploy the sorarebuddy backend to a VPS
 
+> On **Hostinger**? Follow `deploy/hostinger.md` — a tailored walkthrough
+> (pick the OS, set the DNS A record in hPanel, open the firewall) that wraps
+> the generic steps below.
+
 The backend is pure Python 3 stdlib — no pip install. You need:
 
 - a VPS (Debian/Ubuntu assumed) with root/sudo and Python 3,
