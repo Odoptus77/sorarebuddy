@@ -182,6 +182,9 @@ verfügbar; NIE jemanden auf einer unbestätigten/alten Meldung benchen.**
    Einsatzrate, Verletzung, Marktpreis (Sales-Median) und P/L-Score +
    Empfehlung (Kaufen/Watchlist/Skip) + Zielpreis (−10 %). Rangierung nach der
    adjustierten Form. Unbekannter Gegner → neutral (×1,0).
+   **Standardmäßig nur Kandidaten, die in der aktuellen GW auch spielen** (ein
+   Ersatz „für jetzt" muss im Fenster antreten; `--all-games` hebt das auf).
+   In Länderspiel-GWs also nur nominierte Nationalspieler mit Spiel im Fenster.
 4. **Preis-Caveat:** der Median mischt Saisons und ist nur ein grober „ab-Preis";
    vor einem Kauf den echten aktuellen Floor der einsetzbaren Karte auf Sorare
    gegenprüfen (und `--season` für Präzision nutzen).

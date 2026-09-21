@@ -20,6 +20,7 @@ Usage:
 Slugs are Sorare player slugs (firstname-lastname, e.g. "joshua-kimmich").
 """
 import argparse
+import datetime as dt
 import json
 import os
 import statistics
@@ -27,6 +28,7 @@ import sys
 import unicodedata
 
 from sorare_client import graphql
+from lineup_suggest import get_upcoming_fixture
 
 PLAYER_QUERY = """
 query Scout($slugs: [String!]) {
@@ -167,7 +169,19 @@ def profile(p, price, strength=None, weight=0.0):
         "opponent": opp, "opp_type": opp_type, "matchup": mu, "adj": adj,
         "injured": injured, "price": price, "value": round(value, 3) if value else None,
         "has_game": bool(p.get("nextGame")),
+        "kickoff": (p.get("nextGame") or {}).get("date"),
     }
+
+
+def in_window(kickoff, ws, we):
+    """True if the player's next game falls inside the current gameweek."""
+    if not (kickoff and ws and we):
+        return False
+    try:
+        gd = dt.datetime.fromisoformat(kickoff.replace("Z", "+00:00"))
+    except ValueError:
+        return False
+    return ws <= gd <= we
 
 
 def recommend(c, bench, budget):
@@ -209,9 +223,21 @@ def main(argv):
                     help="opponent-strength file for matchup weighting (as in lineup_suggest)")
     ap.add_argument("--matchup-weight", type=float, default=0.20,
                     help="how strongly the next opponent adjusts form (0 = off)")
+    ap.add_argument("--all-games", action="store_true",
+                    help="keep candidates even if their next game is NOT in the "
+                         "current gameweek (default: only players who play this GW)")
     ap.add_argument("--json", dest="json_out", default=None)
     args = ap.parse_args(argv)
     strength = load_strength(args.strength) if args.matchup_weight else {"clubs": {}, "nations": {}}
+
+    ws = we = None
+    if not args.all_games:
+        fx = get_upcoming_fixture()
+        ws = dt.datetime.fromisoformat(fx["startDate"].replace("Z", "+00:00"))
+        we = dt.datetime.fromisoformat(fx["endDate"].replace("Z", "+00:00"))
+        print(f"GW {fx['gameWeek']} ({fx['slug']}) {ws.date()}–{we.date()} — nur "
+              f"Kandidaten mit Spiel in diesem Fenster (--all-games hebt das auf).\n",
+              file=sys.stderr)
 
     cand_slugs = [s.strip() for s in args.candidates.split(",") if s.strip()]
     all_slugs = ([args.like] if args.like else []) + cand_slugs
@@ -241,6 +267,8 @@ def main(argv):
         c = profile(players[s], prices.get(s), strength, w)
         if args.position and args.position not in (c["pos"] or ""):
             continue
+        if not args.all_games and not in_window(c["kickoff"], ws, we):
+            continue                       # doesn't play this GW -> useless now
         rec, why = recommend(c, bench, args.budget)
         c["rec"], c["why"], c["target"] = rec, why, target_price(c)
         rows.append(c)
