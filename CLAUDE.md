@@ -91,6 +91,7 @@ Alle dependency-frei (nur Python-Stdlib), lesen den Key aus `.env.local`:
 | … mit Ausschluss verletzter/gesperrter Spieler | `python3 lineup_suggest.py nicktd7 --exclude "slug-oder-name,…" --json lineups.json` |
 | … Matchup-Gewichtung (Gegnerstärke) | standardmäßig AN: liest `team_strength.json`, `--matchup-weight 0.20` (0 = aus) |
 | Rewards je Spieler | `python3 rewards_by_player.py nicktd7 --json rewards.json` |
+| Scouting: Ersatz/Ziel-Spieler bewerten | `python3 scout.py --like <slug> --candidates "slug1,slug2,…" [--budget 40] [--position Defender]` |
 | Voraussichtliche Startelf (SofaScore) | `python3 sofascore_lineups.py "Real Madrid"` |
 | HTML-Dashboard aus club.json | `python3 build_dashboard.py club.json --out dashboard.html` |
 
@@ -170,13 +171,18 @@ verfügbar; NIE jemanden auf einer unbestätigten/alten Meldung benchen.**
 3. Karten-Wert/Trend aus `club.json` (delta_eur / delta_pct) einbeziehen.
 4. Kurzer, priorisierter Report: was sich verändert hat + Empfehlung je Spieler.
 
-### B) Scouting-Report (Aufgabe 2)
-1. Suchraum wählen (Nicks Ligen/Schwerpunkte oder eine offene Position).
-2. Kandidaten über Sorare-Queries (Form/Position/Club) + WebSearch (Aufsteiger,
-   Formstarke, Talente) sammeln.
-3. Karten-Marktpreis prüfen (`tokenPrices` je Spieler+Rarity+Season, vgl.
-   `club_overview.py`), Preis/Leistung bewerten.
-4. Ranked Watchlist mit Kaufempfehlung + Zielpreis.
+### B) Scouting-Report (Aufgabe 2) — `scout.py`
+1. Suchraum/Anlass wählen (z. B. Ersatz für Kristensen = RV; oder offene Position,
+   Nicks Ligen). Ggf. Benchmark-Spieler mit `--like <slug>`.
+2. **Kandidaten-Namen** sammeln (WebSearch: formstarke/aufstrebende Spieler der
+   passenden Position/Liga; Grundregel #0 fürs Datum). Slugs = firstname-lastname.
+3. `python3 scout.py --like <slug> --candidates "slugA,slugB,…"` liefert je
+   Kandidat: Form (L15/L5), Einsatzrate, Verletzung, Marktpreis (Sales-Median)
+   und P/L-Score + Empfehlung (Kaufen/Watchlist/Skip) + Zielpreis (−10 %).
+4. **Preis-Caveat:** der Median mischt Saisons und ist nur ein grober „ab-Preis";
+   vor einem Kauf den echten aktuellen Floor der einsetzbaren Karte auf Sorare
+   gegenprüfen (und `--season` für Präzision nutzen).
+5. Ergebnis: ranked Watchlist mit klarer Empfehlung.
 
 ## Konventionen
 
