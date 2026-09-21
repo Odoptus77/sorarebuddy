@@ -168,9 +168,15 @@ def rarity_of(t):
     return None
 
 
-def get_upcoming_fixture():
+def get_upcoming_fixture(slug=None):
     q = "{ so5 { so5Fixtures(first: 8) { nodes { slug gameWeek aasmState startDate endDate } } } }"
     nodes = graphql(q)["data"]["so5"]["so5Fixtures"]["nodes"]
+    if slug:                                   # explicit fixture (e.g. next GW)
+        for n in nodes:
+            if n["slug"] == slug or str(n["gameWeek"]) == str(slug):
+                return n
+        sys.exit(f"Fixture '{slug}' not found. Available: "
+                 + ", ".join(n["slug"] for n in nodes))
     now = dt.datetime.now(dt.timezone.utc)
     up = []
     for n in nodes:
@@ -690,6 +696,10 @@ def main(argv):
                     help="how strongly the opponent's strength swings the "
                          "projection. factor = 1 + w*(0.5 - opp_strength); "
                          "0.20 => +/-10%% at the extremes. 0 disables it.")
+    ap.add_argument("--fixture", default=None,
+                    help="build for a specific fixture slug or gameweek number "
+                         "instead of the next one (e.g. football-25-29-sep-2026 "
+                         "for the MLS Hot Streak round during an int'l break)")
     ap.add_argument("--sofascore", action="store_true",
                     help="opt in to SofaScore predicted-lineup enrichment "
                          "(needs api.sofascore.com allowed; SofaScore IP-blocks "
@@ -766,7 +776,7 @@ def main(argv):
         e["proj"] = round(e["proj"] * factor, 1)
         e["ev"] = round(e["proj"] * e["start_prob"], 1)
 
-    fx = get_upcoming_fixture()
+    fx = get_upcoming_fixture(args.fixture)
     ws = dt.datetime.fromisoformat(fx["startDate"].replace("Z", "+00:00"))
     we = dt.datetime.fromisoformat(fx["endDate"].replace("Z", "+00:00"))
     print(f"Upcoming GW {fx['gameWeek']} ({fx['slug']}) {ws.date()}–{we.date()}", file=sys.stderr)

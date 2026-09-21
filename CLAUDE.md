@@ -88,6 +88,7 @@ Alle dependency-frei (nur Python-Stdlib), lesen den Key aus `.env.local`:
 | Beliebige GraphQL-Query | `python3 sorare_client.py query '{ ... }'` |
 | Kader + Einkaufspreis vs. Marktwert | `python3 club_overview.py nicktd7 --json club.json` |
 | Aufstellungs-Vorschlag je Wettbewerb | `python3 lineup_suggest.py nicktd7 --json lineups.json` |
+| … für eine bestimmte GW (z. B. MLS-Hot-Streak in Länderspielpause) | `python3 lineup_suggest.py nicktd7 --fixture football-25-29-sep-2026` |
 | … mit Ausschluss verletzter/gesperrter Spieler | `python3 lineup_suggest.py nicktd7 --exclude "slug-oder-name,…" --json lineups.json` |
 | … Matchup-Gewichtung (Gegnerstärke) | standardmäßig AN: liest `team_strength.json`, `--matchup-weight 0.20` (0 = aus) |
 | Rewards je Spieler | `python3 rewards_by_player.py nicktd7 --json rewards.json` |
