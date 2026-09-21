@@ -27,3 +27,6 @@ DerivedData/
 .DS_Store
 .idea/
 .vscode/
+
+# Accepted lineup baseline for the 5h sync check (account data, do not commit)
+baseline_lineup.json
