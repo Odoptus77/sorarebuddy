@@ -51,6 +51,23 @@ def load_env(path=".env.local"):
             os.environ.setdefault(key, value)
 
 
+_ENV_LOADED = False
+
+
+def _ensure_env():
+    """Load .env.local once so importers get the key without each remembering.
+
+    Scripts that call graphql() directly (lineup_suggest, rewards_by_player,
+    ...) would otherwise run without SORARE_API_KEY -- dropping to the low
+    (500) complexity limit instead of the 30000 an API key grants. Real
+    environment values still win (load_env uses setdefault).
+    """
+    global _ENV_LOADED
+    if not _ENV_LOADED:
+        load_env()
+        _ENV_LOADED = True
+
+
 def graphql(query, variables=None, retries=3, timeout=45):
     """Execute a GraphQL request and return the parsed JSON response.
 
@@ -64,6 +81,7 @@ def graphql(query, variables=None, retries=3, timeout=45):
     Transient network errors (timeouts, dropped connections) are retried with
     exponential backoff before giving up.
     """
+    _ensure_env()
     payload = json.dumps({"query": query, "variables": variables or {}}).encode()
     headers = {
         "Content-Type": "application/json",
