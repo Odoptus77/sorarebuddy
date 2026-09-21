@@ -659,6 +659,12 @@ def main(argv):
                          "from the pool (injured/suspended players that Sorare's "
                          "own injury feed does not yet flag). Matched case- and "
                          "accent-insensitively against slug and display name.")
+    ap.add_argument("--start-override", default="start_overrides.json",
+                    help="JSON {player_slug: probability 0..1} to REPLACE the "
+                         "model's club-based start probability. Use it for "
+                         "national-team games, where club minutes don't predict "
+                         "selection -- research the probable XI and set your own "
+                         "number here. Missing file/slug -> keep the model value.")
     ap.add_argument("--strength", default="team_strength.json",
                     help="JSON with opponent strength ratings (0..1, higher = "
                          "stronger) to weight the projection by matchup. Format: "
@@ -684,6 +690,20 @@ def main(argv):
         return "".join(ch for ch in s if not unicodedata.combining(ch))
 
     excluded = {_norm(x) for x in args.exclude.split(",") if x.strip()}
+
+    # Researched start-probability overrides (mainly national-team games).
+    start_overrides = {}
+    if os.path.exists(args.start_override):
+        try:
+            with open(args.start_override, encoding="utf-8") as fh:
+                raw = json.load(fh)
+            start_overrides = {k: float(v) for k, v in raw.items()
+                               if not k.startswith("_")}
+            print(f"Start-prob overrides from {args.start_override}: "
+                  f"{len(start_overrides)} players.", file=sys.stderr)
+        except (ValueError, OSError) as exc:
+            print(f"WARNING: could not read --start-override "
+                  f"{args.start_override}: {exc}", file=sys.stderr)
 
     # Opponent strength (0..1, higher = stronger) for matchup weighting.
     strength = {"clubs": {}, "nations": {}}
@@ -757,8 +777,15 @@ def main(argv):
                 best[e["player_slug"]] = e
         for e in best.values():
             e["is_classic"] = (e.get("season") or 0) < current_season
+            ov = start_overrides.get(e["player_slug"])
+            if ov is not None:
+                e["start_prob"] = round(max(0.0, min(1.0, ov)), 3)
+                e["start_src"] = "researched"
+                e["ev"] = round(e["proj"] * e["start_prob"], 1)
             apply_matchup(e)
-        pools[rar] = list(best.values())
+        # Drop (near-)certain non-starters AFTER overrides too: a researched
+        # 0% (e.g. suspended) player must never be fielded, even as a fallback.
+        pools[rar] = [e for e in best.values() if e["start_prob"] >= 0.10]
         print(f"  {rar}: {len(pools[rar])} eligible players", file=sys.stderr)
     if excluded:
         if dropped:

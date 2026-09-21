@@ -105,6 +105,23 @@ verfügbar; NIE jemanden auf einer unbestätigten/alten Meldung benchen.**
 5. Startquoten aus dem Optimierer sind **modelliert**, keine offizielle Startelf.
    Kurz vor der Deadline (offizielle XI ~1 h vorher) knappe Fälle final checken.
 
+### Eigene Startelf-Prognose für Länderspiele (Gegenpol zu Sorare)
+
+- Mein Modell rechnet Startquoten aus **Vereins**-Minuten — bei **Länderspielpausen**
+  (Gegner = Nationalteam) ist das unbrauchbar (Vereins-Stammspieler ≠ Nationalelf-
+  Starter). Deshalb eigene, recherchierte Startquoten in **`start_overrides.json`**
+  (`{player_slug: 0..1}`), die das Modell überschreiben (`--start-override`,
+  standardmäßig an).
+- **Methodik (Pflicht bei Länderspiel-GWs):** pro betroffenem Nationalteam
+  **3–4 voraussichtliche Aufstellungen** (WhoScored, Sports Mole, GiveMeSport,
+  FotMob, Sofascore …) heranziehen, Quellen-Aktualität nach den ≤7-Tage-Regeln
+  prüfen (Falle: veraltete Elf mit zurückgetretenen Spielern), dann eine **eigene
+  Wahrscheinlichkeit** je Spieler bilden. Darf Sorare bewusst widersprechen —
+  aber nur gut belegt. Auch **Sperren** zählen (mein Verletzungsfeed übersieht sie).
+- 0 % / ganz niedrige Werte (gesperrt, klarer Ersatz) fliegen aus dem Pool
+  (kein Fielden von Nicht-Startern). Datei jede Länderspielpause neu erstellen;
+  für reine Club-GWs leeren/ignorieren (dann greift wieder das Vereinsmodell).
+
 ### Matchup-Gewichtung (Gegnerstärke)
 
 - `lineup_suggest.py` bezieht die **Gegnerstärke** in die Projektion ein: Faktor
