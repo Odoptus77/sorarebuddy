@@ -62,17 +62,32 @@ Für **Recherche/News** (nicht in der Sorare-API enthalten): `WebSearch` /
 `WebFetch` nutzen (Verletzungen, Startelf, Transfers, Sperren) und wo möglich
 mit `sofascore_lineups.py` (voraussichtliche Aufstellung) gegenprüfen.
 
-### ⚠️ Recherche-Regeln (Pflicht)
-1. **Quelldatum immer prüfen.** Ein Artikel über eine „Verletzung"/„OP" kann aus
-   einer Vorsaison stammen. Bevor du jemanden als Ausfall/fraglich meldest, das
-   Datum verifizieren — am besten über ein **aktuelles Spiel-Log** (FotMob/ESPN
-   „letzte Spiele" / „matches"): Hat der Spieler in den letzten Tagen gespielt
-   und wie viele Minuten? Ein Spieler mit 90 Minuten letzte Woche ist nicht „out".
-   (Gilt symmetrisch: auch ein alter „ist zurück"-Artikel ist kein Beleg.)
-2. **Ausfälle in die Aufstellung einfließen lassen:** verletzte/gesperrte Spieler,
-   die Sorares eigener Injury-Feed noch nicht kennt, per
-   `lineup_suggest.py --exclude "…"` aus dem Pool nehmen und neu rechnen.
-3. Startquoten aus dem Optimierer sind **modelliert**, keine offizielle Startelf.
+### ⚠️ Recherche-Regeln (Pflicht) — nach zwei Fehlgriffen mit veralteten Quellen
+
+**Goldene Regel: Nur News verwenden, die max. 7 Tage alt sind — und jede
+Aussage ein zweites Mal gegenchecken. Im Zweifel gilt der Spieler als
+verfügbar; NIE jemanden auf einer unbestätigten/alten Meldung benchen.**
+
+1. **7-Tage-Fenster.** Eine Verletzungs-/Startelf-/Sperren-Meldung nur nutzen,
+   wenn sie **≤ 7 Tage alt** ist. Immer sowohl das **Veröffentlichungsdatum**
+   als auch das **Ereignisdatum** prüfen (Jahr explizit!). Häufige Fallen:
+   - Artikel aus der **Vorsaison** (gleiches Kalenderdatum, falsches Jahr).
+   - **Tweet-Zeitstempel**: die Snowflake-ID / das angezeigte Jahr verifizieren —
+     nicht schätzen. (Ein Sept-2025-Tweet ist für Sept 2026 wertlos.)
+2. **Doppelter Gegencheck (zwei unabhängige Quellen).** Bevor jemand als
+   Ausfall/fraglich **oder** als „wieder fit" gemeldet wird, mit **einem
+   zweiten, aktuellen Beleg** bestätigen — vorrangig das **Spiel-Log der letzten
+   14 Tage** (FotMob/ESPN „matches"/„letzte Spiele"): Hat er gespielt, wie viele
+   Minuten? Ein 90-Minuten-Einsatz letzte Woche schlägt jeden Artikel; ein alter
+   „ist zurück"-Artikel ist ohne Spiel-Log kein Beleg. Beide Quellen müssen
+   ≤ 7 Tage aktuell sein.
+3. **Kein Beleg → kein Ausschluss.** Findet sich kein ≤7-Tage-Beleg, der von
+   zwei Quellen gestützt ist, bleibt der Spieler **drin** und wird höchstens als
+   „unbestätigt, vor Deadline prüfen" markiert — nicht per `--exclude` entfernt.
+4. **Ausfälle einfließen lassen:** erst NACH bestandenem Doppelcheck verletzte/
+   gesperrte Spieler per `lineup_suggest.py --exclude "…"` aus dem Pool nehmen
+   und neu rechnen.
+5. Startquoten aus dem Optimierer sind **modelliert**, keine offizielle Startelf.
    Kurz vor der Deadline (offizielle XI ~1 h vorher) knappe Fälle final checken.
 
 ## Standard-Workflows
