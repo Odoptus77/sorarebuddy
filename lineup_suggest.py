@@ -12,17 +12,22 @@ excluding injured players and players without a game in the gameweek.
 
 Only the general All Star / Champion competitions are built (no per-player
 league or age filter needed). League-specific (SPFL, LALIGA, ...) and Under-21
-competitions are skipped. Opponent strength and non-injury news aren't in the
-API. A card may be reused across DIFFERENT competitions (Sorare allows this);
+competitions are skipped. Opponent strength is not in the Sorare API but can be
+supplied via --strength (a JSON of 0..1 ratings per club/nation); the projection
+is then scaled by the matchup (weak opponent -> up, strong -> down). Non-injury
+news still isn't in the API -- cross-check it per CLAUDE.md before the deadline.
+A card may be reused across DIFFERENT competitions (Sorare allows this);
 within one competition's multiple teams the cards are distinct.
 
 Usage:
     python3 lineup_suggest.py <manager-slug> [--json lineups.json] [--rarities limited,rare]
         [--exclude "player-slug-or-name,..."]   # drop injured/suspended players
+        [--strength team_strength.json] [--matchup-weight 0.20]  # weight by opponent
 """
 import argparse
 import datetime as dt
 import json
+import os
 import re
 import sys
 import time
@@ -127,9 +132,12 @@ query Cards($slug: String!, $after: String, $rarities: [Rarity!]) {
 
 PLAYER_FIELDS = """
   slug displayName anyPositions age lastFifteenSo5Appearances
+  country { code }
   activeClub { ... on Club { name country { code } domesticLeague { slug } } }
   activeInjuries { kind expectedEndDate active }
-  nextGame { date statusTyped homeTeam { ... on Club { name } } awayTeam { ... on Club { name } } }
+  nextGame { date statusTyped
+    homeTeam { __typename name ... on NationalTeam { country { code } } }
+    awayTeam { __typename name ... on NationalTeam { country { code } } } }
   playerGameScores(last: %d) { anyGame { date } detailedScore { stat statValue } }
   l5: averageScore(type: LAST_FIVE_SO5_AVERAGE_SCORE)
   l15: averageScore(type: LAST_FIFTEEN_SO5_AVERAGE_SCORE)
@@ -453,9 +461,26 @@ def eligible_entry(card, pd, ws, we):
         return None          # (near-)certain absentee: drop entirely
     app = pd.get("lastFifteenSo5Appearances") or 0
     club = (pd.get("activeClub") or {}).get("name")
-    home = (ng.get("homeTeam") or {}).get("name")
-    away = (ng.get("awayTeam") or {}).get("name")
-    is_home = club is not None and club == home
+    home_t = ng.get("homeTeam") or {}
+    away_t = ng.get("awayTeam") or {}
+    nat = (pd.get("country") or {}).get("code")
+
+    def _is_mine(team):
+        # Club game: match on club name. National game: match the player's
+        # nationality code against the national team's country code (the club
+        # name never matches a national team, which mis-assigned the opponent).
+        if team.get("__typename") == "NationalTeam":
+            return nat is not None and (team.get("country") or {}).get("code") == nat
+        return club is not None and team.get("name") == club
+
+    if _is_mine(home_t):
+        is_home, opp_team = True, away_t
+    elif _is_mine(away_t):
+        is_home, opp_team = False, home_t
+    else:
+        is_home, opp_team = False, home_t   # unknown side -> assume away
+    opponent = opp_team.get("name")
+    opp_type = opp_team.get("__typename")   # "Club" or "NationalTeam"
     proj = round(l5 * (0.75 + 0.25 * min(1.0, app / 15.0)) * (1.03 if is_home else 1.0), 1)
     ev = round(proj * start_prob, 1)   # expected value = projection x P(start)
     club = pd.get("activeClub") or {}
@@ -470,7 +495,8 @@ def eligible_entry(card, pd, ws, we):
             "injured": bool(pd.get("activeInjuries")),
             "cap_score": round(l15 if l15 else l5, 1),
             "l5": round(l5, 1), "appearances": app, "league": league, "country": country,
-            "home": is_home, "opponent": away if is_home else home,
+            "home": is_home, "opponent": opponent,
+            "opp_type": opp_type, "matchup": 1.0,
             "kickoff": ng["date"]}
 
 
@@ -575,6 +601,16 @@ def main(argv):
                          "from the pool (injured/suspended players that Sorare's "
                          "own injury feed does not yet flag). Matched case- and "
                          "accent-insensitively against slug and display name.")
+    ap.add_argument("--strength", default="team_strength.json",
+                    help="JSON with opponent strength ratings (0..1, higher = "
+                         "stronger) to weight the projection by matchup. Format: "
+                         '{"clubs": {"FC Porto": 0.9, ...}, '
+                         '"nations": {"Germany": 0.95, ...}}. Missing file or '
+                         "unknown opponent -> neutral (no matchup effect).")
+    ap.add_argument("--matchup-weight", type=float, default=0.20,
+                    help="how strongly the opponent's strength swings the "
+                         "projection. factor = 1 + w*(0.5 - opp_strength); "
+                         "0.20 => +/-10%% at the extremes. 0 disables it.")
     ap.add_argument("--sofascore", action="store_true",
                     help="opt in to SofaScore predicted-lineup enrichment "
                          "(needs api.sofascore.com allowed; SofaScore IP-blocks "
@@ -590,6 +626,35 @@ def main(argv):
         return "".join(ch for ch in s if not unicodedata.combining(ch))
 
     excluded = {_norm(x) for x in args.exclude.split(",") if x.strip()}
+
+    # Opponent strength (0..1, higher = stronger) for matchup weighting.
+    strength = {"clubs": {}, "nations": {}}
+    if args.matchup_weight and os.path.exists(args.strength):
+        try:
+            with open(args.strength, encoding="utf-8") as fh:
+                raw = json.load(fh)
+            for bucket in ("clubs", "nations"):
+                strength[bucket] = {_norm(k): float(v)
+                                    for k, v in (raw.get(bucket) or {}).items()}
+            print(f"Matchup weighting on (w={args.matchup_weight}) from "
+                  f"{args.strength}: {len(strength['clubs'])} clubs, "
+                  f"{len(strength['nations'])} nations.", file=sys.stderr)
+        except (ValueError, OSError) as exc:
+            print(f"WARNING: could not read --strength {args.strength}: {exc} "
+                  "-> matchup weighting off.", file=sys.stderr)
+
+    def apply_matchup(e):
+        """Scale proj/ev by the opponent's strength. Neutral if unknown."""
+        if not args.matchup_weight or not e.get("opponent"):
+            return
+        table = strength["nations"] if e.get("opp_type") == "NationalTeam" else strength["clubs"]
+        s = table.get(_norm(e["opponent"]))
+        if s is None:
+            return                       # unknown opponent -> no change
+        factor = 1.0 + args.matchup_weight * (0.5 - s)
+        e["matchup"] = round(factor, 3)
+        e["proj"] = round(e["proj"] * factor, 1)
+        e["ev"] = round(e["proj"] * e["start_prob"], 1)
 
     fx = get_upcoming_fixture()
     ws = dt.datetime.fromisoformat(fx["startDate"].replace("Z", "+00:00"))
@@ -634,6 +699,7 @@ def main(argv):
                 best[e["player_slug"]] = e
         for e in best.values():
             e["is_classic"] = (e.get("season") or 0) < current_season
+            apply_matchup(e)
         pools[rar] = list(best.values())
         print(f"  {rar}: {len(pools[rar])} eligible players", file=sys.stderr)
     if excluded:

@@ -68,6 +68,7 @@ Alle dependency-frei (nur Python-Stdlib), lesen den Key aus `.env.local`:
 | Kader + Einkaufspreis vs. Marktwert | `python3 club_overview.py nicktd7 --json club.json` |
 | Aufstellungs-Vorschlag je Wettbewerb | `python3 lineup_suggest.py nicktd7 --json lineups.json` |
 | … mit Ausschluss verletzter/gesperrter Spieler | `python3 lineup_suggest.py nicktd7 --exclude "slug-oder-name,…" --json lineups.json` |
+| … Matchup-Gewichtung (Gegnerstärke) | standardmäßig AN: liest `team_strength.json`, `--matchup-weight 0.20` (0 = aus) |
 | Rewards je Spieler | `python3 rewards_by_player.py nicktd7 --json rewards.json` |
 | Voraussichtliche Startelf (SofaScore) | `python3 sofascore_lineups.py "Real Madrid"` |
 | HTML-Dashboard aus club.json | `python3 build_dashboard.py club.json --out dashboard.html` |
@@ -103,6 +104,23 @@ verfügbar; NIE jemanden auf einer unbestätigten/alten Meldung benchen.**
    und neu rechnen.
 5. Startquoten aus dem Optimierer sind **modelliert**, keine offizielle Startelf.
    Kurz vor der Deadline (offizielle XI ~1 h vorher) knappe Fälle final checken.
+
+### Matchup-Gewichtung (Gegnerstärke)
+
+- `lineup_suggest.py` bezieht die **Gegnerstärke** in die Projektion ein: Faktor
+  `1 + w·(0,5 − Gegnerstärke)`, Standard `w=0,20` (±10 % an den Extremen; dezent,
+  Form bleibt dominant). Schwacher Gegner → Aufwertung, starker Gegner → Abwertung.
+- Stärken stehen in **`team_strength.json`** (0..1, höher = stärker), getrennt in
+  `nations` und `clubs`. Der Gegner-Typ (Club vs. Nationalteam) kommt aus der API;
+  bei Länderspielpausen sind die Gegner Nationalteams (Stärke ≈ FIFA-Ranking),
+  sonst Clubs (Stärke ≈ Ligatabelle/Form). Unbekannter Gegner → neutral (×1,0).
+- **Pflege (Option B, live):** Werte regelmäßig aus aktuellen Ligatabellen/FIFA-
+  Ranking auffrischen — v. a. beim Startelf-Check die im Pool auftauchenden Gegner
+  gegenchecken und `team_strength.json` ergänzen. Datei ist öffentlich (kein
+  Secret) und wird committet.
+- Heim/Gegner wird korrekt bestimmt: Clubspiel über den Clubnamen, Länderspiel
+  über die **Nationalität** des Spielers (`player.country.code`) vs. Ländercode
+  der Nationalteams — nicht über den Clubnamen (der matcht dort nie).
 
 ## Standard-Workflows
 

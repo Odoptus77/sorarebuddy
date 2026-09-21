@@ -1,0 +1,20 @@
+{
+  "_comment": "Opponent strength ratings 0..1 (higher = stronger) for lineup_suggest.py matchup weighting (--strength). Nations ~FIFA-ranking tier (last FIFA update Jul 2026; Norway boosted as WC2026 quarter-finalists). Clubs ~relative strength within their league. Refresh from current standings/rankings; keys are matched case/accent-insensitively.",
+  "_updated": "2026-09-21",
+  "nations": {
+    "Netherlands": 0.88,
+    "Germany": 0.86,
+    "Norway": 0.72,
+    "Denmark": 0.70,
+    "Austria": 0.66,
+    "Serbia": 0.60,
+    "Wales": 0.56,
+    "Israel": 0.40
+  },
+  "clubs": {
+    "Seattle Sounders FC": 0.62,
+    "Independiente Santa Fe SA": 0.52,
+    "Real Salt Lake": 0.50,
+    "Jaguares de Córdoba FC": 0.42
+  }
+}
