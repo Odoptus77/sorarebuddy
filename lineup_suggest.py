@@ -4,11 +4,14 @@
 Public data only (no OAuth). Reads the gameweek's competition structure and
 builds the best lineup(s) for each general competition, respecting:
   - format: Classic = SO7 (7 cards), Arena = SO5 (5 cards)
-  - the SO5/SO7 formation (GK, DEF, MID, FWD, + Extra(s))
+  - the formation: SO5 = GK, DEF, MID, FWD, Extra; SO7 = GK, 2x DEF, 2x MID,
+    FWD, Extra (Extra = any outfield position)
   - the cap (Arena only): sum of the cards' L15 average score <= cap
   - teamsCap: up to N teams per competition, each using DISTINCT cards
-maximising projected score (recent form x appearance rate x home edge),
-excluding injured players and players without a game in the gameweek.
+  - no defence-vs-attack clash: within one team we avoid pairing our GK/DEF
+    with an opposing FWD from the SAME match (their points partly cancel)
+maximising projected score (recent form x appearance rate x home edge x
+opponent matchup), excluding injured players and players without a game.
 
 Only the general All Star / Champion competitions are built (no per-player
 league or age filter needed). League-specific (SPFL, LALIGA, ...) and Under-21
@@ -39,6 +42,20 @@ PLAYER_BATCH = 10   # detailedScore (minutes) per game inflates query complexity
 GAMES_BACK = 5      # recent games used for the Startelf (start-probability) score
 PACE = 0.25
 POS_SLOTS = ["Goalkeeper", "Defender", "Midfielder", "Forward"]
+
+# Exact slot make-up per lineup size (EXTRA = any outfield position).
+#   SO5 (Arena):     GK, DEF, MID, FWD, Extra
+#   SO7 (Pro/Classic): GK, 2x DEF, 2x MID, FWD, Extra
+FORMATIONS = {
+    5: ["Goalkeeper", "Defender", "Midfielder", "Forward", "EXTRA"],
+    7: ["Goalkeeper", "Defender", "Defender", "Midfielder", "Midfielder",
+        "Forward", "EXTRA"],
+}
+
+
+def formation_for(size):
+    """Slot list for a lineup of `size` cards (falls back to 1-per-line+extras)."""
+    return FORMATIONS.get(size, list(POS_SLOTS) + ["EXTRA"] * (size - 4))
 RARITY_TOKENS = [("super_rare", "SUPER_RARE"), ("limited", "LIMITED"),
                  ("rare", "RARE"), ("unique", "UNIQUE")]
 # IN_SEASON_<TOKEN> competition -> (domesticLeague slug prefix, readable name).
@@ -474,13 +491,16 @@ def eligible_entry(card, pd, ws, we):
         return club is not None and team.get("name") == club
 
     if _is_mine(home_t):
-        is_home, opp_team = True, away_t
+        is_home, opp_team, my_team = True, away_t, home_t
     elif _is_mine(away_t):
-        is_home, opp_team = False, home_t
+        is_home, opp_team, my_team = False, home_t, away_t
     else:
-        is_home, opp_team = False, home_t   # unknown side -> assume away
+        is_home, opp_team, my_team = False, home_t, away_t  # unknown side -> assume away
     opponent = opp_team.get("name")
     opp_type = opp_team.get("__typename")   # "Club" or "NationalTeam"
+    team_name = my_team.get("name")
+    # Stable id for the fixture, side-independent: the two team names + kickoff.
+    fixture = "|".join(sorted(x for x in (team_name, opponent) if x)) + "@" + ng["date"]
     proj = round(l5 * (0.75 + 0.25 * min(1.0, app / 15.0)) * (1.03 if is_home else 1.0), 1)
     ev = round(proj * start_prob, 1)   # expected value = projection x P(start)
     club = pd.get("activeClub") or {}
@@ -497,6 +517,7 @@ def eligible_entry(card, pd, ws, we):
             "l5": round(l5, 1), "appearances": app, "league": league, "country": country,
             "home": is_home, "opponent": opponent,
             "opp_type": opp_type, "matchup": 1.0,
+            "team_name": team_name, "fixture": fixture,
             "kickoff": ng["date"]}
 
 
@@ -513,17 +534,54 @@ def cands(pool, slot, blocked, min_start=0.0):
                                      c.get("ev", c["proj"])), reverse=True)
 
 
+def _role(slot, entry):
+    """Coarse role for the same-fixture conflict rule."""
+    if slot in ("Goalkeeper", "Defender"):
+        return "def"
+    if slot == "Forward":
+        return "att"
+    if slot == "Midfielder":
+        return "mid"
+    pos = entry.get("positions") or []          # EXTRA: infer from the player
+    if "Forward" in pos:
+        return "att"
+    if "Defender" in pos or "Goalkeeper" in pos:
+        return "def"
+    return "mid"
+
+
+def _fixture_conflict(slot, cand, chosen, slot_list):
+    """True if `cand` would face an already-picked team-mate-of-the-lineup from
+    the opposite side of the SAME match in a defence-vs-attack pairing (e.g. our
+    keeper/defender vs the opponent's forward). Those points partly cancel, so
+    we avoid stacking both sides of one game as GK/DEF against FWD."""
+    r = _role(slot, cand)
+    if r == "mid":
+        return False
+    for cidx, other in chosen.items():
+        if (other.get("fixture") == cand.get("fixture")
+                and other.get("team_name") != cand.get("team_name")
+                and {r, _role(slot_list[cidx], other)} == {"def", "att"}):
+            return True
+    return False
+
+
 def build_team(pool, used, size, cap, max_classic=None, min_start=0.0):
     def _ev(c):
         return c.get("ev", c["proj"])
-    slot_list = list(POS_SLOTS) + ["EXTRA"] * (size - 4)
+    slot_list = formation_for(size)
     chosen = {}          # slot index -> card
     blocked = set(used)
     for idx, slot in enumerate(slot_list):
         cs = cands(pool, slot, blocked, min_start)
-        if cs:
-            chosen[idx] = cs[0]
-            blocked.add(cs[0]["slug"])
+        if not cs:
+            continue
+        # Prefer the best candidate that doesn't clash with an opposing player
+        # from the same fixture; fall back to the best one so no slot is empty.
+        pick = next((c for c in cs
+                     if not _fixture_conflict(slot, c, chosen, slot_list)), cs[0])
+        chosen[idx] = pick
+        blocked.add(pick["slug"])
     if max_classic is not None:
         # Hot Streak: keep at most `max_classic` classic (non-in-season) cards.
         guard = 0
