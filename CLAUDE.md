@@ -91,7 +91,7 @@ Alle dependency-frei (nur Python-Stdlib), lesen den Key aus `.env.local`:
 | … mit Ausschluss verletzter/gesperrter Spieler | `python3 lineup_suggest.py nicktd7 --exclude "slug-oder-name,…" --json lineups.json` |
 | … Matchup-Gewichtung (Gegnerstärke) | standardmäßig AN: liest `team_strength.json`, `--matchup-weight 0.20` (0 = aus) |
 | Rewards je Spieler | `python3 rewards_by_player.py nicktd7 --json rewards.json` |
-| Scouting: Ersatz/Ziel-Spieler bewerten | `python3 scout.py --like <slug> --candidates "slug1,slug2,…" [--budget 40] [--position Defender]` |
+| Scouting: Ersatz/Ziel-Spieler bewerten | `python3 scout.py --like <slug> --candidates "slug1,slug2,…" [--budget 40] [--position Defender]` (Matchup-Gewichtung standardmäßig an, `--matchup-weight 0`=aus) |
 | Voraussichtliche Startelf (SofaScore) | `python3 sofascore_lineups.py "Real Madrid"` |
 | HTML-Dashboard aus club.json | `python3 build_dashboard.py club.json --out dashboard.html` |
 
@@ -177,8 +177,11 @@ verfügbar; NIE jemanden auf einer unbestätigten/alten Meldung benchen.**
 2. **Kandidaten-Namen** sammeln (WebSearch: formstarke/aufstrebende Spieler der
    passenden Position/Liga; Grundregel #0 fürs Datum). Slugs = firstname-lastname.
 3. `python3 scout.py --like <slug> --candidates "slugA,slugB,…"` liefert je
-   Kandidat: Form (L15/L5), Einsatzrate, Verletzung, Marktpreis (Sales-Median)
-   und P/L-Score + Empfehlung (Kaufen/Watchlist/Skip) + Zielpreis (−10 %).
+   Kandidat: Form (L15/L5), **Matchup-adjustierte Form** (Form × Gegnerstärke
+   des nächsten Spiels, gleiche `team_strength.json` wie der Optimierer),
+   Einsatzrate, Verletzung, Marktpreis (Sales-Median) und P/L-Score +
+   Empfehlung (Kaufen/Watchlist/Skip) + Zielpreis (−10 %). Rangierung nach der
+   adjustierten Form. Unbekannter Gegner → neutral (×1,0).
 4. **Preis-Caveat:** der Median mischt Saisons und ist nur ein grober „ab-Preis";
    vor einem Kauf den echten aktuellen Floor der einsetzbaren Karte auf Sorare
    gegenprüfen (und `--season` für Präzision nutzen).
