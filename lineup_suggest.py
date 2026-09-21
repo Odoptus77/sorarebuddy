@@ -140,7 +140,7 @@ query Cards($slug: String!, $after: String, $rarities: [Rarity!]) {
   user(slug: $slug) {
     cards(first: %d, after: $after, rarities: $rarities) {
       pageInfo { hasNextPage endCursor }
-      nodes { slug rarityTyped seasonYear
+      nodes { slug rarityTyped seasonYear anyPositions
         anyPlayer { slug displayName anyPositions } }
     }
   }
@@ -508,7 +508,10 @@ def eligible_entry(card, pd, ws, we):
     country = (club.get("country") or {}).get("code")
     return {"slug": card["slug"], "player": card["anyPlayer"]["displayName"],
             "player_slug": card["anyPlayer"]["slug"], "season": card.get("seasonYear"),
-            "positions": card["anyPlayer"].get("anyPositions") or [],
+            # Slot by the CARD's position (what Sorare enforces), not the
+            # player's real-life position -- they can differ (e.g. a midfielder
+            # on a Forward card). Fall back to the player position if absent.
+            "positions": card.get("anyPositions") or card["anyPlayer"].get("anyPositions") or [],
             "age": pd.get("age"), "club_name": club.get("name"),
             "proj": proj, "ev": ev, "start_prob": start_prob, "sofa_status": None,
             "recent_mins": [mp for _, mp in recent_mins],
