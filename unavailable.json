@@ -1,0 +1,7 @@
+{
+  "_comment": "Player slugs whose CARD Nick cannot field right now (in the vault/tresor, listed for sale, etc.) -- NOT injuries. Dropped from the lineup pool by lineup_suggest.py (--unavailable, on by default). Remove a slug once the card is available again.",
+  "_updated": "2026-09-21",
+  "slugs": [
+    "xaver-schlager"
+  ]
+}

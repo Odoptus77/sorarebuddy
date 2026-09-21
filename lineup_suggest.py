@@ -662,6 +662,12 @@ def main(argv):
                          "from the pool (injured/suspended players that Sorare's "
                          "own injury feed does not yet flag). Matched case- and "
                          "accent-insensitively against slug and display name.")
+    ap.add_argument("--unavailable", default="unavailable.json",
+                    help="JSON list of player_slugs whose CARD can't be fielded "
+                         "right now (in the vault/tresor, listed for sale, etc.) "
+                         "-- separate from injuries. Format: "
+                         '{"slugs": ["xaver-schlager", ...]} or a plain [ ... ]. '
+                         "These are dropped from the pool like --exclude.")
     ap.add_argument("--start-override", default="start_overrides.json",
                     help="JSON {player_slug: probability 0..1} to REPLACE the "
                          "model's club-based start probability. Use it for "
@@ -693,6 +699,23 @@ def main(argv):
         return "".join(ch for ch in s if not unicodedata.combining(ch))
 
     excluded = {_norm(x) for x in args.exclude.split(",") if x.strip()}
+
+    # Cards not currently fieldable (vault/tresor, on sale, ...) -> drop them
+    # from the pool exactly like --exclude. Read by default so the routines
+    # respect it automatically.
+    if os.path.exists(args.unavailable):
+        try:
+            with open(args.unavailable, encoding="utf-8") as fh:
+                raw = json.load(fh)
+            slugs = raw.get("slugs", []) if isinstance(raw, dict) else raw
+            unavail = {_norm(s) for s in slugs if isinstance(s, str) and not s.startswith("_")}
+            if unavail:
+                excluded |= unavail
+                print(f"Unavailable (not fieldable) from {args.unavailable}: "
+                      f"{len(unavail)} cards.", file=sys.stderr)
+        except (ValueError, OSError) as exc:
+            print(f"WARNING: could not read --unavailable {args.unavailable}: {exc}",
+                  file=sys.stderr)
 
     # Researched start-probability overrides (mainly national-team games).
     start_overrides = {}
