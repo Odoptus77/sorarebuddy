@@ -140,7 +140,7 @@ query Cards($slug: String!, $after: String, $rarities: [Rarity!]) {
   user(slug: $slug) {
     cards(first: %d, after: $after, rarities: $rarities) {
       pageInfo { hasNextPage endCursor }
-      nodes { slug rarityTyped seasonYear anyPositions
+      nodes { slug rarityTyped seasonYear anyPositions sealed
         anyPlayer { slug displayName anyPositions } }
     }
   }
@@ -309,7 +309,13 @@ def fetch_cards(slug, rarities):
             break
         after = conn["pageInfo"]["endCursor"]
         time.sleep(PACE)
-    return cards
+    # Sealed cards (in the vault/tresor) can't be fielded -> drop them here.
+    sealed = [c for c in cards if c.get("sealed")]
+    if sealed:
+        print(f"Skipping {len(sealed)} sealed (vault) card(s): "
+              + ", ".join(sorted({(c.get('anyPlayer') or {}).get('displayName', c['slug']) for c in sealed})),
+              file=sys.stderr)
+    return [c for c in cards if not c.get("sealed")]
 
 
 def fetch_players(slugs):

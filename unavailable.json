@@ -1,7 +1,5 @@
 {
-  "_comment": "Player slugs whose CARD Nick cannot field right now (in the vault/tresor, listed for sale, etc.) -- NOT injuries. Dropped from the lineup pool by lineup_suggest.py (--unavailable, on by default). Remove a slug once the card is available again.",
+  "_comment": "Player slugs whose CARD Nick cannot field right now for reasons NOT auto-detected via the API. Note: sealed/vault (Tresor) cards are now detected automatically (card.sealed) and need NOT be listed here. Use this only for other manual cases. Dropped from the pool by lineup_suggest.py (--unavailable, on by default).",
   "_updated": "2026-09-21",
-  "slugs": [
-    "xaver-schlager"
-  ]
+  "slugs": []
 }
