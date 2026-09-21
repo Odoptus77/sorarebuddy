@@ -1,42 +1,4 @@
 {
-  "_comment": "Researched START probabilities for lineup_suggest.py (--start-override). Independent of Sorare, built from 3-4 predicted-XI sources per national game (UEFA Nations League, 22-24 Sep 2026). Club-based model is unreliable for internationals. Values 0..1. Refresh every international break; delete/ignore for pure club gameweeks.",
-  "_updated": "2026-09-21",
-  "_confidence": "high: van-dijk(suspended), backup GKs behind a clear #1 (nubel, flekken, samuel-soares), diogo-costa, kimmich, nusa. medium: tah, schlotterbeck, havertz, musiala, geertruida, frimpong, strand-larsen, pavlidis. lower (stale source / squad-role estimate): denmark & austria & israel players.",
-
-  "virgil-van-dijk": 0.00,
-  "marc-andre-ter-stegen": 0.88,
-  "alexander-nubel": 0.08,
-  "joshua-kimmich": 0.95,
-  "jonathan-tah": 0.85,
-  "nico-schlotterbeck": 0.80,
-  "jamal-musiala": 0.50,
-  "kai-havertz": 0.62,
-  "younes-ebnoutalib": 0.15,
-
-  "mark-flekken": 0.05,
-  "lutsharel-geertruida": 0.30,
-  "jeremie-frimpong": 0.10,
-
-  "diogo-meireles-costa": 0.92,
-  "samuel-jumpe-soares": 0.05,
-
-  "antonio-eromonsele-nordby-nusa": 0.90,
-  "jorgen-strand-larsen": 0.25,
-  "fredrik-aursnes": 0.30,
-
-  "rasmus-nissen-kristensen": 0.45,
-  "victor-mow-froholdt": 0.35,
-  "joachim-andersen": 0.55,
-  "alexander-hartmann-bah": 0.55,
-
-  "konrad-laimer": 0.85,
-  "nicolas-seiwald": 0.72,
-  "xaver-schlager": 0.72,
-  "paul-wanner": 0.55,
-  "sasa-kalajdzic": 0.30,
-
-  "anan-khalaili": 0.45,
-  "thai-baribo": 0.60,
-
-  "evangelos-pavlidis": 0.80
+  "_comment": "Researched START probabilities for lineup_suggest.py (--start-override), {player_slug: 0..1}. INTENTIONALLY EMPTY: the previous GW715 batch was rolled back because it was not date-verified (e.g. a Van Dijk 'suspension' that was actually from Oct 2024, and predicted XIs of unverified currency). Only add an entry backed by a <=7-day, double-checked source (CLAUDE.md research rules). Until then the club-based model value stands.",
+  "_updated": "2026-09-21"
 }
