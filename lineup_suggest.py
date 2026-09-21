@@ -18,6 +18,7 @@ within one competition's multiple teams the cards are distinct.
 
 Usage:
     python3 lineup_suggest.py <manager-slug> [--json lineups.json] [--rarities limited,rare]
+        [--exclude "player-slug-or-name,..."]   # drop injured/suspended players
 """
 import argparse
 import datetime as dt
@@ -569,12 +570,26 @@ def main(argv):
     ap.add_argument("slug")
     ap.add_argument("--json", default="lineups.json")
     ap.add_argument("--rarities", default="limited,rare")
+    ap.add_argument("--exclude", default="",
+                    help="comma-separated player slugs or display names to drop "
+                         "from the pool (injured/suspended players that Sorare's "
+                         "own injury feed does not yet flag). Matched case- and "
+                         "accent-insensitively against slug and display name.")
     ap.add_argument("--sofascore", action="store_true",
                     help="opt in to SofaScore predicted-lineup enrichment "
                          "(needs api.sofascore.com allowed; SofaScore IP-blocks "
                          "datacenter egress, so this usually falls back)")
     args = ap.parse_args(argv)
     rarities = [r.strip() for r in args.rarities.split(",") if r.strip()]
+
+    def _norm(s):
+        # Case/accent-insensitive key so "Nico Schlotterbeck", "schlotterbeck"
+        # and the slug all match the same excluded player.
+        import unicodedata
+        s = unicodedata.normalize("NFKD", (s or "").strip().lower())
+        return "".join(ch for ch in s if not unicodedata.combining(ch))
+
+    excluded = {_norm(x) for x in args.exclude.split(",") if x.strip()}
 
     fx = get_upcoming_fixture()
     ws = dt.datetime.fromisoformat(fx["startDate"].replace("Z", "+00:00"))
@@ -594,12 +609,21 @@ def main(argv):
 
     # eligible pool per rarity (one best-season card per player)
     pools = {}
+    dropped = set()
+    matched_keys = set()
     for rar in rarities:
         best = {}
         for c in cards:
             if c["rarityTyped"] != rar or not c.get("anyPlayer"):
                 continue
-            pd = players.get(c["anyPlayer"]["slug"])
+            ap_ = c["anyPlayer"]
+            if excluded:
+                keys = {_norm(ap_.get("slug")), _norm(ap_.get("displayName"))} & excluded
+                if keys:
+                    dropped.add(ap_.get("displayName") or ap_.get("slug"))
+                    matched_keys.update(keys)
+                    continue
+            pd = players.get(ap_["slug"])
             if not pd:
                 continue
             e = eligible_entry(c, pd, ws, we)
@@ -612,6 +636,14 @@ def main(argv):
             e["is_classic"] = (e.get("season") or 0) < current_season
         pools[rar] = list(best.values())
         print(f"  {rar}: {len(pools[rar])} eligible players", file=sys.stderr)
+    if excluded:
+        if dropped:
+            print(f"Excluded from pool: {', '.join(sorted(dropped))}", file=sys.stderr)
+        unmatched = excluded - matched_keys
+        if unmatched:
+            print(f"WARNING: --exclude values matched no eligible card: "
+                  f"{', '.join(sorted(unmatched))} (typo? or player has no game "
+                  f"this GW anyway)", file=sys.stderr)
 
     # --- SofaScore predicted/confirmed XI enrichment (optional) ------------
     sofa_used = False

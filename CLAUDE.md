@@ -53,6 +53,7 @@ Alle dependency-frei (nur Python-Stdlib), lesen den Key aus `.env.local`:
 | Beliebige GraphQL-Query | `python3 sorare_client.py query '{ ... }'` |
 | Kader + Einkaufspreis vs. Marktwert | `python3 club_overview.py nicktd7 --json club.json` |
 | Aufstellungs-Vorschlag je Wettbewerb | `python3 lineup_suggest.py nicktd7 --json lineups.json` |
+| … mit Ausschluss verletzter/gesperrter Spieler | `python3 lineup_suggest.py nicktd7 --exclude "slug-oder-name,…" --json lineups.json` |
 | Rewards je Spieler | `python3 rewards_by_player.py nicktd7 --json rewards.json` |
 | Voraussichtliche Startelf (SofaScore) | `python3 sofascore_lineups.py "Real Madrid"` |
 | HTML-Dashboard aus club.json | `python3 build_dashboard.py club.json --out dashboard.html` |
@@ -60,6 +61,19 @@ Alle dependency-frei (nur Python-Stdlib), lesen den Key aus `.env.local`:
 Für **Recherche/News** (nicht in der Sorare-API enthalten): `WebSearch` /
 `WebFetch` nutzen (Verletzungen, Startelf, Transfers, Sperren) und wo möglich
 mit `sofascore_lineups.py` (voraussichtliche Aufstellung) gegenprüfen.
+
+### ⚠️ Recherche-Regeln (Pflicht)
+1. **Quelldatum immer prüfen.** Ein Artikel über eine „Verletzung"/„OP" kann aus
+   einer Vorsaison stammen. Bevor du jemanden als Ausfall/fraglich meldest, das
+   Datum verifizieren — am besten über ein **aktuelles Spiel-Log** (FotMob/ESPN
+   „letzte Spiele" / „matches"): Hat der Spieler in den letzten Tagen gespielt
+   und wie viele Minuten? Ein Spieler mit 90 Minuten letzte Woche ist nicht „out".
+   (Gilt symmetrisch: auch ein alter „ist zurück"-Artikel ist kein Beleg.)
+2. **Ausfälle in die Aufstellung einfließen lassen:** verletzte/gesperrte Spieler,
+   die Sorares eigener Injury-Feed noch nicht kennt, per
+   `lineup_suggest.py --exclude "…"` aus dem Pool nehmen und neu rechnen.
+3. Startquoten aus dem Optimierer sind **modelliert**, keine offizielle Startelf.
+   Kurz vor der Deadline (offizielle XI ~1 h vorher) knappe Fälle final checken.
 
 ## Standard-Workflows
 
