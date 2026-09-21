@@ -18,6 +18,20 @@ Ergebnisse immer **konkret und umsetzbar** liefern: pro Spieler eine kurze
 Einschätzung + eine klare Empfehlung (Halten / Aufstocken / Verkaufen /
 Beobachten bzw. beim Scouting: Kaufen / Auf die Watchlist / Skip) mit Begründung.
 
+## Sorare-Deadlines (Classic) — WICHTIG fürs Timing
+
+- **Classic hat zwei feste Aufstellungs-Deadlines pro Woche:**
+  **Dienstag 16:00 Uhr** (Midweek-GW) und **Freitag 16:00 Uhr** (Wochenend-GW),
+  jeweils **deutscher Zeit (CET/CEST)** = 14:00 UTC (Sommerzeit) bzw. 15:00 UTC
+  (Winterzeit). Die Aufstellung ist **zur GW-Deadline komplett gelockt** — es
+  gibt keine späteren Einzelspiel-Deadlines zum Nachbessern.
+- **Konsequenz für den finalen Startelf-Check:** immer **vor** der GW-Deadline
+  terminieren (z. B. ~1,5 h vorher). Ein Check nach 16:00 Uhr am Deadline-Tag ist
+  wertlos. Zur Deadline liegen offizielle XIs für spätere Anpfiffe oft noch nicht
+  vor → dann Presse-/Verletzungslage + voraussichtliche XI heranziehen.
+- Die im Optimierer-JSON gelisteten `deadline_first/last` je Wettbewerb sind
+  **nicht** die maßgebliche Aufstellungs-Deadline — es gilt die GW-Deadline oben.
+
 ## Account & Kader
 
 - **Manager-Slug:** `nicktd7` (Nickname „Nicktd7"). Der Slug ist der Schlüssel
