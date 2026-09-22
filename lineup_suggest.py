@@ -56,6 +56,23 @@ FORMATIONS = {
 def formation_for(size):
     """Slot list for a lineup of `size` cards (falls back to 1-per-line+extras)."""
     return FORMATIONS.get(size, list(POS_SLOTS) + ["EXTRA"] * (size - 4))
+
+
+# UEFA member nations (normalized: lowercase, no accents), for a "European
+# Nations" national-team competition filter. Includes common name variants.
+UEFA_NATIONS = {
+    "albania", "andorra", "armenia", "austria", "azerbaijan", "belarus",
+    "belgium", "bosnia and herzegovina", "bulgaria", "croatia", "cyprus",
+    "czechia", "czech republic", "denmark", "england", "estonia",
+    "faroe islands", "finland", "france", "georgia", "germany", "gibraltar",
+    "greece", "hungary", "iceland", "israel", "italy", "kazakhstan", "kosovo",
+    "latvia", "liechtenstein", "lithuania", "luxembourg", "malta", "moldova",
+    "montenegro", "netherlands", "north macedonia", "northern ireland",
+    "norway", "poland", "portugal", "republic of ireland", "ireland",
+    "romania", "russia", "san marino", "scotland", "serbia", "slovakia",
+    "slovenia", "spain", "sweden", "switzerland", "turkiye", "turkey",
+    "ukraine", "wales",
+}
 RARITY_TOKENS = [("super_rare", "SUPER_RARE"), ("limited", "LIMITED"),
                  ("rare", "RARE"), ("unique", "UNIQUE")]
 # IN_SEASON_<TOKEN> competition -> (domesticLeague slug prefix, readable name).
@@ -587,16 +604,29 @@ def build_team(pool, used, size, cap, max_classic=None, min_start=0.0):
     slot_list = formation_for(size)
     chosen = {}          # slot index -> card
     blocked = set(used)
+    classic_used = 0
     for idx, slot in enumerate(slot_list):
         cs = cands(pool, slot, blocked, min_start)
         if not cs:
             continue
-        # Prefer the best candidate that doesn't clash with an opposing player
-        # from the same fixture; fall back to the best one so no slot is empty.
-        pick = next((c for c in cs
-                     if not _fixture_conflict(slot, c, chosen, slot_list)), cs[0])
+
+        def _ok(c):
+            # Avoid a same-fixture defence-vs-attack clash, and respect the Hot
+            # Streak classic cap already during the greedy fill so in-season
+            # players get placed in the slots only they can fill (a scarce
+            # in-season pool otherwise loses a slot to a classic).
+            if _fixture_conflict(slot, c, chosen, slot_list):
+                return False
+            if (max_classic is not None and c.get("is_classic")
+                    and classic_used >= max_classic):
+                return False
+            return True
+
+        pick = next((c for c in cs if _ok(c)), cs[0])
         chosen[idx] = pick
         blocked.add(pick["slug"])
+        if pick.get("is_classic"):
+            classic_used += 1
     if max_classic is not None:
         # Hot Streak: keep at most `max_classic` classic (non-in-season) cards.
         guard = 0
@@ -696,6 +726,9 @@ def main(argv):
                     help="how strongly the opponent's strength swings the "
                          "projection. factor = 1 + w*(0.5 - opp_strength); "
                          "0.20 => +/-10%% at the extremes. 0 disables it.")
+    ap.add_argument("--manual-competitions", default="manual_competitions.json",
+                    help="JSON of competitions the API doesn't expose, keyed by "
+                         "fixture slug (apply only to that GW). See the file.")
     ap.add_argument("--fixture", default=None,
                     help="build for a specific fixture slug or gameweek number "
                          "instead of the next one (e.g. football-25-29-sep-2026 "
@@ -782,6 +815,31 @@ def main(argv):
     print(f"Upcoming GW {fx['gameWeek']} ({fx['slug']}) {ws.date()}–{we.date()}", file=sys.stderr)
 
     comps = fetch_competitions(fx["slug"], rarities)
+    # Manually declared competitions the API doesn't expose (e.g. an int'l-break
+    # "European Nations" Hot Streak). Keyed by fixture slug, so they apply ONLY
+    # to that gameweek and go stale automatically afterwards.
+    if os.path.exists(args.manual_competitions):
+        try:
+            with open(args.manual_competitions, encoding="utf-8") as fh:
+                mc = json.load(fh)
+            for m in (mc.get(fx["slug"]) or []):
+                if m.get("rarity") not in rarities:
+                    continue
+                comps.append({
+                    "rarity": m["rarity"], "label": m.get("label", "Manual"),
+                    "format": m.get("format", "Hot Streak"),
+                    "mode": m.get("mode", "Pro"), "size": m.get("size", 5),
+                    "cap": m.get("cap"), "teams_cap": m.get("teams_cap", 1),
+                    "league_prefix": None, "country_code": None,
+                    "league_prefixes": None, "contender": False, "max_age": None,
+                    "in_season": True, "hotstreak": m.get("hotstreak", True),
+                    "max_classic": m.get("max_classic", 1),
+                    "national_confederation": m.get("national_confederation"),
+                    "manual": True,
+                })
+                print(f"  + manueller Wettbewerb: {m.get('label')}", file=sys.stderr)
+        except (ValueError, OSError) as exc:
+            print(f"WARNING: manual_competitions.json: {exc}", file=sys.stderr)
     print(f"{len(comps)} competitions to build.", file=sys.stderr)
 
     cards = fetch_cards(args.slug, rarities)
@@ -869,6 +927,10 @@ def main(argv):
         # league filter only; the in-season/classic rule is enforced per format
         # (Hot Streak allows at most 1 classic; Arena allows all seasons).
         pool = [e for e in available if e["rarity_"] == comp["rarity"]]
+        conf = comp.get("national_confederation")
+        if conf:                                   # national-team competition
+            pool = [e for e in pool if e.get("opp_type") == "NationalTeam"
+                    and (conf != "europe" or _norm(e.get("team_name")) in UEFA_NATIONS)]
         lps = comp.get("league_prefixes")
         if lps:
             pool = [e for e in pool
@@ -946,7 +1008,12 @@ def main(argv):
     used_global = set()
     for comp in comps:
         teams = []
-        used_local = set(used_global)
+        # Manual (API-invisible) competitions build INDEPENDENTLY: in Sorare a
+        # card may be fielded in several DIFFERENT competitions, so a manual
+        # comp starts from the full pool and does not consume the global set
+        # (its own teams stay distinct via used_local).
+        is_manual = comp.get("manual")
+        used_local = set() if is_manual else set(used_global)
         for ti in range(comp["teams_cap"]):
             floor = START_FLOORS[min(ti, len(START_FLOORS) - 1)]
             avail = [e for e in pools[comp["rarity"]] if e["slug"] not in used_local]
@@ -970,7 +1037,8 @@ def main(argv):
                         c["classic"] = True
         if not teams:
             continue
-        used_global = used_local
+        if not is_manual:                # manual comps don't consume the pool
+            used_global = used_local
         w0, w1 = window(teams)
         out["competitions"].append({**{k: comp[k] for k in
                                     ("rarity", "label", "format", "mode", "size", "cap", "teams_cap")},

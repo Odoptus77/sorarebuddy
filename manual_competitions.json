@@ -1,0 +1,15 @@
+{
+  "_comment": "Wettbewerbe, die die Sorare-API NICHT ausgibt und die Nick mir pro Gameweek nennt. Key = Fixture-Slug -> gilt NUR für diese GW (danach automatisch veraltet, weil ein anderes Fixture aktuell ist). Felder je Eintrag: rarity, label, format, size, teams_cap, max_classic, hotstreak, national_confederation ('europe' = nur UEFA-Nationalspieler).",
+  "football-23-25-sep-2026": [
+    {
+      "rarity": "limited",
+      "label": "Europäische Nationen (Hot Streak)",
+      "format": "Hot Streak",
+      "size": 5,
+      "teams_cap": 1,
+      "hotstreak": true,
+      "max_classic": 1,
+      "national_confederation": "europe"
+    }
+  ]
+}

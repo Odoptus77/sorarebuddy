@@ -145,6 +145,20 @@ verfügbar; NIE jemanden auf einer unbestätigten/alten Meldung benchen.**
   (kein Fielden von Nicht-Startern). Datei jede Länderspielpause neu erstellen;
   für reine Club-GWs leeren/ignorieren (dann greift wieder das Vereinsmodell).
 
+### Manuell deklarierte Wettbewerbe (API-unsichtbar) — nur je 1 GW
+
+- Manche Wettbewerbe gibt die Sorare-API **nicht** aus (z. B. „Europäische
+  Nationen" = SO5-Hot-Streak für UEFA-Nationalspieler, 4 In-Season + 1 Classic).
+- **Grundregel:** Solche Wettbewerbe gelten **immer nur für die eine GW**, für
+  die Nick sie nennt — nicht dauerhaft. Umgesetzt über **`manual_competitions.json`**,
+  **gekeyt per Fixture-Slug** (z. B. `football-23-25-sep-2026`); nach der GW
+  veralten sie automatisch (anderes Fixture). `lineup_suggest.py` liest die Datei
+  standardmäßig und baut die Wettbewerbe **unabhängig** (Karten dürfen mit anderen
+  Wettbewerben geteilt werden — Sorare erlaubt Mehrfacheinsatz über verschiedene
+  Wettbewerbe; innerhalb eines Wettbewerbs bleiben Teams distinkt).
+- Felder je Eintrag: `rarity, label, format, size, teams_cap, max_classic,
+  hotstreak, national_confederation` (`"europe"` = nur UEFA-Nationalspieler).
+
 ### Matchup-Gewichtung (Gegnerstärke)
 
 - `lineup_suggest.py` bezieht die **Gegnerstärke** in die Projektion ein: Faktor
