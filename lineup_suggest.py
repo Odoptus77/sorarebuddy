@@ -554,11 +554,15 @@ def eligible_entry(card, pd, ws, we):
 
 
 def cands(pool, slot, blocked, min_start=0.0):
+    # `blocked` holds BOTH card slugs and player slugs (distinct namespaces): a
+    # card is skipped if its own slug is used OR another card of the same player
+    # is already in this lineup -> never the same player twice in one team.
     if slot == "EXTRA":
-        cs = [c for c in pool if c["slug"] not in blocked
+        cs = [c for c in pool if c["slug"] not in blocked and c["player_slug"] not in blocked
               and any(p in POS_SLOTS[1:] for p in c["positions"])]  # non-GK
     else:
-        cs = [c for c in pool if c["slug"] not in blocked and slot in c["positions"]]
+        cs = [c for c in pool if c["slug"] not in blocked and c["player_slug"] not in blocked
+              and slot in c["positions"]]
     # Prefer players at/above the start-probability floor (safe starters),
     # then by expected value. Below-floor players stay as a fallback so a slot
     # is never left empty (an empty slot scores 0 — worse than a risky start).
@@ -624,7 +628,7 @@ def build_team(pool, used, size, cap, max_classic=None, min_start=0.0):
 
         pick = next((c for c in cs if _ok(c)), cs[0])
         chosen[idx] = pick
-        blocked.add(pick["slug"])
+        blocked.add(pick["slug"]); blocked.add(pick["player_slug"])
         if pick.get("is_classic"):
             classic_used += 1
     if max_classic is not None:
@@ -636,7 +640,7 @@ def build_team(pool, used, size, cap, max_classic=None, min_start=0.0):
             for idx, cur in chosen.items():
                 if not cur.get("is_classic"):
                     continue
-                others = blocked - {cur["slug"]}
+                others = blocked - {cur["slug"], cur["player_slug"]}
                 for alt in cands(pool, slot_list[idx], others, min_start):
                     if alt.get("is_classic"):
                         continue
@@ -646,9 +650,9 @@ def build_team(pool, used, size, cap, max_classic=None, min_start=0.0):
             if not best:
                 break
             _, idx, alt = best
-            blocked.discard(chosen[idx]["slug"])
+            blocked.discard(chosen[idx]["slug"]); blocked.discard(chosen[idx]["player_slug"])
             chosen[idx] = alt
-            blocked.add(alt["slug"])
+            blocked.add(alt["slug"]); blocked.add(alt["player_slug"])
     if cap is not None:
         guard = 0
         while sum(c["cap_score"] for c in chosen.values()) > cap and guard < 400:
@@ -656,7 +660,7 @@ def build_team(pool, used, size, cap, max_classic=None, min_start=0.0):
             best = None
             for idx, cur in chosen.items():
                 slot = slot_list[idx]
-                others = blocked - {cur["slug"]}
+                others = blocked - {cur["slug"], cur["player_slug"]}
                 for alt in cands(pool, slot, others, min_start):
                     saved = cur["cap_score"] - alt["cap_score"]
                     if saved <= 0:
@@ -667,9 +671,9 @@ def build_team(pool, used, size, cap, max_classic=None, min_start=0.0):
             if not best:
                 break
             _, idx, alt = best
-            blocked.discard(chosen[idx]["slug"])
+            blocked.discard(chosen[idx]["slug"]); blocked.discard(chosen[idx]["player_slug"])
             chosen[idx] = alt
-            blocked.add(alt["slug"])
+            blocked.add(alt["slug"]); blocked.add(alt["player_slug"])
     cards = []
     for idx, slot in enumerate(slot_list):
         if idx in chosen:
@@ -850,12 +854,15 @@ def main(argv):
     print(f"Fetching form/cap/next-game for {len(slugs)} players...", file=sys.stderr)
     players = fetch_players(slugs)
 
-    # eligible pool per rarity (one best-season card per player)
+    # eligible pool per rarity: keep EVERY eligible card. A player may own
+    # several cards (e.g. classic + in-season) and each is separately fieldable
+    # in a DIFFERENT competition. "No card twice" (global) and "no player twice
+    # in one lineup/competition" are enforced later in build_team / the comp loop.
     pools = {}
     dropped = set()
     matched_keys = set()
     for rar in rarities:
-        best = {}
+        entries = []
         for c in cards:
             if c["rarityTyped"] != rar or not c.get("anyPlayer"):
                 continue
@@ -872,10 +879,8 @@ def main(argv):
             e = eligible_entry(c, pd, ws, we)
             if not e:
                 continue
-            prev = best.get(e["player_slug"])
-            if prev is None or (e["season"] or 0) > (prev["season"] or 0):
-                best[e["player_slug"]] = e
-        for e in best.values():
+            entries.append(e)
+        for e in entries:
             e["is_classic"] = (e.get("season") or 0) < current_season
             ov = start_overrides.get(e["player_slug"])
             if ov is not None:
@@ -885,7 +890,7 @@ def main(argv):
             apply_matchup(e)
         # Drop (near-)certain non-starters AFTER overrides too: a researched
         # 0% (e.g. suspended) player must never be fielded, even as a fallback.
-        pools[rar] = [e for e in best.values() if e["start_prob"] >= 0.10]
+        pools[rar] = [e for e in entries if e["start_prob"] >= 0.10]
         print(f"  {rar}: {len(pools[rar])} eligible players", file=sys.stderr)
     if excluded:
         if dropped:
@@ -1009,15 +1014,17 @@ def main(argv):
     for comp in comps:
         teams = []
         # Single-use pool across ALL competitions (incl. manual/API-invisible
-        # ones): on this account each card may be fielded only ONCE per
-        # gameweek, so every comp — manual Hot Streaks included — draws from
-        # and consumes the shrinking global pool.
-        used_local = set(used_global)
+        # ones): on this account each CARD may be fielded only ONCE per gameweek,
+        # so every comp draws from and consumes the shrinking global card pool.
+        # A PLAYER may still appear via a DIFFERENT card in another competition,
+        # but never twice inside one competition (comp_players guards that).
+        used_local = set(used_global)     # card slugs used across all comps
+        comp_players = set()              # player slugs used within THIS comp
         for ti in range(comp["teams_cap"]):
             floor = START_FLOORS[min(ti, len(START_FLOORS) - 1)]
             avail = [e for e in pools[comp["rarity"]] if e["slug"] not in used_local]
             pool = build_pool(comp, avail)
-            t = build_team(pool, set(), comp["size"], comp["cap"],
+            t = build_team(pool, set(comp_players), comp["size"], comp["cap"],
                            comp.get("max_classic"), min_start=floor)
             t["risk_floor"] = floor
             if not t["cards"]:
@@ -1026,6 +1033,7 @@ def main(argv):
                 break  # only keep a partial team as the first entry
             teams.append(t)
             used_local |= t["used"]
+            comp_players |= {c["player_slug"] for c in t["cards"]}
             if not t["complete"]:
                 break
         for t in teams:

@@ -158,6 +158,10 @@ verfügbar; NIE jemanden auf einer unbestätigten/alten Meldung benchen.**
   gemeinsamen, schrumpfenden Pool und verbrauchen ihn (kein Mehrfacheinsatz einer
   Karte über verschiedene Wettbewerbe). Hot Streaks werden zuerst befüllt (beste
   In-Season-Karten), danach der Rest nach projizierter Stärke.
+- **Mehrere Karten desselben Spielers** (z. B. Classic + In-Season): jede ist
+  **separat einsetzbar**. Derselbe Spieler darf **nicht zweimal in einem Lineup
+  oder innerhalb eines Wettbewerbs** stehen, aber **je einmal in verschiedenen**
+  Wettbewerben (z. B. In-Season-Pavlidis in der HS, Classic-Pavlidis in All-Star).
 - Felder je Eintrag: `rarity, label, format, size, teams_cap, max_classic,
   hotstreak, national_confederation` (`"europe"` = nur UEFA-Nationalspieler).
 
