@@ -30,3 +30,10 @@ DerivedData/
 
 # Accepted lineup baseline for the 5h sync check (account data, do not commit)
 baseline_lineup.json
+
+# Runtime output artifacts (contain account data — do not commit; see CLAUDE.md conventions)
+club.json
+rewards.json
+lineups.json
+dashboard.html
+*.csv
