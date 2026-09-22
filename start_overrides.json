@@ -8,7 +8,8 @@
     "checked_no_xi_yet": "Denmark-Norway, Greece-Serbia, Portugal-Wales, Austria-Israel are all 24 Sep and 3 days out -> no firm predicted XI published yet. Availability checked: Norway no absentees; Denmark missing Eriksen+Isaksen (not Nick's); Pavlidis a Greece key starter; Nick's other players not flagged out. Their start probs stay MODEL + UNCONFIRMED, finalised at the Tue deadline check.",
     "not_overridden": "Kristensen, Nusa, Pavlidis, Geertruida, Frimpong, Strand Larsen, Denmark/Norway/Greece outfielders: no date-verified XI -> model value kept, UNCONFIRMED, recheck Tue.",
     "maehle_2026-09-22": "Joakim Mæhle: Denmark squad (khelnow 15 Sep 2026) + FotMob log 18 Sep 90', 12 Sep 90', 05 Sep 90', no injury flag. Nailed-on DEN left-back, plays NOR-DEN 24 Sep 20:45. -> 0.90.",
-    "vagiannidis_2026-09-22": "Georgios Vagiannidis: Greece squad (nominated) + FotMob log fit (84' CL 09 Sep) but LEAGUE-benched at Sporting (unused sub 13+19 Sep). Greece RB start UNCONFIRMED (competes w/ Rota). Modelled ~0.45, finalise at deadline check; do NOT treat as certain starter."
+    "vagiannidis_2026-09-22": "Georgios Vagiannidis: Greece squad (nominated) + FotMob log fit (84' CL 09 Sep) but LEAGUE-benched at Sporting (unused sub 13+19 Sep). Greece RB start UNCONFIRMED (competes w/ Rota). Modelled ~0.45, finalise at deadline check; do NOT treat as certain starter.",
+    "kristensen_2026-09-22": "Rasmus Nissen Kristensen: teilt sich den DK-Rechtsverteidiger-Platz direkt mit Alexander Bah (beide RV, Denmark squad khelnow 15 Sep + Wikipedia/ESPN 'right-back'). Kein gesetzter Starter -> ~0.50 (Coinflip mit Bah). Modell-98% war Vereins-Artefakt. Finale DK-XI beim 24.09-Check."
   },
   "marc-andre-ter-stegen": 0.9,
   "alexander-nubel": 0.08,
@@ -22,5 +23,6 @@
   "samuel-jumpe-soares": 0.08,
   "konrad-laimer": 0.02,
   "joakim-maehle": 0.9,
-  "georgios-vagiannidis": 0.45
+  "georgios-vagiannidis": 0.45,
+  "rasmus-nissen-kristensen": 0.5
 }
