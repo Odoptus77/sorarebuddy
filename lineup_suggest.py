@@ -1008,12 +1008,11 @@ def main(argv):
     used_global = set()
     for comp in comps:
         teams = []
-        # Manual (API-invisible) competitions build INDEPENDENTLY: in Sorare a
-        # card may be fielded in several DIFFERENT competitions, so a manual
-        # comp starts from the full pool and does not consume the global set
-        # (its own teams stay distinct via used_local).
-        is_manual = comp.get("manual")
-        used_local = set() if is_manual else set(used_global)
+        # Single-use pool across ALL competitions (incl. manual/API-invisible
+        # ones): on this account each card may be fielded only ONCE per
+        # gameweek, so every comp — manual Hot Streaks included — draws from
+        # and consumes the shrinking global pool.
+        used_local = set(used_global)
         for ti in range(comp["teams_cap"]):
             floor = START_FLOORS[min(ti, len(START_FLOORS) - 1)]
             avail = [e for e in pools[comp["rarity"]] if e["slug"] not in used_local]
@@ -1037,8 +1036,7 @@ def main(argv):
                         c["classic"] = True
         if not teams:
             continue
-        if not is_manual:                # manual comps don't consume the pool
-            used_global = used_local
+        used_global = used_local         # every comp consumes the single-use pool
         w0, w1 = window(teams)
         out["competitions"].append({**{k: comp[k] for k in
                                     ("rarity", "label", "format", "mode", "size", "cap", "teams_cap")},

@@ -1,25 +1,26 @@
 {
   "_comment": "Researched START probabilities (--start-override), {player_slug: 0..1}. GRUNDREGEL #0: only entries backed by a date-verified source are included. Sources checked by opening them and confirming they preview the 24 Sep 2026 games (not the 2024 fixtures).",
-  "_updated": "2026-09-21",
+  "_updated": "2026-09-22",
   "_sources": {
     "germany_2026-09-21": "sports.yahoo.com NL-vs-Germany preview, published 2026-09-21, + getfootballnewsgermany 2026-09-17 (Klopp coach): ter Stegen #1; Schlotterbeck+Tah start; Kimmich central; Musiala central attacking mid; Havertz up front. No van Dijk suspension mentioned (that was Oct 2024).",
     "structural_gk": "A backup keeper cannot start ahead of a confirmed #1: Nuebel behind ter Stegen (GER), Flekken behind Verbruggen (NED), Samuel Soares behind Diogo Costa (POR).",
     "laimer_out_2026-09-21": "Austrian FA official: Konrad Laimer OUT for the first two Nations League games incl. Austria-Israel 24 Sep (minor left-adductor injury from ~13 Sep). Confirmed by AllFootball 'Austria Official' + Bavarian Football Works/Goal + FotMob 'possibly unavailable'. -> 0.",
     "checked_no_xi_yet": "Denmark-Norway, Greece-Serbia, Portugal-Wales, Austria-Israel are all 24 Sep and 3 days out -> no firm predicted XI published yet. Availability checked: Norway no absentees; Denmark missing Eriksen+Isaksen (not Nick's); Pavlidis a Greece key starter; Nick's other players not flagged out. Their start probs stay MODEL + UNCONFIRMED, finalised at the Tue deadline check.",
-    "not_overridden": "Kristensen, Nusa, Pavlidis, Geertruida, Frimpong, Strand Larsen, Denmark/Norway/Greece outfielders: no date-verified XI -> model value kept, UNCONFIRMED, recheck Tue."
+    "not_overridden": "Kristensen, Nusa, Pavlidis, Geertruida, Frimpong, Strand Larsen, Denmark/Norway/Greece outfielders: no date-verified XI -> model value kept, UNCONFIRMED, recheck Tue.",
+    "maehle_2026-09-22": "Joakim Mæhle: Denmark squad (khelnow 15 Sep 2026) + FotMob log 18 Sep 90', 12 Sep 90', 05 Sep 90', no injury flag. Nailed-on DEN left-back, plays NOR-DEN 24 Sep 20:45. -> 0.90.",
+    "vagiannidis_2026-09-22": "Georgios Vagiannidis: Greece squad (nominated) + FotMob log fit (84' CL 09 Sep) but LEAGUE-benched at Sporting (unused sub 13+19 Sep). Greece RB start UNCONFIRMED (competes w/ Rota). Modelled ~0.45, finalise at deadline check; do NOT treat as certain starter."
   },
-
-  "marc-andre-ter-stegen": 0.90,
+  "marc-andre-ter-stegen": 0.9,
   "alexander-nubel": 0.08,
   "nico-schlotterbeck": 0.85,
   "jonathan-tah": 0.85,
   "joshua-kimmich": 0.92,
-  "jamal-musiala": 0.80,
-  "kai-havertz": 0.80,
+  "jamal-musiala": 0.8,
+  "kai-havertz": 0.8,
   "younes-ebnoutalib": 0.15,
-
-  "mark-flekken": 0.10,
+  "mark-flekken": 0.1,
   "samuel-jumpe-soares": 0.08,
-
-  "konrad-laimer": 0.02
+  "konrad-laimer": 0.02,
+  "joakim-maehle": 0.9,
+  "georgios-vagiannidis": 0.45
 }

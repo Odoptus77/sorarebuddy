@@ -153,9 +153,11 @@ verfügbar; NIE jemanden auf einer unbestätigten/alten Meldung benchen.**
   die Nick sie nennt — nicht dauerhaft. Umgesetzt über **`manual_competitions.json`**,
   **gekeyt per Fixture-Slug** (z. B. `football-23-25-sep-2026`); nach der GW
   veralten sie automatisch (anderes Fixture). `lineup_suggest.py` liest die Datei
-  standardmäßig und baut die Wettbewerbe **unabhängig** (Karten dürfen mit anderen
-  Wettbewerben geteilt werden — Sorare erlaubt Mehrfacheinsatz über verschiedene
-  Wettbewerbe; innerhalb eines Wettbewerbs bleiben Teams distinkt).
+  standardmäßig. **Single-Use-Pool über ALLE Wettbewerbe:** Jede Karte darf pro GW
+  nur **einmal** eingesetzt werden — auch manuelle Hot Streaks ziehen aus dem
+  gemeinsamen, schrumpfenden Pool und verbrauchen ihn (kein Mehrfacheinsatz einer
+  Karte über verschiedene Wettbewerbe). Hot Streaks werden zuerst befüllt (beste
+  In-Season-Karten), danach der Rest nach projizierter Stärke.
 - Felder je Eintrag: `rarity, label, format, size, teams_cap, max_classic,
   hotstreak, national_confederation` (`"europe"` = nur UEFA-Nationalspieler).
 
