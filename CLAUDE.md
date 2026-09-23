@@ -211,6 +211,25 @@ verfügbar; NIE jemanden auf einer unbestätigten/alten Meldung benchen.**
    gegenprüfen (und `--season` für Präzision nutzen).
 5. Ergebnis: ranked Watchlist mit klarer Empfehlung.
 
+### C) Nächste-GW-Vorplanung — Pflicht, sobald die Classic-Deadline durch ist
+Sobald eine Classic-Deadline (Di/Fr 16:00 CET/CEST) durch und die GW gelockt ist,
+**sofort einen ersten Lineup-Entwurf für die KOMMENDE GW** erstellen (nicht warten,
+bis Nick fragt):
+1. `python3 lineup_suggest.py nicktd7 --json <scratchpad>/next.json` (das Skript
+   ermittelt nach dem Lock automatisch die nächste GW).
+2. **Reine Club-GW → `start_overrides` IGNORIEREN** (leere Datei `{}` via
+   `--start-override`), damit wieder das Vereinsmodell greift — die
+   Länderspiel-Overrides wären für Club-Spiele falsch. Länderspiel-GW →
+   recherchierte Overrides wie gehabt.
+   **⚠️ Achtung Länderspielpause:** Eine Woche hat zwei Nationalspiel-Runden
+   (Matchday 1 + 2). Auch die **Wochenend-GW** enthält dann noch Nationalspiele
+   (Matchday 2, ~Sa–Mo) → NICHT als Club-GW behandeln, Overrides **behalten**;
+   nur die **Gegner ändern sich** → `team_strength.json` für die neuen Gegner
+   auffrischen. Erst die GW NACH der Pause ist wieder reine Club-GW.
+3. Entwurf als Tabellen zeigen (mit Kapitän), offene Startelf-/Verfügbarkeitsfragen
+   markieren; **final** beim nächsten Deadline-Check (~1,5 h vorher) datiert prüfen
+   (GRUNDREGEL #0). Baseline erst nach Nicks Sorare-Bestätigung nachziehen.
+
 ## Konventionen
 
 - Entwicklungszweig für Änderungen: `claude/sorare-account-management-4vdfzk`.
