@@ -91,6 +91,7 @@ Alle dependency-frei (nur Python-Stdlib), lesen den Key aus `.env.local`:
 | … für eine bestimmte GW (z. B. MLS-Hot-Streak in Länderspielpause) | `python3 lineup_suggest.py nicktd7 --fixture football-25-29-sep-2026` |
 | … mit Ausschluss verletzter/gesperrter Spieler | `python3 lineup_suggest.py nicktd7 --exclude "slug-oder-name,…" --json lineups.json` |
 | … Matchup-Gewichtung (Gegnerstärke) | standardmäßig AN: liest `team_strength.json`, `--matchup-weight 0.20` (0 = aus) |
+| … National-Abstellungen (Länderspielpause) | UEFA automatisch aus dem Fixture; Nicht-UEFA in `international_callups.json` (per Fixture-Slug); s. u. |
 | Rewards je Spieler | `python3 rewards_by_player.py nicktd7 --json rewards.json` |
 | Scouting: Ersatz/Ziel-Spieler bewerten | `python3 scout.py --like <slug> --candidates "slug1,slug2,…" [--budget 40] [--position Defender]` (Matchup-Gewichtung standardmäßig an, `--matchup-weight 0`=aus) |
 | Voraussichtliche Startelf (SofaScore) | `python3 sofascore_lineups.py "Real Madrid"` |
@@ -164,6 +165,41 @@ verfügbar; NIE jemanden auf einer unbestätigten/alten Meldung benchen.**
   Wettbewerben (z. B. In-Season-Pavlidis in der HS, Classic-Pavlidis in All-Star).
 - Felder je Eintrag: `rarity, label, format, size, teams_cap, max_classic,
   hotstreak, national_confederation` (`"europe"` = nur UEFA-Nationalspieler).
+
+### National-Abstellungen in Länderspielpausen (Optimierer erkennt sie)
+
+**Problem, das das behebt:** In einer FIFA-Pause laufen manche Klub-Ligen weiter
+(MLS, K-League …). Ist ein Spieler zu seiner Nationalmannschaft abgestellt, spielt
+er sein **Klub**-Spiel im Fenster **nicht** (Sorare zeigt ~0 %) — mein
+Vereins-Minuten-Modell würde ihn aber als Starter werten. (Genau das ging schief:
+Bouanga/Son/Blake standen mit hoher Klub-Quote im Entwurf, obwohl abgestellt.)
+
+- **Automatische Erkennung (UEFA):** `lineup_suggest.py` liest per **1 Query** alle
+  Länderspiele des Fixtures (`anyGames`) und merkt sich pro Nation das **letzte**
+  Spiel im Fenster. Ein Klubspieler wird als „auf National-Abstellung" markiert,
+  wenn seine **Nation** im Fenster spielt **und** sein **Klubspiel ≤ 24 h nach**
+  dem letzten Länderspiel seiner Nation liegt (sonst ist er zurück und spielt). Er
+  wird dann **stark abgewertet** (×0,12) und geflaggt (`intl_duty`, `start_src:
+  intl_duty_auto`) — kein harter Ausschluss, damit ein researched Override oder ein
+  bestätigter Klub-Start ihn zurückholt. Selbst-abschaltend: reine Klub-GW → keine
+  Länderspiele im Fixture → keine Abwertung. Ausgabe-Feld `international_break: true/false`.
+- **Grenze der API:** Sorares Fixture führt **nur die Länderspiele, die es selbst
+  austrägt** (praktisch **UEFA**). **Nicht-UEFA**-Abstellungen (viele
+  CAF/AFC/CONCACAF/CONMEBOL — z. B. Gabun/Korea/Jamaika mit Klub in MLS/K-League)
+  sind für die API **unsichtbar** → **manuell** deklarieren.
+- **Manuelle Liste `international_callups.json`** (öffentlich, kein Secret; wird
+  committet): **gekeyt per Fixture-Slug**, gilt nur für diese GW und veraltet danach
+  automatisch. Format: `{ "<fixture>": ["player-slug", …] }`. Gelistete Spieler gelten
+  fürs Klubspiel als **abwesend** (`start_prob 0` → aus dem Pool). `lineup_suggest.py`
+  liest die Datei standardmäßig (`--international-callups`).
+- **Präzedenz:** manuelle Callup-Liste (harter Drop) → **researched
+  `start_overrides.json`** (schlägt die Auto-Erkennung; hier trägst du „spielt Klub
+  doch, Quote X" ein) → automatische Erkennung. GRUNDREGEL #0 gilt: pro
+  Callup/Override das Datum + die Sorare-% datiert gegenchecken.
+- **Beim Sync-/Deadline-Check:** die `intl_duty`-Flags bzw. die stderr-Zeile
+  „Länderspiel-Verdacht … Sorare-% prüfen" ernst nehmen und die Sorare-Prozente der
+  betroffenen Klubspieler gegenchecken; Nicht-UEFA-Abgestellte in
+  `international_callups.json` nachtragen.
 
 ### Matchup-Gewichtung (Gegnerstärke)
 

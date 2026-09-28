@@ -41,6 +41,13 @@ CARD_PAGE = 50
 PLAYER_BATCH = 10   # detailedScore (minutes) per game inflates query complexity
 GAMES_BACK = 5      # recent games used for the Startelf (start-probability) score
 PACE = 0.25
+# During an international break, a player called up to his country will NOT play
+# a club game that happens to fall in the same window (Sorare shows ~0%), yet
+# the club-minutes model still rates him a starter. When his nation plays in the
+# window and this is a CLUB game, downweight his start prob by this factor and
+# flag it for a Sorare-% check (soft, not a hard drop -> a researched override
+# or a confirmed club start can still restore him).
+INTL_DUTY_FACTOR = 0.12
 POS_SLOTS = ["Goalkeeper", "Defender", "Midfielder", "Forward"]
 
 # Exact slot make-up per lineup size (EXTRA = any outfield position).
@@ -205,6 +212,72 @@ def get_upcoming_fixture(slug=None):
             up.append((start, n))
     up.sort(key=lambda x: x[0])
     return up[0][1] if up else nodes[0]
+
+
+def fetch_nation_last_games(fx_slug):
+    """Map country code -> datetime of that nation's LAST national-team game in
+    this fixture window. One query over the fixture's games; empty for a pure
+    club GW (self-gating: no national games -> no call-up logic).
+
+    The last-game datetime (not just "plays at all") is what tells a club game
+    apart: a player is with his nation only while it is still playing, so a club
+    game clearly AFTER his nation's last window game means he is back and plays.
+
+    NOTE: Sorare's fixture only carries the national games it actually runs (in
+    practice UEFA nations). Call-ups to nations Sorare doesn't carry (much of
+    CAF/AFC/CONCACAF/CONMEBOL — e.g. a Gabon/Korea/Jamaica international playing
+    in MLS or the K-League through the break) stay INVISIBLE to the API and must
+    be declared in international_callups.json instead."""
+    q = ('{ so5 { so5Fixture(slug: "%s") { anyGames { date '
+         'homeTeam { __typename ... on NationalTeam { country { code } } } '
+         'awayTeam { __typename ... on NationalTeam { country { code } } } } } } }'
+         % fx_slug)
+    try:
+        data = (graphql(q) or {}).get("data") or {}
+    except Exception as exc:
+        print(f"WARNING: could not read fixture games for int'l-break "
+              f"detection: {exc}", file=sys.stderr)
+        return {}
+    fix = ((data.get("so5") or {}).get("so5Fixture")) or {}
+    last = {}
+    for g in (fix.get("anyGames") or []):
+        gd = g.get("date")
+        if not gd:
+            continue
+        try:
+            gdt = dt.datetime.fromisoformat(gd.replace("Z", "+00:00"))
+        except Exception:
+            continue
+        for side in ("homeTeam", "awayTeam"):
+            t = g.get(side) or {}
+            if t.get("__typename") == "NationalTeam":
+                c = (t.get("country") or {}).get("code")
+                if c and (c not in last or gdt > last[c]):
+                    last[c] = gdt
+    return last
+
+
+# A club game is treated as missed to national duty only if it kicks off no
+# later than this long after the nation's LAST game in the window (else the
+# player is back from the national team and plays his club game).
+DUTY_RETURN_BUFFER = dt.timedelta(hours=24)
+
+
+def _on_national_duty(entry, nation_last_game):
+    """True if the player's nation is still on duty when his CLUB game kicks off
+    -> he is with his country and will miss the club game. Compares his club
+    kickoff against his nation's LAST game in the window (+ a return buffer)."""
+    last = nation_last_game.get(entry.get("nat_code"))
+    if last is None:
+        return False                     # nation not playing this window
+    ko = entry.get("kickoff")
+    if not ko:
+        return True                      # unknown kickoff -> be safe, flag it
+    try:
+        kdt = dt.datetime.fromisoformat(ko.replace("Z", "+00:00"))
+    except Exception:
+        return True
+    return kdt <= last + DUTY_RETURN_BUFFER
 
 
 def fetch_competitions(fx_slug, rarities):
@@ -550,7 +623,9 @@ def eligible_entry(card, pd, ws, we):
             "home": is_home, "opponent": opponent,
             "opp_type": opp_type, "matchup": 1.0,
             "team_name": team_name, "fixture": fixture,
-            "kickoff": ng["date"]}
+            "kickoff": ng["date"],
+            # player's nationality code, for international call-up detection
+            "nat_code": nat, "intl_duty": False}
 
 
 def cands(pool, slot, blocked, min_start=0.0):
@@ -733,6 +808,15 @@ def main(argv):
     ap.add_argument("--manual-competitions", default="manual_competitions.json",
                     help="JSON of competitions the API doesn't expose, keyed by "
                          "fixture slug (apply only to that GW). See the file.")
+    ap.add_argument("--international-callups", default="international_callups.json",
+                    help="JSON of player_slugs on national duty, keyed by fixture "
+                         "slug (apply only to that GW, auto-expire after). Listed "
+                         "players are treated as ABSENT from any club game this GW "
+                         "(start_prob 0 -> dropped). Use it for call-ups Sorare's "
+                         "fixture doesn't carry (non-UEFA nations, whose national "
+                         "games the API can't see); UEFA call-ups are detected "
+                         "automatically from the fixture. A researched "
+                         "start-override still wins over automatic detection.")
     ap.add_argument("--fixture", default=None,
                     help="build for a specific fixture slug or gameweek number "
                          "instead of the next one (e.g. football-25-29-sep-2026 "
@@ -818,6 +902,35 @@ def main(argv):
     we = dt.datetime.fromisoformat(fx["endDate"].replace("Z", "+00:00"))
     print(f"Upcoming GW {fx['gameWeek']} ({fx['slug']}) {ws.date()}–{we.date()}", file=sys.stderr)
 
+    # International-break awareness: for each nation, the datetime of its last
+    # national-team game in this window. A player whose nation is still playing
+    # when his CLUB game kicks off is on national duty and will miss it (Sorare
+    # ~0%), while the club-minutes model would rate him a starter.
+    nation_last_game = fetch_nation_last_games(fx["slug"])
+    intl_break = bool(nation_last_game)
+    if intl_break:
+        print(f"Länderspiel-Fenster erkannt: {len(nation_last_game)} Nationen "
+              f"mit Spiel im Fenster.", file=sys.stderr)
+
+    # Manually declared international call-ups (player_slugs on national duty),
+    # keyed by fixture slug so they auto-expire after the GW. For call-ups the
+    # Sorare fixture doesn't carry (non-UEFA nations). Listed players are treated
+    # as ABSENT from any club game this GW (start_prob 0 -> dropped).
+    manual_callups = set()
+    if os.path.exists(args.international_callups):
+        try:
+            with open(args.international_callups, encoding="utf-8") as fh:
+                raw = json.load(fh)
+            for s in (raw.get(fx["slug"]) or []):
+                if isinstance(s, str) and not s.startswith("_"):
+                    manual_callups.add(_norm(s))
+            if manual_callups:
+                print(f"Manuelle Nominierungen (national) für {fx['slug']}: "
+                      f"{len(manual_callups)} Spieler.", file=sys.stderr)
+        except (ValueError, OSError) as exc:
+            print(f"WARNING: could not read --international-callups "
+                  f"{args.international_callups}: {exc}", file=sys.stderr)
+
     comps = fetch_competitions(fx["slug"], rarities)
     # Manually declared competitions the API doesn't expose (e.g. an int'l-break
     # "European Nations" Hot Streak). Keyed by fixture slug, so they apply ONLY
@@ -883,14 +996,34 @@ def main(argv):
         for e in entries:
             e["is_classic"] = (e.get("season") or 0) < current_season
             ov = start_overrides.get(e["player_slug"])
-            if ov is not None:
+            on_club = (e.get("opp_type") == "Club")
+            # Precedence: (1) a declared call-up is an authoritative absence from
+            # the club game; (2) a researched override wins over everything else
+            # (Nick may have CONFIRMED the player does start his club game); (3)
+            # otherwise auto-detect national duty (nation plays this window AND
+            # this is a club game) and downweight + flag for a Sorare-% check.
+            if on_club and _norm(e["player_slug"]) in manual_callups:
+                e["start_prob"] = 0.0
+                e["start_src"] = "callup_out"
+                e["intl_duty"] = True
+            elif ov is not None:
                 e["start_prob"] = round(max(0.0, min(1.0, ov)), 3)
                 e["start_src"] = "researched"
-                e["ev"] = round(e["proj"] * e["start_prob"], 1)
+            elif on_club and _on_national_duty(e, nation_last_game):
+                e["start_prob"] = round(e["start_prob"] * INTL_DUTY_FACTOR, 3)
+                e["start_src"] = "intl_duty_auto"
+                e["intl_duty"] = True
+            e["ev"] = round(e["proj"] * e["start_prob"], 1)
             apply_matchup(e)
         # Drop (near-)certain non-starters AFTER overrides too: a researched
-        # 0% (e.g. suspended) player must never be fielded, even as a fallback.
+        # 0% (e.g. suspended) player or a declared call-up must never be
+        # fielded, even as a fallback.
         pools[rar] = [e for e in entries if e["start_prob"] >= 0.10]
+        flagged = sorted({e["player"] for e in entries if e.get("intl_duty")
+                          and e["start_prob"] >= 0.10})
+        if flagged:
+            print(f"  {rar}: Länderspiel-Verdacht (Klubspiel im Fenster, "
+                  f"Sorare-% prüfen): {', '.join(flagged)}", file=sys.stderr)
         print(f"  {rar}: {len(pools[rar])} eligible players", file=sys.stderr)
     if excluded:
         if dropped:
@@ -925,6 +1058,7 @@ def main(argv):
     out = {"fixture": {"slug": fx["slug"], "gameWeek": fx["gameWeek"],
                        "start": fx["startDate"], "end": fx["endDate"]},
            "generated": dt.datetime.now(dt.timezone.utc).isoformat(),
+           "international_break": intl_break,
            "eligible": {r: len(pools.get(r, [])) for r in rarities},
            "competitions": []}
 

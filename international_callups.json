@@ -1,0 +1,4 @@
+{
+  "_comment": "Manuell deklarierte National-Abstellungen (Spieler, die in einer Länderspielpause bei ihrer Nationalmannschaft sind und ihr KLUB-Spiel im GW-Fenster NICHT spielen). Gekeyt per Fixture-Slug -> gilt nur für diese GW und veraltet danach automatisch (anderes Fixture). Gelistete player_slugs werden fürs Klubspiel als abwesend behandelt (start_prob 0 -> aus dem Pool). NUR nötig für Nationen, deren Länderspiele Sorares Fixture NICHT führt (Nicht-UEFA: viele CAF/AFC/CONCACAF/CONMEBOL, z.B. Gabun/Korea/Jamaika mit Klub in MLS/K-League). UEFA-Abstellungen erkennt lineup_suggest.py automatisch aus dem Fixture (anyGames). Ein researched start_override (start_overrides.json) schlägt die automatische Erkennung, NICHT diese manuelle Liste. GRUNDREGEL #0: pro Eintrag Sorare-% / Nominierung datiert gegenchecken.",
+  "_format": "{ \"<fixture-slug>\": [\"player-slug\", ...] }  Beispiel: { \"football-25-29-sep-2026\": [\"denis-bouanga\", \"heung-min-son\"] }"
+}
