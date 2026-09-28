@@ -36,4 +36,5 @@ club.json
 rewards.json
 lineups.json
 dashboard.html
+backtest.json
 *.csv

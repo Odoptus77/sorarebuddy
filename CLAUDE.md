@@ -93,6 +93,7 @@ Alle dependency-frei (nur Python-Stdlib), lesen den Key aus `.env.local`:
 | … Matchup-Gewichtung (Gegnerstärke) | standardmäßig AN: liest `team_strength.json`, `--matchup-weight 0.20` (0 = aus) |
 | … National-Abstellungen (Länderspielpause) | UEFA automatisch aus dem Fixture; Nicht-UEFA in `international_callups.json` (per Fixture-Slug); s. u. |
 | Rewards je Spieler | `python3 rewards_by_player.py nicktd7 --json rewards.json` |
+| Backtest/Kalibrierung des Modells | `python3 backtest.py nicktd7 [--players "slug,…"] [--json backtest.json]` (misst Start-Kalibrierung/Brier + Projektions-Fehler retrospektiv aus Spiel-Logs) |
 | Scouting: Ersatz/Ziel-Spieler bewerten | `python3 scout.py --like <slug> --candidates "slug1,slug2,…" [--budget 40] [--position Defender]` (Matchup-Gewichtung standardmäßig an, `--matchup-weight 0`=aus) |
 | Voraussichtliche Startelf (SofaScore) | `python3 sofascore_lineups.py "Real Madrid"` |
 | HTML-Dashboard aus club.json | `python3 build_dashboard.py club.json --out dashboard.html` |
