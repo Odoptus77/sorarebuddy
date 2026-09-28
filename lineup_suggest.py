@@ -40,6 +40,7 @@ from sorare_client import graphql
 CARD_PAGE = 50
 PLAYER_BATCH = 10   # detailedScore (minutes) per game inflates query complexity
 GAMES_BACK = 5      # recent games used for the Startelf (start-probability) score
+PROJ_GAMES = 15     # games fetched for the played-only scoring projection
 PACE = 0.25
 # During an international break, a player called up to his country will NOT play
 # a club game that happens to fall in the same window (Sorare shows ~0%), yet
@@ -179,10 +180,10 @@ PLAYER_FIELDS = """
   nextGame { date statusTyped
     homeTeam { __typename name ... on NationalTeam { country { code } } }
     awayTeam { __typename name ... on NationalTeam { country { code } } } }
-  playerGameScores(last: %d) { anyGame { date } detailedScore { stat statValue } }
+  playerGameScores(last: %d) { score anyGame { date } detailedScore { stat statValue } }
   l5: averageScore(type: LAST_FIVE_SO5_AVERAGE_SCORE)
   l15: averageScore(type: LAST_FIFTEEN_SO5_AVERAGE_SCORE)
-""" % GAMES_BACK
+""" % PROJ_GAMES
 
 
 def rarity_of(t):
@@ -521,6 +522,33 @@ def start_probability(pd, we):
     return max(0.0, min(0.98, round(prob, 3))), mins
 
 
+def played_projection(pd):
+    """Expected SO5 score GIVEN the player plays: a blend of his last-5 and
+    last-15 scores over games he ACTUALLY PLAYED (minutes > 0).
+
+    Rationale (validated by backtest.py on 1k+ games): the raw L5 average mixes
+    in DNP / unused-sub games (score ~0), which dragged the projection ~10 pts
+    below the true score-when-playing level (MAE 19 -> 14, bias -11 -> ~0). The
+    start probability already accounts for availability, so the projection must
+    be the clean 'if he plays' score, not a play-rate-discounted one."""
+    played = []
+    for g in reversed(pd.get("playerGameScores") or []):   # most-recent first
+        mp = None
+        for s in (g.get("detailedScore") or []):
+            if s.get("stat") == "mins_played":
+                mp = s.get("statValue")
+                break
+        if (mp or 0) > 0 and g.get("score") is not None:
+            played.append(g["score"])
+    if not played:
+        return None
+    l5 = played[:5]
+    l15 = played[:15]
+    m5 = sum(l5) / len(l5)
+    m15 = sum(l15) / len(l15)
+    return 0.6 * m5 + 0.4 * m15
+
+
 def apply_sofascore(entries, index):
     """Fuse SofaScore predicted/confirmed XIs into each entry's start_prob.
     Confirmed lineups override the model; predicted lineups blend with it.
@@ -603,7 +631,13 @@ def eligible_entry(card, pd, ws, we):
     team_name = my_team.get("name")
     # Stable id for the fixture, side-independent: the two team names + kickoff.
     fixture = "|".join(sorted(x for x in (team_name, opponent) if x)) + "@" + ng["date"]
-    proj = round(l5 * (0.75 + 0.25 * min(1.0, app / 15.0)) * (1.03 if is_home else 1.0), 1)
+    # Expected score IF he plays: played-only blend (see played_projection);
+    # fall back to the API L5 average when no per-game scores are on record.
+    # No play-rate discount here — start_prob already carries availability.
+    base_proj = played_projection(pd)
+    if base_proj is None:
+        base_proj = l5
+    proj = round(base_proj * (1.03 if is_home else 1.0), 1)
     ev = round(proj * start_prob, 1)   # expected value = projection x P(start)
     club = pd.get("activeClub") or {}
     league = (club.get("domesticLeague") or {}).get("slug")

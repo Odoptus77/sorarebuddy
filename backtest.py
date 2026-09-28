@@ -124,12 +124,15 @@ def model_start_prob(prior):
 
 
 def model_proj(prior):
-    """L5-style trailing average of the last up-to-5 prior game scores."""
-    scores = [g["score"] for g in reversed(prior)
-              if g.get("score") is not None][:5]
-    if not scores:
+    """Played-only blend, mirroring lineup_suggest.played_projection:
+    0.6*mean(last5 played) + 0.4*mean(last15 played), over prior games with
+    minutes > 0 (DNP/unused-sub games excluded)."""
+    played = [g["score"] for g in reversed(prior)
+              if (g.get("mins") or 0) > 0 and g.get("score") is not None]
+    if not played:
         return None
-    return sum(scores) / len(scores)
+    l5, l15 = played[:5], played[:15]
+    return 0.6 * (sum(l5) / len(l5)) + 0.4 * (sum(l15) / len(l15))
 
 
 def main(argv):
