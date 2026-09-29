@@ -54,6 +54,11 @@ INTL_DUTY_FACTOR = 0.12
 # upcoming national game (his club-minutes score is meaningless there).
 NATIONAL_BENCH_FACTOR = 0.12
 NATIONAL_BENCH_DAYS = 12   # how far back to look for the nation's break games
+# A red card (straight or 2nd yellow) in the player's most recent game almost
+# always bans him from the next game of the SAME competition stream (club vs
+# national). Soft downweight + flag (not a hard drop: reds get rescinded, and
+# the ban is competition-specific) so it surfaces for a check.
+SUSPENSION_FACTOR = 0.10
 # Mild recalibration of the model start probability toward the observed base
 # rate: p' = (1-k)*p + k*base. Backtest-tuned (k=0.10 minimised Brier); a small,
 # monotonic nudge that mainly de-biases the extremes and barely moves rankings.
@@ -471,8 +476,8 @@ def _recent_minutes(pd):
                 break
         dte = ((g.get("anyGame") or {}).get("date") or "")[:10]
         out.append((dte, mp))
-    # Sorare returns oldest->newest for last:N; flip to most-recent first.
-    out.reverse()
+    # Sorare returns playerGameScores MOST-RECENT-FIRST (verified: index 0 is the
+    # newest game) -> the list is already in the order RECENCY_W expects.
     return out
 
 
@@ -546,7 +551,7 @@ def played_projection(pd):
     start probability already accounts for availability, so the projection must
     be the clean 'if he plays' score, not a play-rate-discounted one."""
     played = []
-    for g in reversed(pd.get("playerGameScores") or []):   # most-recent first
+    for g in (pd.get("playerGameScores") or []):   # API order = most-recent-first
         mp = None
         for s in (g.get("detailedScore") or []):
             if s.get("stat") == "mins_played":
@@ -597,6 +602,31 @@ def national_bench_signal(pd, we):
                 break
         mins_seen.append(mp or 0)
     return bool(mins_seen) and max(mins_seen) == 0
+
+
+def suspension_signal(pd, opp_type):
+    """True if the player's MOST RECENT game had a red card AND that game is the
+    same competition stream (club vs national) as his upcoming game -> almost
+    certainly banned for the next game of that stream. Uses the dated game log
+    (red_card stat covers straight reds and second yellows). A researched
+    override still wins (e.g. a rescinded red)."""
+    games = pd.get("playerGameScores") or []
+    if not games:
+        return False
+    last = games[0]                     # most-recent-first -> index 0 is newest
+    red = 0
+    for s in (last.get("detailedScore") or []):
+        if s.get("stat") == "red_card":
+            red = s.get("statValue") or 0
+            break
+    if red < 1:
+        return False
+    ag = last.get("anyGame") or {}
+    last_type = "NationalTeam" if (
+        (ag.get("homeTeam") or {}).get("__typename") == "NationalTeam"
+        or (ag.get("awayTeam") or {}).get("__typename") == "NationalTeam") else "Club"
+    # ban applies to the same stream; unknown upcoming type -> flag to be safe
+    return opp_type is None or last_type == opp_type
 
 
 def apply_sofascore(entries, index):
@@ -709,7 +739,7 @@ def eligible_entry(card, pd, ws, we):
             "team_name": team_name, "fixture": fixture,
             "kickoff": ng["date"],
             # player's nationality code, for international call-up detection
-            "nat_code": nat, "intl_duty": False}
+            "nat_code": nat, "intl_duty": False, "suspended": False}
 
 
 def cands(pool, slot, blocked, min_start=0.0):
@@ -1093,6 +1123,11 @@ def main(argv):
             elif ov is not None:
                 e["start_prob"] = round(max(0.0, min(1.0, ov)), 3)
                 e["start_src"] = "researched"
+            elif suspension_signal(players.get(e["player_slug"]) or {}, e.get("opp_type")):
+                # red card in his last game of this stream -> banned next game
+                e["start_prob"] = round(e["start_prob"] * SUSPENSION_FACTOR, 3)
+                e["start_src"] = "suspension_risk"
+                e["suspended"] = True
             elif on_club and _on_national_duty(e, nation_last_game):
                 e["start_prob"] = round(e["start_prob"] * INTL_DUTY_FACTOR, 3)
                 e["start_src"] = "intl_duty_auto"
@@ -1115,6 +1150,10 @@ def main(argv):
         if flagged:
             print(f"  {rar}: Länderspiel-Verdacht (Klubspiel im Fenster, "
                   f"Sorare-% prüfen): {', '.join(flagged)}", file=sys.stderr)
+        susp = sorted({e["player"] for e in entries if e.get("suspended")})
+        if susp:
+            print(f"  {rar}: Sperren-Verdacht (Rot im letzten Spiel, prüfen): "
+                  f"{', '.join(susp)}", file=sys.stderr)
         print(f"  {rar}: {len(pools[rar])} eligible players", file=sys.stderr)
     if excluded:
         if dropped:

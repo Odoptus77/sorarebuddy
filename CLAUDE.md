@@ -218,8 +218,17 @@ Bouanga/Son/Blake standen mit hoher Klub-Quote im Entwurf, obwohl abgestellt.)
 - **Startquote leicht rekalibriert:** `p' = 0,9·p + 0,1·0,48` (Shrink Richtung
   Basisrate, Backtest-optimiert) — de-biast die Extreme, ändert die Rangfolge
   praktisch nicht.
-- `python3 backtest.py nicktd7` misst beides retrospektiv (Brier/Kalibrierung +
-  Projektions-MAE) — nach jeder Modelländerung vorher/nachher vergleichen.
+- **Sperren-Erkennung (`suspension_signal`):** Rote Karte (glatt oder Gelb-Rot,
+  `red_card`-Stat) im **letzten** Spiel desselben Wettbewerb-Streams (Klub vs.
+  Nationalteam) wie das kommende → sehr wahrscheinlich gesperrt → abgewertet
+  (×0,10, `start_src: suspension_risk`, stderr „Sperren-Verdacht … prüfen").
+  Fängt die Sperren, die der Verletzungs-Feed übersieht. Gelb-Sperren (Schwellen
+  je Liga) sind so **nicht** abgedeckt → weiter manuell/extern.
+- **Log-Reihenfolge:** `playerGameScores` kommt **most-recent-first** (Index 0 =
+  neuestes Spiel) — Recency-Gewichtung und `played_projection` nutzen genau diese
+  Reihenfolge (kein Umdrehen).
+- `python3 backtest.py nicktd7` misst Start-Kalibrierung + Projektions-MAE
+  retrospektiv — nach jeder Modelländerung vorher/nachher vergleichen.
 
 ### Matchup-Gewichtung (Gegnerstärke)
 
