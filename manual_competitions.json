@@ -11,5 +11,17 @@
       "max_classic": 1,
       "national_confederation": "europe"
     }
+  ],
+  "football-1-2-oct-2026": [
+    {
+      "rarity": "limited",
+      "label": "Europäische Nationen (Hot Streak)",
+      "format": "Hot Streak",
+      "size": 5,
+      "teams_cap": 1,
+      "hotstreak": true,
+      "max_classic": 1,
+      "national_confederation": "europe"
+    }
   ]
 }
