@@ -94,6 +94,7 @@ Alle dependency-frei (nur Python-Stdlib), lesen den Key aus `.env.local`:
 | … National-Abstellungen (Länderspielpause) | UEFA automatisch aus dem Fixture; Nicht-UEFA in `international_callups.json` (per Fixture-Slug); s. u. |
 | Verletzungen/Sperren (API-Football) | `python3 injuries_feed.py status` · `date YYYY-MM-DD` · `selftest` (Einrichtung: `docs/network-setup.md`) |
 | Rewards je Spieler | `python3 rewards_by_player.py nicktd7 --json rewards.json` |
+| **Treffer-Bilanz + Lernkreislauf** | `python3 evaluate.py` (Log vs. echte Startelf/Minuten/Punkte → `logs/evaluation.json` + gelernte `calibration.json`) |
 | Backtest/Kalibrierung des Modells | `python3 backtest.py nicktd7 [--players "slug,…"] [--json backtest.json]` (misst Start-Kalibrierung/Brier + Projektions-Fehler retrospektiv aus Spiel-Logs) |
 | Scouting: Ersatz/Ziel-Spieler bewerten | `python3 scout.py --like <slug> --candidates "slug1,slug2,…" [--budget 40] [--position Defender]` (Matchup-Gewichtung standardmäßig an, `--matchup-weight 0`=aus) |
 | Voraussichtliche Startelf (SofaScore) | `python3 sofascore_lineups.py "Real Madrid"` |
@@ -272,6 +273,19 @@ Bouanga/Son/Blake standen mit hoher Klub-Quote im Entwurf, obwohl abgestellt.)
     für Spiele außerhalb des Fensters nötig. Flag `intl_duty`.
   - Nations-League-Spiele hatten am 29.09. **keine** Meldungen (Abdeckung v. a.
     Klubligen, z. B. MLS).
+- **Treffer-Bilanz & Lernkreislauf (`evaluate.py`, seit 29.09.2026):** gleicht je
+  Spieler & Spiel die **letzte Vorhersage vor Anpfiff** aus `logs/predictions.jsonl`
+  mit dem Ergebnis ab — Startelf exakt über Sorares `gameStarted` (nicht über
+  Minuten), dazu Minuten/Punkte. Bericht: Brier gesamt + **je Quelle** (Modell,
+  Override, Sorare-%, API-Football, Abstellung/Bank/Rot), Trefferquote der
+  Ausfall-Signale, reale Startquote je `playingStatus`, Projektions-MAE/Bias.
+  **Lernen:** schreibt `calibration.json` = regularisierte Platt-Skalierung je
+  Quelle (geschrumpft zur Gesamtkalibrierung, diese zu „keine Änderung") + ein
+  Projektions-Faktor. `lineup_suggest.py` wendet sie automatisch an, **sobald ≥ 30
+  Spiele ausgewertet** sind (`active`); gelernt wird aus der **Rohquote**
+  (`start_prob_raw` im Log), damit sich der Kreislauf nicht selbst verstärkt.
+  `logs/evaluation.json` und `calibration.json` werden **committet** (nötig im
+  nächsten Container). Tägliche Routine „Sorare Treffer-Bilanz" fährt das + meldet.
 - **Log-Reihenfolge:** `playerGameScores` kommt **most-recent-first** (Index 0 =
   neuestes Spiel) — Recency-Gewichtung und `played_projection` nutzen genau diese
   Reihenfolge (kein Umdrehen).
@@ -353,5 +367,6 @@ bis Nick fragt):
   meine Startquoten werden sichtbar; Nick hat das akzeptiert). Grund: Der
   Container ist flüchtig, ohne Commit ginge das Log für die Kalibrierung verloren.
   Nach jedem echten `lineup_suggest.py`-Lauf das Log mit committen + pushen.
+  Ebenso `logs/evaluation.json` + `calibration.json` nach jedem `evaluate.py`-Lauf.
 - Neue Recherche-/Scouting-Tools als eigenständige Stdlib-Skripte im gleichen
   Stil ergänzen (Docstring mit Usage, `graphql`/`load_env` aus `sorare_client`).

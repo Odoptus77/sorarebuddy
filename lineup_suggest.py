@@ -30,6 +30,7 @@ Usage:
 import argparse
 import datetime as dt
 import json
+import math
 import os
 import re
 import sys
@@ -986,6 +987,11 @@ def main(argv):
                     help="build for a specific fixture slug or gameweek number "
                          "instead of the next one (e.g. football-25-29-sep-2026 "
                          "for the MLS Hot Streak round during an int'l break)")
+    ap.add_argument("--calibration", default="calibration.json",
+                    help="learned calibration from evaluate.py (Treffer-Bilanz): "
+                         "per-source correction of the start probability + a "
+                         "projection scale. Applied only once enough games were "
+                         "evaluated ('active'). '' disables.")
     ap.add_argument("--no-injuries-feed", action="store_true",
                     help="skip the API-Football injury/suspension feed "
                          "(injuries_feed.py); it is used automatically when "
@@ -1095,6 +1101,39 @@ def main(argv):
     # Sorare's odds describe the NEXT Classic fixture only -> ignore them when
     # building for an explicitly chosen (possibly later) fixture.
     use_sorare_odds = not args.no_sorare_odds and args.fixture is None
+
+    # Learned calibration (evaluate.py): only used once it is 'active'.
+    calib = None
+    if args.calibration and os.path.exists(args.calibration):
+        try:
+            with open(args.calibration, encoding="utf-8") as fh:
+                c = json.load(fh)
+            if c.get("active"):
+                calib = c
+                print(f"Kalibrierung aktiv (aus {c.get('n')} ausgewerteten Spielen, "
+                      f"Stand {str(c.get('_updated'))[:10]}; Projektions-Faktor "
+                      f"{(c.get('proj_scale') or {}).get('value', 1.0)}).", file=sys.stderr)
+            else:
+                print(f"Kalibrierung noch inaktiv ({c.get('n')}/{c.get('min_n')} "
+                      f"Spiele ausgewertet).", file=sys.stderr)
+        except (ValueError, OSError) as exc:
+            print(f"WARNING: could not read --calibration {args.calibration}: {exc}",
+                  file=sys.stderr)
+
+    def _calibrate(e):
+        """Apply the learned per-source correction to the final start prob and
+        the projection scale; keep the raw value for logging/learning."""
+        e["start_prob_raw"] = e["start_prob"]
+        if not calib:
+            return
+        src = e.get("start_src") or "model"
+        if src != "callup_out" and e["start_prob"] > 0:
+            prm = (calib.get("sources") or {}).get(src) or calib.get("global") or {}
+            p = min(0.99, max(0.01, e["start_prob"]))
+            z = prm.get("a", 0.0) + prm.get("b", 1.0) * math.log(p / (1 - p))
+            e["start_prob"] = round(1 / (1 + math.exp(-max(-30, min(30, z)))), 3)
+        scale = (calib.get("proj_scale") or {}).get("value", 1.0)
+        e["proj"] = round(e["proj"] * scale, 1)
 
     # Keep only the overrides bound to THIS gameweek; the rest have expired.
     start_overrides = {k: o["p"] for k, o in override_raw.items()
@@ -1279,6 +1318,7 @@ def main(argv):
                 e["start_prob"] = round(e["start_prob"] * NATIONAL_BENCH_FACTOR, 3)
                 e["start_src"] = "natl_bench_auto"
                 e["intl_duty"] = True
+            _calibrate(e)
             e["ev"] = round(e["proj"] * e["start_prob"], 1)
             apply_matchup(e)
             e["status_conflict"] = _status_conflict(e)
@@ -1513,6 +1553,7 @@ def main(argv):
                     "playing_status": e.get("playing_status"),
                     "sorare_start": e.get("sorare_start"), "sorare_sub": e.get("sorare_sub"),
                     "sorare_rel": e.get("sorare_rel"), "start_prob": e.get("start_prob"),
+                    "start_prob_raw": e.get("start_prob_raw"),
                     "start_src": e.get("start_src") or "model", "proj": e.get("proj"),
                     "apif": e.get("apif"),
                 }, ensure_ascii=False) + "\n")
