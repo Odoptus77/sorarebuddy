@@ -1,0 +1,29 @@
+[Unit]
+Description=sorarebuddy dashboard (Next.js)
+After=network-online.target sorarebuddy.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=sorarebuddy
+Group=sorarebuddy
+WorkingDirectory=/opt/sorarebuddy/dashboard
+EnvironmentFile=/etc/sorarebuddy/dashboard.env
+Environment=NODE_ENV=production
+Environment=NEXT_TELEMETRY_DISABLED=1
+# loopback only -- Caddy/nginx terminates TLS and proxies to it
+ExecStart=/usr/bin/env node node_modules/next/dist/bin/next start -p 3000 -H 127.0.0.1
+Restart=on-failure
+RestartSec=3
+
+# --- hardening ---
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+ProtectControlGroups=true
+ProtectKernelTunables=true
+RestrictSUIDSGID=true
+
+[Install]
+WantedBy=multi-user.target

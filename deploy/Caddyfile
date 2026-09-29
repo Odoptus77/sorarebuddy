@@ -1,8 +1,21 @@
 # Caddy reverse proxy with automatic HTTPS (Let's Encrypt).
 # Replace the domain, put this at /etc/caddy/Caddyfile, then: systemctl reload caddy
 # Requires an A/AAAA record for the domain pointing at this VPS, ports 80+443 open.
+#
+# One domain for both services:
+#   /api/* and /health  -> Python backend (iOS app, prewarm cron)   127.0.0.1:8080
+#   everything else     -> Next.js dashboard (password-protected)   127.0.0.1:3000
 
 sorarebuddy.example.com {
 	encode zstd gzip
-	reverse_proxy 127.0.0.1:8080
+
+	handle /api/* {
+		reverse_proxy 127.0.0.1:8080
+	}
+	handle /health {
+		reverse_proxy 127.0.0.1:8080
+	}
+	handle {
+		reverse_proxy 127.0.0.1:3000
+	}
 }

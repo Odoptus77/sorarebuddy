@@ -157,7 +157,9 @@ def _producer(kind, slug, rarities):
     if kind == "rewards":
         return _run_script("rewards_by_player.py", slug, ["--out", os.devnull])
     if kind == "lineups":
-        return _run_script("lineup_suggest.py", slug, ["--rarities", rarities])
+        # --log '': server runs must not write the repo's prediction log (the
+        # app dir is read-only for the service user; the log is curated by hand)
+        return _run_script("lineup_suggest.py", slug, ["--rarities", rarities, "--log", ""])
     if kind == "review":
         return _run_review()
     raise ValueError(kind)

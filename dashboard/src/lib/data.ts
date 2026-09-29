@@ -46,6 +46,13 @@ async function fromApi<T>(route: string, params: Record<string, string> = {}): P
     const age = res.headers.get("X-Cache-Age");
     return { ok: true, source, data: (await res.json()) as T, ageSeconds: age ? Number(age) : null };
   } catch (e) {
+    if (e instanceof Error && (e.name === "TimeoutError" || e.name === "AbortError")) {
+      return {
+        ok: false,
+        source,
+        error: "Das Backend rechnet noch (erster Abruf dauert einige Minuten) — bitte gleich neu laden.",
+      };
+    }
     return { ok: false, source, error: e instanceof Error ? e.message : String(e) };
   }
 }

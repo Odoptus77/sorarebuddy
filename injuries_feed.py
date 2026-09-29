@@ -33,7 +33,7 @@ import urllib.request
 from sorare_client import load_env
 
 BASE = "https://v3.football.api-sports.io"
-CACHE_DIR = os.path.join(".cache", "apifootball")
+CACHE_DIR = os.environ.get("APIFOOTBALL_CACHE_DIR", os.path.join(".cache", "apifootball"))
 CACHE_TTL_H = 3
 TIMEOUT = 30
 KICKOFF_TOLERANCE = dt.timedelta(hours=36)   # injury row fixture vs our kickoff
@@ -109,9 +109,12 @@ def fetch_day(day, use_cache=True):
         if page >= (paging.get("total") or 1):
             break
         page += 1
-    os.makedirs(CACHE_DIR, exist_ok=True)
-    with open(path, "w", encoding="utf-8") as fh:
-        json.dump(rows, fh)
+    try:                            # cache is best-effort (read-only app dir on a server)
+        os.makedirs(CACHE_DIR, exist_ok=True)
+        with open(path, "w", encoding="utf-8") as fh:
+            json.dump(rows, fh)
+    except OSError:
+        pass
     return rows
 
 

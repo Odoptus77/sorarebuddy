@@ -109,6 +109,7 @@ Alle dependency-frei (nur Python-Stdlib), lesen den Key aus `.env.local`:
 | Scouting: Ersatz/Ziel-Spieler bewerten | `python3 scout.py --like <slug> --candidates "slug1,slug2,…" [--budget 40] [--position Defender]` (Matchup-Gewichtung standardmäßig an, `--matchup-weight 0`=aus) |
 | Voraussichtliche Startelf (SofaScore) | `python3 sofascore_lineups.py "Real Madrid"` |
 | HTML-Dashboard aus club.json | `python3 build_dashboard.py club.json --out dashboard.html` |
+| **Web-Dashboard (Next.js)** | `dashboard/` — Übersicht/Aufstellungen/Kader/GW-Bilanz/Modell; Daten serverseitig vom Backend (`SORAREBUDDY_API_URL`) oder aus den lokalen JSONs; Hosting auf dem Hostinger-VPS: `deploy/hostinger.md` §8 (`deploy/install-dashboard.sh`) |
 
 Für **Recherche/News** (nicht in der Sorare-API enthalten): `WebSearch` /
 `WebFetch` nutzen (Verletzungen, Startelf, Transfers, Sperren) und wo möglich

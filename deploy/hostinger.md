@@ -103,17 +103,72 @@ crontab -e
 0 * * * * curl -fsS "https://sorarebuddy.yourdomain.com/api/bundle?slug=nicktd7" -H "Authorization: Bearer <APP_TOKEN>" >/dev/null
 ```
 
+## 8. Dashboard (Next.js) auf demselben Server
+
+Das Dashboard läuft als zweiter Dienst (`sorarebuddy-dashboard`, Port 3000,
+nur loopback) und holt seine Daten vom Backend auf `127.0.0.1:8080`. Caddy
+leitet auf **derselben Domain** `/api/*` + `/health` ans Backend und alles
+andere ans Dashboard — kein zusätzlicher DNS-Eintrag nötig.
+
+**Wichtig — richtiger Branch:** Der Standard-Branch des Repos enthält das
+Dashboard noch nicht. Auf dem Server einmalig umstellen:
+
+```bash
+cd /opt/sorarebuddy
+git fetch origin
+git checkout claude/sorare-account-management-4vdfzk
+```
+
+Dann installieren (installiert bei Bedarf Node.js 22, baut, startet den Dienst):
+
+```bash
+bash deploy/install-dashboard.sh
+```
+
+Das Skript legt `/etc/sorarebuddy/dashboard.env` an, übernimmt den
+`APP_TOKEN` des Backends und **setzt ein zufälliges Dashboard-Passwort, das es
+einmal im Terminal anzeigt** (Nutzer `nick`). Das Passwort nicht in Chats
+posten; ändern jederzeit in `/etc/sorarebuddy/dashboard.env` +
+`systemctl restart sorarebuddy-dashboard`.
+
+Danach Caddy auf die neue Routing-Datei umstellen:
+
+```bash
+cp /opt/sorarebuddy/deploy/Caddyfile /etc/caddy/Caddyfile
+nano /etc/caddy/Caddyfile          # deine Domain eintragen (wie bisher)
+systemctl reload caddy
+```
+
+Test: `https://sorarebuddy.yourdomain.com/` im Browser öffnen → Login-Dialog →
+Dashboard. Die API fürs iOS-App bleibt unter derselben Domain erreichbar.
+
+Vorwärmen, damit das Dashboard nie auf einen kalten Pipeline-Lauf wartet (die
+Parameter müssen denen des Dashboards entsprechen, sonst ist es ein anderer
+Cache-Eintrag):
+
+```bash
+crontab -e
+# stündlich: Aufstellungen + Kader so, wie das Dashboard sie abfragt
+5 * * * * curl -fsS "http://127.0.0.1:8080/api/lineups?slug=nicktd7&rarities=limited" -H "Authorization: Bearer <APP_TOKEN>" >/dev/null
+10 * * * * curl -fsS "http://127.0.0.1:8080/api/club?slug=nicktd7&rarities=limited" -H "Authorization: Bearer <APP_TOKEN>" >/dev/null
+```
+
+Logs: `journalctl -u sorarebuddy-dashboard -f`. Die Seite **GW-Bilanz** braucht
+einen Sorare-OAuth-Login auf dem Server und zeigt ohne ihn nur einen Hinweis;
+alle anderen Seiten funktionieren sofort.
+
 ## Updating later
 
 ```bash
-cd /opt/sorarebuddy && bash deploy/update.sh
+cd /opt/sorarebuddy && bash deploy/update.sh    # Backend + (falls installiert) Dashboard
 ```
 
 ## If something's off
 
 ```bash
-journalctl -u sorarebuddy -f      # backend logs
-systemctl status sorarebuddy caddy
+journalctl -u sorarebuddy -f              # backend logs
+journalctl -u sorarebuddy-dashboard -f    # dashboard logs
+systemctl status sorarebuddy sorarebuddy-dashboard caddy
 ```
 
 - Caddy can't get a cert → DNS A record not propagated yet, or 80/443 blocked
