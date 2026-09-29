@@ -237,9 +237,11 @@ Bouanga/Son/Blake standen mit hoher Klub-Quote im Entwurf, obwohl abgestellt.)
     29.09.) → verschiebt **keine** Quote, sondern löst nur den Alarm „Sorare-Status
     widerspricht Startquote (prüfen)" aus (Bank-Status bei ≥55 %, oder Klub-STARTER
     bei ≤35 % in einem Klubspiel). Fängt v. a. **veraltete Overrides** (Froholdt-Fall).
-  - **Vorhersage-Log** `predictions_log.jsonl` (gitignored; `--log`, `''` = aus):
-    je Lauf eine Zeile pro Spieler (Modell-%, Sorare-Status/-%, finale Quote +
-    Quelle) → Grundlage, um Quellen später gegen echte Aufstellungen zu kalibrieren.
+  - **Vorhersage-Log** `logs/predictions.jsonl` (**wird committet**, s. Konventionen;
+    `--log`, `''` = aus): je Lauf eine Zeile pro Spieler (Modell-%, Sorare-Status/-%,
+    finale Quote + Quelle) → Grundlage, um Quellen später gegen echte Aufstellungen
+    zu kalibrieren. **Test-/Experiment-Läufe immer mit `--log ''`**, damit das Log
+    nur echte Vorhersagen enthält.
 - **Log-Reihenfolge:** `playerGameScores` kommt **most-recent-first** (Index 0 =
   neuestes Spiel) — Recency-Gewichtung und `played_projection` nutzen genau diese
   Reihenfolge (kein Umdrehen).
@@ -317,5 +319,10 @@ bis Nick fragt):
 - Laufzeit-Ausgaben (`club.json`, `rewards.json`, `lineups.json`, `dashboard.html`,
   `*.csv`) sind Wegwerf-Artefakte — **nicht** committen, wenn sie Account-Daten
   enthalten; im Scratchpad oder als gitignored Dateien halten.
+- **Ausnahme (Nicks Entscheidung, 29.09.2026):** `logs/predictions.jsonl` wird
+  **bewusst committet**, obwohl das Repo **öffentlich** ist (Spielernamen +
+  meine Startquoten werden sichtbar; Nick hat das akzeptiert). Grund: Der
+  Container ist flüchtig, ohne Commit ginge das Log für die Kalibrierung verloren.
+  Nach jedem echten `lineup_suggest.py`-Lauf das Log mit committen + pushen.
 - Neue Recherche-/Scouting-Tools als eigenständige Stdlib-Skripte im gleichen
   Stil ergänzen (Docstring mit Usage, `graphql`/`load_env` aus `sorare_client`).

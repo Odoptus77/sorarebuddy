@@ -37,5 +37,4 @@ rewards.json
 lineups.json
 dashboard.html
 backtest.json
-predictions_log.jsonl
 *.csv

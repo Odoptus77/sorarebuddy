@@ -984,10 +984,12 @@ def main(argv):
     ap.add_argument("--no-sorare-odds", action="store_true",
                     help="ignore Sorare's own starter odds even when the API "
                          "returns them (null since 2026-09-14, sorare/api #693)")
-    ap.add_argument("--log", default="predictions_log.jsonl",
-                    help="append one JSON line per eligible card (model prob, "
+    ap.add_argument("--log", default="logs/predictions.jsonl",
+                    help="append one JSON line per eligible player (model prob, "
                          "Sorare status/odds, final prob + source) for later "
-                         "calibration against the real outcomes. '' disables.")
+                         "calibration against the real outcomes. COMMITTED on "
+                         "purpose (Nick, 2026-09-29). '' disables -- use that "
+                         "for tests/experiments so they don't pollute the log.")
     ap.add_argument("--sofascore", action="store_true",
                     help="opt in to SofaScore predicted-lineup enrichment "
                          "(needs api.sofascore.com allowed; SofaScore IP-blocks "
@@ -1409,6 +1411,7 @@ def main(argv):
         n_odds = 0
         seen = set()
         ts = dt.datetime.now(dt.timezone.utc).isoformat()
+        os.makedirs(os.path.dirname(args.log) or ".", exist_ok=True)
         with open(args.log, "a", encoding="utf-8") as fh:
             for e in all_entries:
                 key = (e["player_slug"], e.get("kickoff"))
