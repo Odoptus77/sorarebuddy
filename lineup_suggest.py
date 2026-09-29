@@ -49,6 +49,16 @@ PACE = 0.25
 # flag it for a Sorare-% check (soft, not a hard drop -> a researched override
 # or a confirmed club start can still restore him).
 INTL_DUTY_FACTOR = 0.12
+# Same soft downweight for a player whose nation ALREADY played this break and
+# who logged 0 minutes in it -> unused squad member, unlikely to start the
+# upcoming national game (his club-minutes score is meaningless there).
+NATIONAL_BENCH_FACTOR = 0.12
+NATIONAL_BENCH_DAYS = 12   # how far back to look for the nation's break games
+# Mild recalibration of the model start probability toward the observed base
+# rate: p' = (1-k)*p + k*base. Backtest-tuned (k=0.10 minimised Brier); a small,
+# monotonic nudge that mainly de-biases the extremes and barely moves rankings.
+START_RECAL_K = 0.10
+BASE_START_RATE = 0.48     # squad-wide observed start rate (backtest, n~5k)
 POS_SLOTS = ["Goalkeeper", "Defender", "Midfielder", "Forward"]
 
 # Exact slot make-up per lineup size (EXTRA = any outfield position).
@@ -180,7 +190,9 @@ PLAYER_FIELDS = """
   nextGame { date statusTyped
     homeTeam { __typename name ... on NationalTeam { country { code } } }
     awayTeam { __typename name ... on NationalTeam { country { code } } } }
-  playerGameScores(last: %d) { score anyGame { date } detailedScore { stat statValue } }
+  playerGameScores(last: %d) { score
+    anyGame { date homeTeam { __typename } awayTeam { __typename } }
+    detailedScore { stat statValue } }
   l5: averageScore(type: LAST_FIVE_SO5_AVERAGE_SCORE)
   l15: averageScore(type: LAST_FIFTEEN_SO5_AVERAGE_SCORE)
 """ % PROJ_GAMES
@@ -519,6 +531,8 @@ def start_probability(pd, we):
         else:
             factor = min(factor, 0.5)
     prob = base * factor
+    # mild recalibration toward the base rate (backtest-tuned, de-biases extremes)
+    prob = (1 - START_RECAL_K) * prob + START_RECAL_K * BASE_START_RATE
     return max(0.0, min(0.98, round(prob, 3))), mins
 
 
@@ -547,6 +561,42 @@ def played_projection(pd):
     m5 = sum(l5) / len(l5)
     m15 = sum(l15) / len(l15)
     return 0.6 * m5 + 0.4 * m15
+
+
+def national_bench_signal(pd, we):
+    """True if the player's nation ALREADY played national-team game(s) in this
+    international break (within NATIONAL_BENCH_DAYS before the GW end) and he
+    logged 0 minutes in ALL of them -> an unused squad member, so his club-based
+    start prob for the UPCOMING national game is meaningless (he most likely
+    sits again). Automates the manual 'benched for his country' catch.
+
+    Only fires for players whose nation has already featured this break; the
+    first national game of a window gives no such signal (nothing to read yet).
+    A researched start_override still wins (Nick may know he starts next)."""
+    cutoff = we - dt.timedelta(days=NATIONAL_BENCH_DAYS)
+    mins_seen = []
+    for g in (pd.get("playerGameScores") or []):
+        ag = g.get("anyGame") or {}
+        d = ag.get("date")
+        if not d:
+            continue
+        try:
+            gd = dt.datetime.fromisoformat(d.replace("Z", "+00:00"))
+        except Exception:
+            continue
+        if not (cutoff <= gd <= we):
+            continue
+        is_natl = ((ag.get("homeTeam") or {}).get("__typename") == "NationalTeam"
+                   or (ag.get("awayTeam") or {}).get("__typename") == "NationalTeam")
+        if not is_natl:
+            continue
+        mp = None
+        for s in (g.get("detailedScore") or []):
+            if s.get("stat") == "mins_played":
+                mp = s.get("statValue")
+                break
+        mins_seen.append(mp or 0)
+    return bool(mins_seen) and max(mins_seen) == 0
 
 
 def apply_sofascore(entries, index):
@@ -1046,6 +1096,13 @@ def main(argv):
             elif on_club and _on_national_duty(e, nation_last_game):
                 e["start_prob"] = round(e["start_prob"] * INTL_DUTY_FACTOR, 3)
                 e["start_src"] = "intl_duty_auto"
+                e["intl_duty"] = True
+            elif (e.get("opp_type") == "NationalTeam"
+                  and national_bench_signal(players.get(e["player_slug"]) or {}, we)):
+                # unused in his nation's already-played break game(s) -> most
+                # likely sits again; club-minutes prob is meaningless here.
+                e["start_prob"] = round(e["start_prob"] * NATIONAL_BENCH_FACTOR, 3)
+                e["start_src"] = "natl_bench_auto"
                 e["intl_duty"] = True
             e["ev"] = round(e["proj"] * e["start_prob"], 1)
             apply_matchup(e)

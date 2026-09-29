@@ -201,6 +201,25 @@ Bouanga/Son/Blake standen mit hoher Klub-Quote im Entwurf, obwohl abgestellt.)
   „Länderspiel-Verdacht … Sorare-% prüfen" ernst nehmen und die Sorare-Prozente der
   betroffenen Klubspieler gegenchecken; Nicht-UEFA-Abgestellte in
   `international_callups.json` nachtragen.
+- **National-Bank-Detektor (automatisch, `national_bench_signal`):** Spielt ein
+  Spieler als Nächstes ein **Länderspiel** und hat seine Nation im selben Fenster
+  schon gespielt, prüft der Optimierer sein Spiel-Log: **0 Minuten in ALLEN schon
+  gespielten Fenster-Länderspielen → unbenutzte Bank → automatisch abgewertet**
+  (×0,12, `start_src: natl_bench_auto`). Ersetzt die manuelle „für sein Land
+  gebenchte"-Recherche (Geertruida-Fall). Ein researched Override schlägt das,
+  falls jemand fürs nächste Spiel doch startet. Braucht Team-Typ im Log →
+  `PLAYER_FIELDS` liest `homeTeam/awayTeam.__typename` je Spiel.
+
+### Modell-Qualität messen & kalibrieren (`backtest.py`)
+
+- **Projektion = „Score, wenn er spielt"** (`played_projection`): Blend aus den
+  letzten 5 und 15 **gespielten** Spielen (Minuten>0), ohne DNP/Bank-Nullen.
+  Backtest-belegt: MAE 18,5 → 14,6, Bias −9 → ~0.
+- **Startquote leicht rekalibriert:** `p' = 0,9·p + 0,1·0,48` (Shrink Richtung
+  Basisrate, Backtest-optimiert) — de-biast die Extreme, ändert die Rangfolge
+  praktisch nicht.
+- `python3 backtest.py nicktd7` misst beides retrospektiv (Brier/Kalibrierung +
+  Projektions-MAE) — nach jeder Modelländerung vorher/nachher vergleichen.
 
 ### Matchup-Gewichtung (Gegnerstärke)
 

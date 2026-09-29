@@ -39,7 +39,8 @@ import sys
 import time
 
 from sorare_client import graphql
-from lineup_suggest import (CARDS_QUERY, RECENCY_W, _mins_to_start, fetch_cards)
+from lineup_suggest import (CARDS_QUERY, RECENCY_W, _mins_to_start, fetch_cards,
+                            START_RECAL_K, BASE_START_RATE)
 
 HIST = 15          # Sorare caps playerGameScores near 15
 BATCH = 6          # score + detailedScore inflates query cost -> small batches
@@ -120,6 +121,8 @@ def model_start_prob(prior):
         base = app_rate * 0.85
     else:
         base = 0.70 * min_signal + 0.30 * app_rate
+    # mirror the deployed mild recalibration toward the base rate
+    base = (1 - START_RECAL_K) * base + START_RECAL_K * BASE_START_RATE
     return max(0.0, min(0.98, base))
 
 
