@@ -72,6 +72,9 @@ Beobachten bzw. beim Scouting: Kaufen / Auf die Watchlist / Skip) mit Begründun
   `null`. Deshalb laufen alle „meine Spieler"-Abfragen über den **Manager-Slug**
   (öffentliche Gallery), nicht über OAuth. OAuth ist optional (siehe
   `docs/oauth-setup.md`), für die zwei Kernaufgaben aber nicht nötig.
+  OAuth-Tokens landen nur in `.env.local` bzw. Umgebungsvariablen und werden
+  **nie angezeigt** (`sorare_client.py token/refresh/tokenfile`); ein
+  abgelaufener Token fällt automatisch auf öffentliche Abfragen zurück.
 - Sicherste Variante auf Claude Code Web: Key als **API-Credential** der
   Cloud-Umgebung hinterlegen (Proxy hängt den `APIKEY`-Header an, Key betritt
   die Session nie). Details: `docs/network-setup.md`.

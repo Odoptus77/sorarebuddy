@@ -11,8 +11,14 @@ Public data (no login needed):
 
 Your own account (OAuth login required -- see docs/oauth-setup.md):
     python3 sorare_client.py authurl        # print the Sorare authorize URL
-    python3 sorare_client.py token <code>   # exchange the callback ?code= for tokens
+    python3 sorare_client.py token <code>   # exchange ?code= for tokens -> .env.local
+    python3 sorare_client.py refresh        # new access token via SORARE_REFRESH_TOKEN
     python3 sorare_client.py me             # who am I (needs SORARE_ACCESS_TOKEN)
+    python3 sorare_client.py tokenfile <path>  # copy tokens to a file for env settings
+
+Tokens are written to .env.local (gitignored, mode 600) and NEVER printed, so
+they can't leak into a chat transcript or log. An expired/invalid token never
+breaks the public-data scripts: on HTTP 401 the request is retried without it.
 
 The API key is sent in the `APIKEY` header, as required by Sorare. When
 SORARE_ACCESS_TOKEN is set, an `Authorization: Bearer` header is added so
@@ -68,6 +74,21 @@ def _ensure_env():
         _ENV_LOADED = True
 
 
+def _token_rejected(result):
+    errs = result.get("errors") or []
+    return any(str(e.get("message", "")).startswith("Unauthorized") for e in errs)
+
+
+def _drop_token(headers, payload):
+    """Retry without the user token so public-data scripts keep working."""
+    headers.pop("Authorization", None)
+    os.environ.pop("SORARE_ACCESS_TOKEN", None)          # warn only once
+    print("WARN: SORARE_ACCESS_TOKEN abgelehnt (abgelaufen?) -- weiter ohne. "
+          "Erneuern: python3 sorare_client.py refresh", file=sys.stderr)
+    return urllib.request.Request(
+        GRAPHQL_ENDPOINT, data=payload, headers=headers, method="POST")
+
+
 def graphql(query, variables=None, retries=3, timeout=45):
     """Execute a GraphQL request and return the parsed JSON response.
 
@@ -100,9 +121,17 @@ def graphql(query, variables=None, retries=3, timeout=45):
     for attempt in range(retries):
         try:
             with urllib.request.urlopen(req, timeout=timeout) as resp:
-                return json.loads(resp.read().decode())
+                result = json.loads(resp.read().decode())
+            # A bad/expired token comes back as HTTP 200 + "Unauthorized" error.
+            if "Authorization" in headers and _token_rejected(result):
+                req = _drop_token(headers, payload)
+                continue
+            return result
         except urllib.error.HTTPError as exc:
             body = exc.read().decode(errors="replace")
+            if exc.code == 401 and "Authorization" in headers:
+                req = _drop_token(headers, payload)
+                continue
             # 429/5xx are worth retrying; other HTTP errors are terminal.
             if exc.code in (429, 500, 502, 503, 504) and attempt < retries - 1:
                 last_err = f"HTTP {exc.code}"
@@ -182,35 +211,76 @@ def cmd_authurl():
     )
 
 
-def cmd_token(code):
-    """Exchange the authorization code for access + refresh tokens."""
-    data = urllib.parse.urlencode(
-        {
-            "client_id": _require_env("SORARE_CLIENT_ID"),
-            "client_secret": _require_env("SORARE_CLIENT_SECRET"),
-            "code": code,
-            "grant_type": "authorization_code",
-            "redirect_uri": os.environ.get("SORARE_REDIRECT_URI", DEFAULT_REDIRECT_URI),
-        }
-    ).encode()
+def _save_env(values, path=".env.local"):
+    """Upsert KEY=VALUE lines in the gitignored env file (mode 600)."""
+    lines = []
+    if os.path.exists(path):
+        with open(path, encoding="utf-8") as fh:
+            lines = [l for l in fh.read().splitlines()
+                     if l.partition("=")[0].strip() not in values]
+    lines += [f"{k}={v}" for k, v in values.items()]
+    fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    with os.fdopen(fd, "w", encoding="utf-8") as fh:
+        fh.write("\n".join(lines) + "\n")
+    os.chmod(path, 0o600)
+    os.environ.update(values)
+
+
+def _token_request(fields):
+    """POST to the token endpoint; store tokens, print only non-secret info."""
+    data = urllib.parse.urlencode(dict(fields,
+        client_id=_require_env("SORARE_CLIENT_ID"),
+        client_secret=_require_env("SORARE_CLIENT_SECRET"))).encode()
     req = urllib.request.Request(
         OAUTH_TOKEN_URL,
         data=data,
-        headers={"Content-Type": "application/x-www-form-urlencoded"},
+        headers={"Content-Type": "application/x-www-form-urlencoded",
+                 "User-Agent": "sorarebuddy/0.1"},
         method="POST",
     )
     try:
         with urllib.request.urlopen(req, timeout=30) as resp:
             result = json.loads(resp.read().decode())
     except urllib.error.HTTPError as exc:
-        sys.exit(f"HTTP {exc.code} from token endpoint:\n{exc.read().decode(errors='replace')}")
-    print(json.dumps(result, indent=2))
-    if "access_token" in result:
-        print(
-            "\nStore this in .env.local (gitignored):\n"
-            f"SORARE_ACCESS_TOKEN={result['access_token']}",
-            file=sys.stderr,
-        )
+        # error bodies carry only error/error_description, no tokens
+        sys.exit(f"HTTP {exc.code} from token endpoint: {exc.read().decode(errors='replace')[:300]}")
+    if "access_token" not in result:
+        sys.exit(f"No access_token in response (fields: {sorted(result)})")
+    values = {"SORARE_ACCESS_TOKEN": result["access_token"]}
+    if result.get("refresh_token"):
+        values["SORARE_REFRESH_TOKEN"] = result["refresh_token"]
+    exp = result.get("expires_in")
+    if exp:
+        values["SORARE_ACCESS_TOKEN_EXPIRES"] = time.strftime(
+            "%Y-%m-%dT%H:%M:%SZ", time.gmtime(time.time() + int(exp)))
+    _save_env(values)
+    print(f"OK: {', '.join(sorted(values))} in .env.local gespeichert (nicht angezeigt).")
+    if exp:
+        print(f"Access-Token gültig bis {values['SORARE_ACCESS_TOKEN_EXPIRES']} "
+              f"(~{int(exp) // 86400} Tage), scope: {result.get('scope')!r}")
+
+
+def cmd_token(code):
+    """Exchange the authorization code for access + refresh tokens."""
+    _token_request({"code": code, "grant_type": "authorization_code",
+                    "redirect_uri": os.environ.get("SORARE_REDIRECT_URI", DEFAULT_REDIRECT_URI)})
+
+
+def cmd_refresh():
+    """Get a fresh access token with the stored refresh token."""
+    _token_request({"refresh_token": _require_env("SORARE_REFRESH_TOKEN"),
+                    "grant_type": "refresh_token"})
+
+
+def cmd_tokenfile(path):
+    """Write the token lines to a file (for pasting into the environment's
+    variables in the settings UI) -- without printing them."""
+    keys = ("SORARE_ACCESS_TOKEN", "SORARE_REFRESH_TOKEN")
+    values = {k: _require_env(k) for k in keys}
+    fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    with os.fdopen(fd, "w", encoding="utf-8") as fh:
+        fh.write("\n".join(f"{k}={v}" for k, v in values.items()) + "\n")
+    print(f"OK: {path} geschrieben (Inhalt nicht angezeigt).")
 
 
 ME_QUERY = "{ currentUser { nickname } }"
@@ -239,6 +309,10 @@ def main(argv):
         cmd_authurl()
     elif command == "token" and rest:
         cmd_token(rest[0])
+    elif command == "refresh":
+        cmd_refresh()
+    elif command == "tokenfile" and rest:
+        cmd_tokenfile(rest[0])
     elif command == "me":
         cmd_me()
     else:

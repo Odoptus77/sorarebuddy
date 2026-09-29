@@ -7,73 +7,67 @@ nie in den Code.
 ## Was OAuth abdeckt (und was nicht)
 
 - ✅ Basis-Konto-Infos, **deine Karten**, Achievements, Notifications
-- ❌ Keine Transaktions-/Handelsdaten, keine zukünftigen Lineups, keine
-  E-Mail-Adresse
+- ✅ laut Sorare-Doku auch Favoriten, eigene Auktionen/Angebote
+- ❌ Keine zukünftigen Lineups/Rewards, kein Kaufen/Verkaufen/Bieten, kein
+  Rewards-Claim, keine E-Mail-Adresse
 
 > **Hinweis Kaufpreis:** Da Transaktionsdaten außen vor sind, ist der tatsächlich
 > gezahlte Kaufpreis pro Karte über OAuth evtl. nicht verfügbar. Das prüfen wir
 > live am Schema, sobald ein Token vorliegt. Der *aktuelle Schätzwert* wird aus
 > den letzten Verkäufen vergleichbarer Karten berechnet.
 
-## Schritt 1 – OAuth-App anlegen
+## Schritt 1 – OAuth-App anlegen (self-service)
 
-1. Auf **sorare.com/settings/developer** eine OAuth-Anwendung anfragen
-   (verifizierte Identität nötig).
-2. Als Callback-URL eintragen: `http://localhost:3000/auth/sorare/callback`
-   (oder eine eigene; muss später exakt übereinstimmen).
-3. Du erhältst **Client ID** und **Client Secret**.
+1. Auf **sorare.com/settings/developer** eine OAuth-Anwendung anlegen.
+2. Callback-/Redirect-URL: `http://localhost:3000/auth/sorare/callback`
+   (muss später exakt übereinstimmen; sonst `SORARE_REDIRECT_URI` setzen).
+3. Du erhältst **Client ID** und **Client Secret** — nie in den Chat kopieren.
 
 ## Schritt 2 – Zugangsdaten hinterlegen
 
-In `.env.local` (gitignored):
+**Claude Code Web (empfohlen):** Cloud-Umgebung → Menü in der Titelleiste →
+*Edit* → **Umgebungsvariablen**:
 
 ```
 SORARE_CLIENT_ID=deine_client_id
 SORARE_CLIENT_SECRET=dein_client_secret
-SORARE_REDIRECT_URI=http://localhost:3000/auth/sorare/callback
 ```
+
+Eine **neue Session** (bzw. ein neuer Container) übernimmt die Werte.
+Lokal alternativ in `.env.local` (gitignored).
 
 ## Schritt 3 – Autorisieren (einmalig, im Browser)
 
-```bash
-python3 sorare_client.py authurl
-```
-
-Öffne die ausgegebene URL im Browser, bestätige den Zugriff. Du wirst auf die
-Callback-URL umgeleitet:
-
-```
-http://localhost:3000/auth/sorare/callback?code=DEIN_CODE
-```
-
-Kopiere den Wert von `code` (die Seite selbst muss nicht laden — es geht nur um
-den Code in der Adresszeile).
+`python3 sorare_client.py authurl` gibt den Login-Link aus (enthält nur die
+Client ID). Öffnen, Zugriff bestätigen → Weiterleitung auf
+`http://localhost:3000/auth/sorare/callback?code=…`. Die Seite lädt nicht — nur
+der `code`-Wert aus der Adresszeile zählt. Der Code ist einmalig, läuft nach
+Minuten ab und ist ohne Client Secret wertlos.
 
 ## Schritt 4 – Code gegen Token tauschen
 
 ```bash
-python3 sorare_client.py token DEIN_CODE
+python3 sorare_client.py token <code>
 ```
 
-Das gibt `access_token` und `refresh_token` aus. Trage das Access-Token in
-`.env.local` ein:
-
-```
-SORARE_ACCESS_TOKEN=das_access_token
-```
+Access- und Refresh-Token werden direkt in `.env.local` (Modus 600) geschrieben
+und **nie angezeigt**. Ausgegeben werden nur Ablaufdatum und Scope.
 
 ## Schritt 5 – Testen
 
-```bash
-python3 sorare_client.py me
-```
+`python3 sorare_client.py me` → dein Nickname statt `null`.
 
-Erwartet: dein Nickname statt `null`. Danach lassen sich deine Karten abrufen.
+## Token dauerhaft machen / erneuern
 
-## Token erneuern
-
-Access-Tokens laufen ab. Mit dem `refresh_token` ein neues holen (POST an
-`https://api.sorare.com/oauth/token` mit `grant_type=refresh_token`).
+- Container sind flüchtig: `.env.local` ist nach einem Neustart weg. Für
+  dauerhaften Zugang `python3 sorare_client.py tokenfile <pfad>` (schreibt die
+  Token-Zeilen in eine Datei, ohne sie anzuzeigen) → Datei herunterladen, Werte
+  als Umgebungsvariablen `SORARE_ACCESS_TOKEN` / `SORARE_REFRESH_TOKEN`
+  eintragen, Datei löschen.
+- Abgelaufen: `python3 sorare_client.py refresh` (nutzt `SORARE_REFRESH_TOKEN`).
+- Ein abgelaufener/ungültiger Token legt nichts lahm: Sorare antwortet mit
+  „Unauthorized“, der Client wiederholt die Anfrage dann ohne Token (öffentliche
+  Daten) und warnt einmal auf stderr.
 
 ## Sicherheit
 
