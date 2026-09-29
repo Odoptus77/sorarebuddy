@@ -229,6 +229,16 @@ def main(argv):
     if odds:
         print(f"Sorare-% (wenn vorhanden): Brier {brier(odds)} bei n={len(odds)}")
 
+    misses = sorted((r for r in rows if r["p"] is not None and
+                     ((r["p"] >= 0.7 and not r["started"]) or (r["p"] <= 0.3 and r["started"]))),
+                    key=lambda r: -abs(r["p"] - y(r)))[:8]
+    if misses:
+        print("\nGrößte Fehlgriffe (≥70 % und nicht gestartet / ≤30 % und gestartet):")
+        for r in misses:
+            print(f"  {r['player_slug']:<28} {r['kickoff'][:10]} vorhergesagt "
+                  f"{r['p']:.0%} ({r.get('start_src') or 'model'}) -> "
+                  f"{'Startelf' if r['started'] else ('Joker' if r['played'] else 'nicht gespielt')}")
+
     played = [r for r in rows if r["played"] and r.get("score") is not None and r.get("proj")]
     proj_stats = None
     if played:
@@ -284,7 +294,11 @@ def main(argv):
                    "start_rate": round(base, 3), "by_source": src_stats,
                    "out_signals": out_stats,
                    "playing_status": {k: {"n": v[0], "started": v[1]} for k, v in status_stats.items()},
-                   "projection": proj_stats}, fh, ensure_ascii=False, indent=2)
+                   "projection": proj_stats,
+                   "misses": [{"player": r["player_slug"], "kickoff": r["kickoff"],
+                               "pred": r["p"], "src": r.get("start_src") or "model",
+                               "started": r["started"], "played": r["played"]}
+                              for r in misses]}, fh, ensure_ascii=False, indent=2)
         fh.write("\n")
     print(f"\nGeschrieben: {args.out}" + (f", {args.calibration}" if calib else ""))
     return 0
