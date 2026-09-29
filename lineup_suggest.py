@@ -1090,9 +1090,13 @@ def main(argv):
     if not args.no_injuries_feed:
         import injuries_feed
         try:
-            apif_rows = injuries_feed.fetch_window(ws, we)
+            apif_rows, apif_skipped = injuries_feed.fetch_window(ws, we)
             print(f"API-Football: {len(apif_rows)} Verletzungs-/Sperr-Meldungen "
                   f"im Fenster geladen.", file=sys.stderr)
+            if apif_skipped:
+                print(f"API-Football: Tage außerhalb des Plans übersprungen "
+                      f"(Free-Plan = gestern bis morgen): {', '.join(apif_skipped)} "
+                      f"-> diese Spiele ohne Feed, manuell prüfen.", file=sys.stderr)
         except injuries_feed.FeedUnavailable as exc:
             print(f"API-Football-Feed übersprungen ({exc}).", file=sys.stderr)
 
@@ -1220,6 +1224,7 @@ def main(argv):
                 e["start_prob"] = round(e["start_prob"] * APIF_MISSING_FACTOR, 3)
                 e["start_src"] = "apif_out"
                 e["suspended"] = injuries_feed.is_suspension(inj)
+                e["intl_duty"] = injuries_feed.is_intl_duty(inj)
             elif inj and inj["type"] == "Questionable":
                 e["start_prob"] = round(e["start_prob"] * APIF_DOUBT_FACTOR, 3)
                 e["start_src"] = "apif_doubtful"

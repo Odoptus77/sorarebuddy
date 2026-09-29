@@ -249,8 +249,20 @@ Bouanga/Son/Blake standen mit hoher Klub-Quote im Entwurf, obwohl abgestellt.)
   Name (auch „M. Nachname"/Rufname) + Team + Anstoß ±36 h; mehrdeutig → ignoriert.
   „Missing Fixture" → ×0,10 (`apif_out`), „Questionable" → ×0,60 (`apif_doubtful`),
   stderr „API-Football meldet (prüfen)". Vorrang: nach recherchiertem Override und
-  Sorare-%, **vor** den eigenen Heuristiken (Rot-Karte, Abstellung, Bank). Solange
-  Host/Key fehlen: automatischer Rückfall (Stand 29.09.: noch nicht freigegeben).
+  Sorare-%, **vor** den eigenen Heuristiken (Rot-Karte, Abstellung, Bank). Ohne
+  Host/Key: automatischer Rückfall. **Seit 29.09.2026 eingerichtet** (Cloud-API-
+  Credential, Free-Plan).
+  - **Free-Plan-Grenze (live geprüft 29.09.):** aktuelle Meldungen nur für Spiele
+    **von gestern bis morgen**; spätere Tage des GW-Fensters werden übersprungen
+    (stderr „Tage außerhalb des Plans übersprungen") → diese Spiele weiter manuell
+    prüfen. Liga/Saison-Abfragen nur für 2022–2024. Abgelehnte Anfragen kosten
+    kein Kontingent. Pro-Plan (~19 $/Monat) würde die Grenze aufheben.
+  - **Meldet auch Länderspiel-Abstellungen** („Missing Fixture: International
+    duty") für **alle** Verbände → schließt die Nicht-UEFA-Lücke (Bouanga/Son/
+    Blake-Fall) für Spiele im Free-Fenster; `international_callups.json` nur noch
+    für Spiele außerhalb des Fensters nötig. Flag `intl_duty`.
+  - Nations-League-Spiele hatten am 29.09. **keine** Meldungen (Abdeckung v. a.
+    Klubligen, z. B. MLS).
 - **Log-Reihenfolge:** `playerGameScores` kommt **most-recent-first** (Index 0 =
   neuestes Spiel) — Recency-Gewichtung und `played_projection` nutzen genau diese
   Reihenfolge (kein Umdrehen).

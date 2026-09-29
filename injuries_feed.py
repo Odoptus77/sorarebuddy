@@ -47,6 +47,13 @@ class FeedUnavailable(Exception):
     """Host blocked / key missing / quota or plan error -> caller falls back."""
 
 
+class PlanRestricted(FeedUnavailable):
+    """The plan doesn't cover this date/season. Verified 2026-09-29: the FREE
+    plan serves current data only for fixtures from yesterday to tomorrow
+    (and seasons 2022-2024 for league/season queries). Rejected calls do not
+    count against the daily quota."""
+
+
 def _norm(s):
     s = unicodedata.normalize("NFKD", (s or "").lower())
     s = "".join(ch for ch in s if not unicodedata.combining(ch))
@@ -74,6 +81,8 @@ def _get(path, params=None):
         raise FeedUnavailable(f"cannot reach {BASE}: {getattr(exc, 'reason', exc)}") from exc
     errs = data.get("errors")
     if errs:                        # api-sports reports auth/plan/quota errors here
+        if isinstance(errs, dict) and "plan" in errs:
+            raise PlanRestricted(errs["plan"])
         raise FeedUnavailable(f"API-Football error: {errs}")
     return data
 
@@ -121,12 +130,22 @@ def _parse(row):
 
 
 def fetch_window(ws, we):
-    """Parsed injury/suspension rows for every calendar day of [ws, we]."""
-    out, day = [], ws.date()
+    """(rows, skipped_days) for every calendar day of [ws, we]. Days the plan
+    doesn't cover (free plan: only yesterday..tomorrow) are skipped, not fatal;
+    a real outage (host/key/quota) still raises FeedUnavailable."""
+    out, skipped, seen, day = [], [], set(), ws.date()
     while day <= we.date():
-        out.extend(_parse(r) for r in fetch_day(day.isoformat()))
+        try:
+            for r in map(_parse, fetch_day(day.isoformat())):
+                # adjacent day queries can return the same late-night fixture
+                key = (r["fixture_id"], _norm(r["name"]), r["type"])
+                if key not in seen:
+                    seen.add(key)
+                    out.append(r)
+        except PlanRestricted:
+            skipped.append(day.isoformat())
         day += dt.timedelta(days=1)
-    return out
+    return out, skipped
 
 
 def name_matches(api_name, display_name):
@@ -165,6 +184,13 @@ def lookup(rows, display_name, team_name, kickoff):
         return None
     # the same player can appear twice (e.g. injury + suspension): worst wins
     return sorted(hits, key=lambda r: r["type"] != "Missing Fixture")[0]
+
+
+def is_intl_duty(row):
+    """API-Football lists national call-ups as 'Missing Fixture' with reason
+    'International duty' -- for ANY confederation, i.e. also the non-UEFA
+    call-ups (Gabon/Korea/Jamaica ...) that Sorare's API can't see."""
+    return "international" in (row.get("reason") or "").lower()
 
 
 def is_suspension(row):
