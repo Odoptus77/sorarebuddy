@@ -59,11 +59,15 @@ und **nie angezeigt**. Ausgegeben werden nur Ablaufdatum und Scope.
 
 ## Token dauerhaft machen / erneuern
 
-- Container sind flüchtig: `.env.local` ist nach einem Neustart weg. Für
-  dauerhaften Zugang `python3 sorare_client.py tokenfile <pfad>` (schreibt die
-  Token-Zeilen in eine Datei, ohne sie anzuzeigen) → Datei herunterladen, Werte
-  als Umgebungsvariablen `SORARE_ACCESS_TOKEN` / `SORARE_REFRESH_TOKEN`
-  eintragen, Datei löschen.
+- **Live geprüft 29.09.2026:** Access-Token gilt nur **~1 Tag**, Scope `public`;
+  jeder `refresh` liefert einen **neuen** Refresh-Token (der alte wird ersetzt).
+  Deshalb Tokens **nicht** als Umgebungsvariablen hinterlegen (echte Env-Werte
+  schlagen `.env.local` und wären nach dem ersten Refresh veraltet). Nach einem
+  Container-Neustart einfach neu einloggen (`authurl` → Code → `token`, ~1 Min).
+- Mit Login abrufbar (live geprüft): `so5Fixture.mySo5Lineups` (deine gesetzten
+  Aufstellungen inkl. Kapitän, nach dem Lock), `mySo5Rankings` (Score/Platz),
+  `currentUser.unclaimedSo5Rewards`. `nextClassicFixturePlayingStatusOdds` bleibt
+  auch mit Login `null` (sorare/api #693).
 - Abgelaufen: `python3 sorare_client.py refresh` (nutzt `SORARE_REFRESH_TOKEN`).
 - Ein abgelaufener/ungültiger Token legt nichts lahm: Sorare antwortet mit
   „Unauthorized“, der Client wiederholt die Anfrage dann ohne Token (öffentliche
