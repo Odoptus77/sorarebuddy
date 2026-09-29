@@ -200,6 +200,10 @@ PLAYER_FIELDS = """
     detailedScore { stat statValue } }
   l5: averageScore(type: LAST_FIVE_SO5_AVERAGE_SCORE)
   l15: averageScore(type: LAST_FIFTEEN_SO5_AVERAGE_SCORE)
+  ... on Player {
+    playingStatus
+    nextClassicFixturePlayingStatusOdds {
+      starterOddsBasisPoints substituteOddsBasisPoints reliability } }
 """ % PROJ_GAMES
 
 
@@ -629,6 +633,43 @@ def suspension_signal(pd, opp_type):
     return opp_type is None or last_type == opp_type
 
 
+# Sorare role labels (Player.playingStatus). Backtest-free sanity check on the
+# squad (2026-09-29): the label agrees with the model almost everywhere (STARTER
+# avg 0.83, NOT_PLAYING 0.13, SUBSTITUTE 0.31), so it is NOT used to move the
+# probability -- only to flag the rare strong contradictions for a manual check.
+_BENCH_STATUSES = ("NOT_PLAYING", "SUBSTITUTE", "RETIRED")
+_AUTO_SRCS = ("callup_out", "intl_duty_auto", "natl_bench_auto", "suspension_risk")
+
+
+def _status_conflict(e):
+    """True if Sorare's role label strongly contradicts our final start prob."""
+    ps, p = e.get("playing_status"), e.get("start_prob") or 0.0
+    if ps in _BENCH_STATUSES and p >= 0.55:
+        return True
+    # a club STARTER we rate low for a known automatic reason is expected; and
+    # the label describes his CLUB role, so it says nothing about a national XI
+    if (ps == "STARTER" and p <= 0.35 and e.get("opp_type") != "NationalTeam"
+            and e.get("start_src") not in _AUTO_SRCS):
+        return True
+    return False
+
+
+def sorare_start_odds(pd):
+    """Sorare's own starter/sub odds for the next Classic fixture (the "Sorare-%"
+    shown in the app), as (p_start, p_sub, reliability) with probabilities in
+    0..1 — or (None, None, None) when unavailable. NOTE: the public API returns
+    null for these since 2026-09-14 (sorare/api issue #693); this hook switches
+    on automatically as soon as Sorare fixes it."""
+    o = pd.get("nextClassicFixturePlayingStatusOdds") or {}
+    bp = o.get("starterOddsBasisPoints")
+    if bp is None:
+        return None, None, None
+    sub = o.get("substituteOddsBasisPoints")
+    return (max(0.0, min(1.0, bp / 10000.0)),
+            None if sub is None else max(0.0, min(1.0, sub / 10000.0)),
+            o.get("reliability"))
+
+
 def apply_sofascore(entries, index):
     """Fuse SofaScore predicted/confirmed XIs into each entry's start_prob.
     Confirmed lineups override the model; predicted lineups blend with it.
@@ -684,7 +725,8 @@ def eligible_entry(card, pd, ws, we):
     if not l5:
         return None
     start_prob, recent_mins = start_probability(pd, we)
-    if start_prob < 0.08:
+    s_start, s_sub, s_rel = sorare_start_odds(pd)
+    if max(start_prob, s_start or 0.0) < 0.08:
         return None          # (near-)certain absentee: drop entirely
     app = pd.get("lastFifteenSo5Appearances") or 0
     club = (pd.get("activeClub") or {}).get("name")
@@ -739,7 +781,11 @@ def eligible_entry(card, pd, ws, we):
             "team_name": team_name, "fixture": fixture,
             "kickoff": ng["date"],
             # player's nationality code, for international call-up detection
-            "nat_code": nat, "intl_duty": False, "suspended": False}
+            "nat_code": nat, "intl_duty": False, "suspended": False,
+            # Sorare's own signals: coarse role label + app starter odds (null
+            # in the API since 2026-09-14) -> used/checked in main()
+            "model_prob": start_prob, "playing_status": pd.get("playingStatus"),
+            "sorare_start": s_start, "sorare_sub": s_sub, "sorare_rel": s_rel}
 
 
 def cands(pool, slot, blocked, min_start=0.0):
@@ -935,6 +981,13 @@ def main(argv):
                     help="build for a specific fixture slug or gameweek number "
                          "instead of the next one (e.g. football-25-29-sep-2026 "
                          "for the MLS Hot Streak round during an int'l break)")
+    ap.add_argument("--no-sorare-odds", action="store_true",
+                    help="ignore Sorare's own starter odds even when the API "
+                         "returns them (null since 2026-09-14, sorare/api #693)")
+    ap.add_argument("--log", default="predictions_log.jsonl",
+                    help="append one JSON line per eligible card (model prob, "
+                         "Sorare status/odds, final prob + source) for later "
+                         "calibration against the real outcomes. '' disables.")
     ap.add_argument("--sofascore", action="store_true",
                     help="opt in to SofaScore predicted-lineup enrichment "
                          "(needs api.sofascore.com allowed; SofaScore IP-blocks "
@@ -1012,6 +1065,9 @@ def main(argv):
         e["ev"] = round(e["proj"] * e["start_prob"], 1)
 
     fx = get_upcoming_fixture(args.fixture)
+    # Sorare's odds describe the NEXT Classic fixture only -> ignore them when
+    # building for an explicitly chosen (possibly later) fixture.
+    use_sorare_odds = not args.no_sorare_odds and args.fixture is None
     ws = dt.datetime.fromisoformat(fx["startDate"].replace("Z", "+00:00"))
     we = dt.datetime.fromisoformat(fx["endDate"].replace("Z", "+00:00"))
     print(f"Upcoming GW {fx['gameWeek']} ({fx['slug']}) {ws.date()}–{we.date()}", file=sys.stderr)
@@ -1123,6 +1179,12 @@ def main(argv):
             elif ov is not None:
                 e["start_prob"] = round(max(0.0, min(1.0, ov)), 3)
                 e["start_src"] = "researched"
+            elif use_sorare_odds and e.get("sorare_start") is not None:
+                # Sorare's own starter odds (the app's %): news-aggregated and
+                # fresher than any of our automatic signals -> they win over
+                # them, but not over a researched override (Nick's verified call)
+                e["start_prob"] = round(e["sorare_start"], 3)
+                e["start_src"] = "sorare_odds"
             elif suspension_signal(players.get(e["player_slug"]) or {}, e.get("opp_type")):
                 # red card in his last game of this stream -> banned next game
                 e["start_prob"] = round(e["start_prob"] * SUSPENSION_FACTOR, 3)
@@ -1141,6 +1203,7 @@ def main(argv):
                 e["intl_duty"] = True
             e["ev"] = round(e["proj"] * e["start_prob"], 1)
             apply_matchup(e)
+            e["status_conflict"] = _status_conflict(e)
         # Drop (near-)certain non-starters AFTER overrides too: a researched
         # 0% (e.g. suspended) player or a declared call-up must never be
         # fielded, even as a fallback.
@@ -1154,6 +1217,12 @@ def main(argv):
         if susp:
             print(f"  {rar}: Sperren-Verdacht (Rot im letzten Spiel, prüfen): "
                   f"{', '.join(susp)}", file=sys.stderr)
+        conf = sorted({f"{e['player']} ({e['playing_status']}, "
+                       f"{int(round(e['start_prob'] * 100))}% {e.get('start_src') or 'model'})"
+                       for e in pools[rar] if e.get("status_conflict")})
+        if conf:
+            print(f"  {rar}: Sorare-Status widerspricht Startquote (prüfen): "
+                  f"{', '.join(conf)}", file=sys.stderr)
         print(f"  {rar}: {len(pools[rar])} eligible players", file=sys.stderr)
     if excluded:
         if dropped:
@@ -1333,6 +1402,31 @@ def main(argv):
     with open(args.json, "w", encoding="utf-8") as fh:
         json.dump(out, fh, ensure_ascii=False, indent=2)
     print(f"Wrote {args.json}", file=sys.stderr)
+
+    # Prediction log for later calibration (one line per player & upcoming game):
+    # what the model said, what Sorare said, what we finally used and why.
+    if args.log:
+        n_odds = 0
+        seen = set()
+        ts = dt.datetime.now(dt.timezone.utc).isoformat()
+        with open(args.log, "a", encoding="utf-8") as fh:
+            for e in all_entries:
+                key = (e["player_slug"], e.get("kickoff"))
+                if key in seen:
+                    continue
+                seen.add(key)
+                n_odds += e.get("sorare_start") is not None
+                fh.write(json.dumps({
+                    "ts": ts, "fixture": fx["slug"], "player_slug": e["player_slug"],
+                    "kickoff": e.get("kickoff"), "opp_type": e.get("opp_type"),
+                    "opponent": e.get("opponent"), "model_prob": e.get("model_prob"),
+                    "playing_status": e.get("playing_status"),
+                    "sorare_start": e.get("sorare_start"), "sorare_sub": e.get("sorare_sub"),
+                    "sorare_rel": e.get("sorare_rel"), "start_prob": e.get("start_prob"),
+                    "start_src": e.get("start_src") or "model", "proj": e.get("proj"),
+                }, ensure_ascii=False) + "\n")
+        print(f"Logged {len(seen)} predictions to {args.log} "
+              f"(Sorare-Startquoten verfügbar: {n_odds})", file=sys.stderr)
 
 
 if __name__ == "__main__":

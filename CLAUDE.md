@@ -224,6 +224,22 @@ Bouanga/Son/Blake standen mit hoher Klub-Quote im Entwurf, obwohl abgestellt.)
   (×0,10, `start_src: suspension_risk`, stderr „Sperren-Verdacht … prüfen").
   Fängt die Sperren, die der Verletzungs-Feed übersieht. Gelb-Sperren (Schwellen
   je Liga) sind so **nicht** abgedeckt → weiter manuell/extern.
+- **Sorare-eigene Signale** (`... on Player` in `PLAYER_FIELDS`):
+  - **Sorare-% = `nextClassicFixturePlayingStatusOdds.starterOddsBasisPoints`**
+    (/10000). Liefert seit **14.09.2026 `null`** ([sorare/api #693](https://github.com/sorare/api/issues/693),
+    Stand 29.09. offen). Der Optimierer nutzt die Werte **automatisch**, sobald sie
+    wieder kommen: Vorrang **vor allen Automatik-Signalen** (Modell, Sperre,
+    Abstellung, Bank), aber **hinter** manueller Callup-Liste und recherchiertem
+    Override (`start_src: sorare_odds`). Nur für die nächste GW (nicht bei
+    `--fixture`); abschaltbar mit `--no-sorare-odds`.
+  - **`playingStatus`** (STARTER/REGULAR/SUBSTITUTE/SUPER_SUBSTITUTE/NOT_PLAYING/
+    RETIRED) = Klub-Rolle. Stimmt fast immer mit dem Modell überein (Kader-Check
+    29.09.) → verschiebt **keine** Quote, sondern löst nur den Alarm „Sorare-Status
+    widerspricht Startquote (prüfen)" aus (Bank-Status bei ≥55 %, oder Klub-STARTER
+    bei ≤35 % in einem Klubspiel). Fängt v. a. **veraltete Overrides** (Froholdt-Fall).
+  - **Vorhersage-Log** `predictions_log.jsonl` (gitignored; `--log`, `''` = aus):
+    je Lauf eine Zeile pro Spieler (Modell-%, Sorare-Status/-%, finale Quote +
+    Quelle) → Grundlage, um Quellen später gegen echte Aufstellungen zu kalibrieren.
 - **Log-Reihenfolge:** `playerGameScores` kommt **most-recent-first** (Index 0 =
   neuestes Spiel) — Recency-Gewichtung und `played_projection` nutzen genau diese
   Reihenfolge (kein Umdrehen).
