@@ -366,6 +366,10 @@ bis Nick fragt):
    (Matchday 2, ~Sa–Mo) → NICHT als Club-GW behandeln, Overrides **behalten**;
    nur die **Gegner ändern sich** → `team_strength.json` für die neuen Gegner
    auffrischen. Erst die GW NACH der Pause ist wieder reine Club-GW.
+   **Spieler, deren nächstes Spiel noch in der laufenden GW liegt** (z. B.
+   Länderspiel am Mi, dann wieder am Sa), sucht der Optimierer seit 29.09.2026
+   über `so5Fixture.anyGames` ihr erstes Spiel im geplanten Fenster (Nation, wenn
+   er gerade bei der Nation ist, sonst Klub) — vorher fielen sie aus dem Entwurf.
 3. Entwurf als Tabellen zeigen (mit Kapitän), offene Startelf-/Verfügbarkeitsfragen
    markieren; **final** beim nächsten Deadline-Check (~1,5 h vorher) datiert prüfen
    (GRUNDREGEL #0). Baseline erst nach Nicks Sorare-Bestätigung nachziehen.

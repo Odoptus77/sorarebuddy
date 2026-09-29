@@ -242,6 +242,60 @@ def get_upcoming_fixture(slug=None):
     return up[0][1] if up else nodes[0]
 
 
+def fetch_fixture_games(fx_slug):
+    """Index of this fixture's games by club name and by nation code:
+    {"club": {name: [game, ...]}, "nation": {code: [game, ...]}}, each list
+    sorted by date. Used when a player's `nextGame` still lies in the
+    CURRENT (locked) GW: his first game inside the planned window is looked up
+    here, so a draft for the next GW isn't missing everyone who plays in both
+    (e.g. national MD 01.10. and again 04.10.)."""
+    q = ('{ so5 { so5Fixture(slug: "%s") { anyGames { date statusTyped '
+         'homeTeam { __typename name ... on NationalTeam { country { code } } } '
+         'awayTeam { __typename name ... on NationalTeam { country { code } } } } } } }'
+         % fx_slug)
+    idx = {"club": {}, "nation": {}}
+    try:
+        data = (graphql(q) or {}).get("data") or {}
+    except Exception as exc:
+        print(f"WARNING: could not read fixture games: {exc}", file=sys.stderr)
+        return idx
+    games = (((data.get("so5") or {}).get("so5Fixture")) or {}).get("anyGames") or []
+    for g in sorted((g for g in games if g.get("date")), key=lambda g: g["date"]):
+        for side in ("homeTeam", "awayTeam"):
+            t = g.get(side) or {}
+            if t.get("__typename") == "NationalTeam":
+                c = (t.get("country") or {}).get("code")
+                if c:
+                    idx["nation"].setdefault(c, []).append(g)
+            elif t.get("name"):
+                idx["club"].setdefault(t["name"], []).append(g)
+    return idx
+
+
+def _game_in_window(pd, ng, ws, we, fx_games):
+    """Replacement for a nextGame that lies BEFORE the window: the player's
+    first game inside [ws, we] -- national if his pending game is a national
+    one (he is with his nation), else his club's."""
+    if not fx_games:
+        return None
+    def _in(games):
+        for g in games or []:
+            try:
+                gd = dt.datetime.fromisoformat(g["date"].replace("Z", "+00:00"))
+            except Exception:
+                continue
+            if ws <= gd <= we:
+                return g
+        return None
+    nat = (pd.get("country") or {}).get("code")
+    club = (pd.get("activeClub") or {}).get("name")
+    with_nation = any((ng.get(s) or {}).get("__typename") == "NationalTeam"
+                      for s in ("homeTeam", "awayTeam"))
+    nat_g = _in(fx_games["nation"].get(nat)) if nat else None
+    club_g = _in(fx_games["club"].get(club)) if club else None
+    return (nat_g or club_g) if with_nation else (club_g or nat_g)
+
+
 def fetch_nation_last_games(fx_slug):
     """Map country code -> datetime of that nation's LAST national-team game in
     this fixture window. One query over the fixture's games; empty for a pure
@@ -717,7 +771,7 @@ def apply_sofascore(entries, index):
     return n_conf, n_pred
 
 
-def eligible_entry(card, pd, ws, we):
+def eligible_entry(card, pd, ws, we, fx_games=None):
     ng = pd.get("nextGame")
     if not ng or not ng.get("date"):
         return None
@@ -725,6 +779,11 @@ def eligible_entry(card, pd, ws, we):
         gd = dt.datetime.fromisoformat(ng["date"].replace("Z", "+00:00"))
     except Exception:
         return None
+    if gd < ws:            # next game still in the current GW -> look further
+        ng = _game_in_window(pd, ng, ws, we, fx_games)
+        if not ng:
+            return None
+        gd = dt.datetime.fromisoformat(ng["date"].replace("Z", "+00:00"))
     if not (ws <= gd <= we):
         return None
     l5, l15 = pd.get("l5"), pd.get("l15")
@@ -1185,6 +1244,7 @@ def main(argv):
     # when his CLUB game kicks off is on national duty and will miss it (Sorare
     # ~0%), while the club-minutes model would rate him a starter.
     nation_last_game = fetch_nation_last_games(fx["slug"])
+    fx_games = fetch_fixture_games(fx["slug"])
     intl_break = bool(nation_last_game)
     if intl_break:
         print(f"Länderspiel-Fenster erkannt: {len(nation_last_game)} Nationen "
@@ -1268,7 +1328,7 @@ def main(argv):
             pd = players.get(ap_["slug"])
             if not pd:
                 continue
-            e = eligible_entry(c, pd, ws, we)
+            e = eligible_entry(c, pd, ws, we, fx_games)
             if not e:
                 continue
             entries.append(e)
