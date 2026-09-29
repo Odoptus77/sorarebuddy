@@ -25,6 +25,7 @@ SORARE_ACCESS_TOKEN is set, an `Authorization: Bearer` header is added so
 requests run on behalf of the logged-in user.
 Docs: https://developers.sorare.com/  and  https://github.com/sorare/api
 """
+import calendar
 import json
 import os
 import sys
@@ -226,7 +227,7 @@ def _save_env(values, path=".env.local"):
     os.environ.update(values)
 
 
-def _token_request(fields):
+def _token_request(fields, out=sys.stdout):
     """POST to the token endpoint; store tokens, print only non-secret info."""
     data = urllib.parse.urlencode(dict(fields,
         client_id=_require_env("SORARE_CLIENT_ID"),
@@ -254,10 +255,38 @@ def _token_request(fields):
         values["SORARE_ACCESS_TOKEN_EXPIRES"] = time.strftime(
             "%Y-%m-%dT%H:%M:%SZ", time.gmtime(time.time() + int(exp)))
     _save_env(values)
-    print(f"OK: {', '.join(sorted(values))} in .env.local gespeichert (nicht angezeigt).")
+    print(f"OK: {', '.join(sorted(values))} in .env.local gespeichert (nicht angezeigt).", file=out)
     if exp:
         print(f"Access-Token gültig bis {values['SORARE_ACCESS_TOKEN_EXPIRES']} "
-              f"(~{int(exp) // 86400} Tage), scope: {result.get('scope')!r}")
+              f"(~{int(exp) // 86400} Tage), scope: {result.get('scope')!r}", file=out)
+
+
+def ensure_user_token(margin_s=600):
+    """True if a usable OAuth user token is set. Renews it quietly via the
+    stored refresh token when it expires within `margin_s` seconds (Sorare
+    access tokens live ~1 day; each refresh rotates the refresh token)."""
+    load_env()
+    if not os.environ.get("SORARE_ACCESS_TOKEN") and not os.environ.get("SORARE_REFRESH_TOKEN"):
+        return False
+    exp = os.environ.get("SORARE_ACCESS_TOKEN_EXPIRES")
+    due = not os.environ.get("SORARE_ACCESS_TOKEN")
+    if exp:
+        try:
+            due = due or calendar.timegm(time.strptime(exp, "%Y-%m-%dT%H:%M:%SZ")) \
+                < time.time() + margin_s
+        except ValueError:
+            pass
+    if due:
+        if not (os.environ.get("SORARE_REFRESH_TOKEN") and os.environ.get("SORARE_CLIENT_ID")
+                and os.environ.get("SORARE_CLIENT_SECRET")):
+            return False
+        try:
+            _token_request({"refresh_token": os.environ["SORARE_REFRESH_TOKEN"],
+                            "grant_type": "refresh_token"}, out=sys.stderr)
+        except SystemExit as exc:          # _token_request exits on HTTP errors
+            print(f"WARN: Token-Erneuerung fehlgeschlagen: {exc}", file=sys.stderr)
+            return False
+    return bool(os.environ.get("SORARE_ACCESS_TOKEN"))
 
 
 def cmd_token(code):

@@ -1120,10 +1120,15 @@ def main(argv):
             print(f"WARNING: could not read --calibration {args.calibration}: {exc}",
                   file=sys.stderr)
 
+    def proj_group(e):
+        pos = (e.get("positions") or ["?"])[0]
+        return f"{pos}|{'national' if e.get('opp_type') == 'NationalTeam' else 'club'}"
+
     def _calibrate(e):
         """Apply the learned per-source correction to the final start prob and
         the projection scale; keep the raw value for logging/learning."""
         e["start_prob_raw"] = e["start_prob"]
+        e["proj_raw"] = e["proj"]
         if not calib:
             return
         src = e.get("start_src") or "model"
@@ -1132,7 +1137,13 @@ def main(argv):
             p = min(0.99, max(0.01, e["start_prob"]))
             z = prm.get("a", 0.0) + prm.get("b", 1.0) * math.log(p / (1 - p))
             e["start_prob"] = round(1 / (1 + math.exp(-max(-30, min(30, z)))), 3)
+        e["proj_raw"] = e["proj"]
         scale = (calib.get("proj_scale") or {}).get("value", 1.0)
+        # finer factor per position x game type (e.g. defenders in national
+        # games score less than their club form suggests), learned by evaluate.py
+        grp = (calib.get("proj_scale_groups") or {}).get(proj_group(e))
+        if grp:
+            scale = grp.get("value", scale)
         e["proj"] = round(e["proj"] * scale, 1)
 
     # Keep only the overrides bound to THIS gameweek; the rest have expired.
@@ -1555,6 +1566,8 @@ def main(argv):
                     "sorare_rel": e.get("sorare_rel"), "start_prob": e.get("start_prob"),
                     "start_prob_raw": e.get("start_prob_raw"),
                     "start_src": e.get("start_src") or "model", "proj": e.get("proj"),
+                    "proj_raw": e.get("proj_raw"),
+                    "pos": (e.get("positions") or [None])[0],
                     "apif": e.get("apif"),
                 }, ensure_ascii=False) + "\n")
         print(f"Logged {len(seen)} predictions to {args.log} "

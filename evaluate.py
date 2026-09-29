@@ -18,7 +18,9 @@ calibration.json, which lineup_suggest.py applies automatically:
       p_cal = sigmoid(a + b * logit(p_raw)),
     shrunk towards a global fit, which is shrunk towards "no change" (a=0, b=1)
     -> with few games nothing moves; the more evidence, the more it adapts;
-  - projection: one global scale factor (actual/predicted), shrunk towards 1.
+  - projection: one global scale factor (actual/predicted), shrunk towards 1,
+    plus a factor per position x game type (club / national), shrunk towards
+    the global one (e.g. defenders score less in national games).
 The raw (pre-calibration) probability is what gets learned from, so the loop
 does not feed on its own corrections.
 
@@ -50,12 +52,14 @@ NO_ENTRY_AFTER = dt.timedelta(hours=36) # no game entry by then -> not in squad
 MIN_N_GLOBAL = 30                       # evaluated games before anything is learned
 LAMBDA = 8.0                            # prior strength (in "games")
 PROJ_MIN_N = 20
+PROJ_GROUP_MIN_N = 8                    # games per position x game type group
 OUT_SIGNALS = ("apif_out", "callup_out", "intl_duty_auto", "natl_bench_auto",
                "suspension_risk")
 
 OUTCOME_QUERY = """
 { players(slugs: [%s]) {
     slug
+    anyPositions
     playerGameScores(last: 8) {
       score
       anyGame { date }
@@ -88,6 +92,19 @@ def final_predictions(path, now):
     return done, len(last) - len(done)
 
 
+POSITIONS = {}
+
+
+def proj_group(r):
+    pos = r.get("pos") or POSITIONS.get(r["player_slug"]) or "?"
+    return f"{pos}|{'national' if r.get('opp_type') == 'NationalTeam' else 'club'}"
+
+
+def _proj(r):
+    """Projection before the learned scale (what the model itself said)."""
+    return r.get("proj_raw") if r.get("proj_raw") is not None else r.get("proj")
+
+
 def fetch_outcomes(slugs):
     out, slugs = {}, sorted(slugs)
     for i in range(0, len(slugs), BATCH):
@@ -96,6 +113,7 @@ def fetch_outcomes(slugs):
         for p in ((resp.get("data") or {}).get("players") or []):
             if p and p.get("slug"):
                 out[p["slug"]] = p.get("playerGameScores") or []
+                POSITIONS[p["slug"]] = (p.get("anyPositions") or [None])[0]
         time.sleep(PACE)
     return out
 
@@ -239,7 +257,7 @@ def main(argv):
                   f"{r['p']:.0%} ({r.get('start_src') or 'model'}) -> "
                   f"{'Startelf' if r['started'] else ('Joker' if r['played'] else 'nicht gespielt')}")
 
-    played = [r for r in rows if r["played"] and r.get("score") is not None and r.get("proj")]
+    played = [r for r in rows if r["played"] and r.get("score") is not None and _proj(r)]
     proj_stats = None
     if played:
         err = [r["proj"] - r["score"] for r in played]
@@ -247,6 +265,16 @@ def main(argv):
                       "bias": round(sum(err) / len(err), 2)}
         print(f"\nProjektion (gespielte Spiele): n={proj_stats['n']} MAE {proj_stats['mae']} "
               f"Bias {proj_stats['bias']:+} (>0 = überschätzt)")
+        by_grp = defaultdict(list)
+        for r in played:
+            by_grp[proj_group(r)].append(r)
+        proj_stats["groups"] = {}
+        for k, rs in sorted(by_grp.items(), key=lambda kv: -len(kv[1])):
+            e = [_proj(r) - r["score"] for r in rs]
+            proj_stats["groups"][k] = {"n": len(rs), "bias": round(sum(e) / len(e), 2),
+                                       "mae": round(sum(abs(x) for x in e) / len(e), 2)}
+            print(f"  {k:<24} n={len(rs):>3} Bias {sum(e) / len(e):+6.1f}  "
+                  f"MAE {sum(abs(x) for x in e) / len(e):5.1f}")
 
     calib = None
     if not args.no_fit:
@@ -266,10 +294,22 @@ def main(argv):
                 calib["sources"][src] = {"a": a, "b": b, "n": len(pr)}
         scale = 1.0
         if played and len(played) >= PROJ_MIN_N:
-            ratio = sum(r["score"] for r in played) / max(1e-6, sum(r["proj"] for r in played))
+            ratio = sum(r["score"] for r in played) / max(1e-6, sum(_proj(r) for r in played))
             w = len(played) / (len(played) + 30)
             scale = round(max(0.8, min(1.25, 1 + w * (ratio - 1))), 3)
         calib["proj_scale"] = {"value": scale, "n": len(played)}
+        # per position x game type, shrunk towards the global scale
+        groups = defaultdict(list)
+        for r in played:
+            groups[proj_group(r)].append(r)
+        calib["proj_scale_groups"] = {}
+        for k, rs in groups.items():
+            if len(rs) < PROJ_GROUP_MIN_N:
+                continue
+            ratio = sum(r["score"] for r in rs) / max(1e-6, sum(_proj(r) for r in rs))
+            w = len(rs) / (len(rs) + 30)
+            calib["proj_scale_groups"][k] = {
+                "value": round(max(0.7, min(1.3, scale + w * (ratio - scale))), 3), "n": len(rs)}
         cal_pairs = []
         for r in rows:
             if r["p_raw"] is None or r.get("start_src") == "callup_out":
@@ -284,7 +324,10 @@ def main(argv):
         state = "AKTIV" if calib["active"] else f"noch inaktiv (ab {MIN_N_GLOBAL} Spielen)"
         print(f"\nLernkreislauf: Kalibrierung {state} | n={calib['n']} | global a={g[0]} b={g[1]}"
               f" | Brier roh {calib['brier_raw']} -> kalibriert {calib['brier_calibrated_in_sample']}"
-              f" | Projektions-Faktor {scale}")
+              f" | Projektions-Faktor {scale}"
+              + (" | je Gruppe: " + ", ".join(f"{k} {v['value']}" for k, v in
+                                              calib["proj_scale_groups"].items())
+                 if calib["proj_scale_groups"] else ""))
 
     os.makedirs(os.path.dirname(args.out) or ".", exist_ok=True)
     with open(args.out, "w", encoding="utf-8") as fh:

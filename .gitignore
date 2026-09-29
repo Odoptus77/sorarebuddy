@@ -41,3 +41,6 @@ backtest.json
 
 # API-Football response cache (injuries_feed.py)
 .cache/
+
+# OAuth GW-Bilanz (account data: ranks/lineups; regenerable from the API)
+logs/lineup_review.json

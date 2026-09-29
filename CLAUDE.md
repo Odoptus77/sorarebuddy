@@ -72,9 +72,15 @@ Beobachten bzw. beim Scouting: Kaufen / Auf die Watchlist / Skip) mit Begründun
   `null`. Deshalb laufen alle „meine Spieler"-Abfragen über den **Manager-Slug**
   (öffentliche Gallery), nicht über OAuth. OAuth ist optional (siehe
   `docs/oauth-setup.md`), für die zwei Kernaufgaben aber nicht nötig.
-  OAuth-Tokens landen nur in `.env.local` bzw. Umgebungsvariablen und werden
-  **nie angezeigt** (`sorare_client.py token/refresh/tokenfile`); ein
-  abgelaufener Token fällt automatisch auf öffentliche Abfragen zurück.
+  **OAuth ist seit 29.09.2026 eingerichtet:** `SORARE_CLIENT_ID/SECRET` als
+  Umgebungsvariablen der Cloud-Umgebung; Access-Token (~1 Tag) + rotierender
+  Refresh-Token nur in `.env.local`, **nie angezeigt**. `ensure_user_token()`
+  erneuert automatisch. Nach Container-Neustart fehlt der Token → Nick den Link
+  aus `python3 sorare_client.py authurl` schicken, Code mit `token <code>`
+  tauschen (~1 Min). Mit Login lesbar: `so5Fixture.mySo5Lineups` (Nicks
+  gesetzte Aufstellungen, nach Lock), `mySo5Rankings`, Rewards. Sorare-Startquoten
+  bleiben auch mit Login `null` (#693). Ein abgelaufener Token fällt automatisch
+  auf öffentliche Abfragen zurück.
 - Sicherste Variante auf Claude Code Web: Key als **API-Credential** der
   Cloud-Umgebung hinterlegen (Proxy hängt den `APIKEY`-Header an, Key betritt
   die Session nie). Details: `docs/network-setup.md`.
@@ -98,6 +104,7 @@ Alle dependency-frei (nur Python-Stdlib), lesen den Key aus `.env.local`:
 | Verletzungen/Sperren (API-Football) | `python3 injuries_feed.py status` · `date YYYY-MM-DD` · `selftest` (Einrichtung: `docs/network-setup.md`) |
 | Rewards je Spieler | `python3 rewards_by_player.py nicktd7 --json rewards.json` |
 | **Treffer-Bilanz + Lernkreislauf** | `python3 evaluate.py` (Log vs. echte Startelf/Minuten/Punkte → `logs/evaluation.json` + gelernte `calibration.json`) |
+| **GW-Bilanz (echte Aufstellungen, OAuth)** | `python3 lineup_review.py [--last 4] [--gw 716]` (Nicks gesetzte Lineups + Platz/Score/Rewards, Ausfälle, Kapitäns-Verlust, Prognose vs. Ergebnis je Position × Spieltyp; braucht Login, s. u.) |
 | Backtest/Kalibrierung des Modells | `python3 backtest.py nicktd7 [--players "slug,…"] [--json backtest.json]` (misst Start-Kalibrierung/Brier + Projektions-Fehler retrospektiv aus Spiel-Logs) |
 | Scouting: Ersatz/Ziel-Spieler bewerten | `python3 scout.py --like <slug> --candidates "slug1,slug2,…" [--budget 40] [--position Defender]` (Matchup-Gewichtung standardmäßig an, `--matchup-weight 0`=aus) |
 | Voraussichtliche Startelf (SofaScore) | `python3 sofascore_lineups.py "Real Madrid"` |
@@ -289,6 +296,10 @@ Bouanga/Son/Blake standen mit hoher Klub-Quote im Entwurf, obwohl abgestellt.)
   (`start_prob_raw` im Log), damit sich der Kreislauf nicht selbst verstärkt.
   `logs/evaluation.json` und `calibration.json` werden **committet** (nötig im
   nächsten Container). Tägliche Routine „Sorare Treffer-Bilanz" fährt das + meldet.
+  **Projektions-Faktoren je Position × Spieltyp** (`proj_scale_groups`, z. B.
+  `Defender|national`, ab 8 Spielen je Gruppe, zur globalen Skala geschrumpft):
+  GW715 zeigte, dass Verteidiger in Länderspielen deutlich unter ihrer Klub-Form
+  punkten. Gelernt aus `proj_raw` (Log-Feld, vor Skalierung), Position aus `pos`.
 - **Log-Reihenfolge:** `playerGameScores` kommt **most-recent-first** (Index 0 =
   neuestes Spiel) — Recency-Gewichtung und `played_projection` nutzen genau diese
   Reihenfolge (kein Umdrehen).
