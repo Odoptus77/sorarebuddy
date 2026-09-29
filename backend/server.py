@@ -12,6 +12,11 @@ Endpoints (all return JSON):
     GET /api/rewards?slug=nicktd7
     GET /api/lineups?slug=nicktd7&rarities=limited,rare
     GET /api/bundle?slug=nicktd7                 -> {club, rewards, lineups}
+    GET /api/model                               -> {evaluation, calibration}
+                                                    (model quality, from the repo files)
+    GET /api/review                              -> real submitted lineups + results
+                                                    (lineup_review.py; needs a Sorare
+                                                    OAuth login on the server)
 
 Auth (optional but recommended when deployed): set APP_TOKEN and the app must
 send  Authorization: Bearer <APP_TOKEN>.
@@ -115,6 +120,34 @@ def _run_script(script, slug, extra=None):
     return data
 
 
+def _run_review():
+    """lineup_review.py (Nick's real lineups via OAuth) -> JSON."""
+    out = os.path.join(CACHE_DIR, f"_tmp_review_{os.getpid()}_{threading.get_ident()}.json")
+    proc = subprocess.run([sys.executable, os.path.join(ROOT, "lineup_review.py"),
+                           "--last", "6", "--json", out],
+                          cwd=ROOT, env=dict(os.environ), capture_output=True,
+                          text=True, timeout=JOB_TIMEOUT)
+    if proc.returncode != 0 or not os.path.exists(out):
+        raise RuntimeError(f"lineup_review.py failed (rc={proc.returncode}): "
+                           f"{(proc.stderr or proc.stdout)[-400:]}")
+    try:
+        with open(out, "r", encoding="utf-8") as fh:
+            return json.load(fh)
+    finally:
+        try:
+            os.remove(out)
+        except OSError:
+            pass
+
+
+def _read_repo_json(rel):
+    try:
+        with open(os.path.join(ROOT, rel), "r", encoding="utf-8") as fh:
+            return json.load(fh)
+    except (OSError, ValueError):
+        return None
+
+
 def _producer(kind, slug, rarities):
     # club/rewards also emit a CSV (--out); send it to /dev/null so nothing is
     # written into the (possibly read-only) app dir. Only the JSON is consumed.
@@ -125,6 +158,8 @@ def _producer(kind, slug, rarities):
         return _run_script("rewards_by_player.py", slug, ["--out", os.devnull])
     if kind == "lineups":
         return _run_script("lineup_suggest.py", slug, ["--rarities", rarities])
+    if kind == "review":
+        return _run_review()
     raise ValueError(kind)
 
 
@@ -214,6 +249,10 @@ class Handler(BaseHTTPRequestHandler):
             return self._send(200, {"ok": True, "ttl": CACHE_TTL})
         if not self._authok():
             return self._send(401, {"error": "unauthorized"})
+        if path == "/api/model":
+            # small repo files, no pipeline run -> never cached
+            return self._send(200, {"evaluation": _read_repo_json("logs/evaluation.json"),
+                                    "calibration": _read_repo_json("calibration.json")})
         q = parse_qs(u.query)
         slug = (q.get("slug", [DEFAULT_SLUG])[0] or "").strip().lower()
         rarities = (q.get("rarities", ["limited,rare"])[0] or "limited,rare").strip()
@@ -229,6 +268,9 @@ class Handler(BaseHTTPRequestHandler):
                 return self._send(200, data, age)
             if path == "/api/lineups":
                 data, age = get_data("lineups", slug, rarities, force)
+                return self._send(200, data, age)
+            if path == "/api/review":
+                data, age = get_data("review", slug, "-", force)
                 return self._send(200, data, age)
             if path == "/api/bundle":
                 club, a1 = get_data("club", slug, rarities, force)

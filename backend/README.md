@@ -19,6 +19,8 @@ App (SwiftUI)  ──HTTPS──▶  backend/server.py  ──▶  club_overview
 | `GET /api/rewards?slug=…`                       | reward attribution  |
 | `GET /api/lineups?slug=…&rarities=limited,rare` | lineup suggestions  |
 | `GET /api/bundle?slug=…`                        | all three combined  |
+| `GET /api/model`                                | model quality: `logs/evaluation.json` + `calibration.json` |
+| `GET /api/review?slug=…`                        | real submitted lineups + results (`lineup_review.py`, needs a Sorare OAuth login on the server) |
 
 Responses carry `X-Cache-Age` (seconds since the data was computed).
 
