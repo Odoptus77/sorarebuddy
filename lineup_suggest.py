@@ -59,6 +59,11 @@ NATIONAL_BENCH_DAYS = 12   # how far back to look for the nation's break games
 # national). Soft downweight + flag (not a hard drop: reds get rescinded, and
 # the ban is competition-specific) so it surfaces for a check.
 SUSPENSION_FACTOR = 0.10
+# API-Football fixture injury/suspension report (injuries_feed.py): "Missing
+# Fixture" = listed out for this game, "Questionable" = doubtful. Soft factors +
+# flag, like the other automatic signals, so a researched override still wins.
+APIF_MISSING_FACTOR = 0.10
+APIF_DOUBT_FACTOR = 0.60
 # Mild recalibration of the model start probability toward the observed base
 # rate: p' = (1-k)*p + k*base. Backtest-tuned (k=0.10 minimised Brier); a small,
 # monotonic nudge that mainly de-biases the extremes and barely moves rankings.
@@ -981,6 +986,10 @@ def main(argv):
                     help="build for a specific fixture slug or gameweek number "
                          "instead of the next one (e.g. football-25-29-sep-2026 "
                          "for the MLS Hot Streak round during an int'l break)")
+    ap.add_argument("--no-injuries-feed", action="store_true",
+                    help="skip the API-Football injury/suspension feed "
+                         "(injuries_feed.py); it is used automatically when "
+                         "v3.football.api-sports.io is reachable")
     ap.add_argument("--no-sorare-odds", action="store_true",
                     help="ignore Sorare's own starter odds even when the API "
                          "returns them (null since 2026-09-14, sorare/api #693)")
@@ -1070,9 +1079,22 @@ def main(argv):
     # Sorare's odds describe the NEXT Classic fixture only -> ignore them when
     # building for an explicitly chosen (possibly later) fixture.
     use_sorare_odds = not args.no_sorare_odds and args.fixture is None
+
     ws = dt.datetime.fromisoformat(fx["startDate"].replace("Z", "+00:00"))
     we = dt.datetime.fromisoformat(fx["endDate"].replace("Z", "+00:00"))
     print(f"Upcoming GW {fx['gameWeek']} ({fx['slug']}) {ws.date()}–{we.date()}", file=sys.stderr)
+
+    # API-Football injuries + suspensions (incl. yellow-card bans) for every day
+    # of the window. Unreachable/unconfigured -> silently fall back.
+    apif_rows = []
+    if not args.no_injuries_feed:
+        import injuries_feed
+        try:
+            apif_rows = injuries_feed.fetch_window(ws, we)
+            print(f"API-Football: {len(apif_rows)} Verletzungs-/Sperr-Meldungen "
+                  f"im Fenster geladen.", file=sys.stderr)
+        except injuries_feed.FeedUnavailable as exc:
+            print(f"API-Football-Feed übersprungen ({exc}).", file=sys.stderr)
 
     # International-break awareness: for each nation, the datetime of its last
     # national-team game in this window. A player whose nation is still playing
@@ -1144,6 +1166,7 @@ def main(argv):
     # in a DIFFERENT competition. "No card twice" (global) and "no player twice
     # in one lineup/competition" are enforced later in build_team / the comp loop.
     pools = {}
+    scored = []           # every rated entry incl. ones dropped below -> for the log
     dropped = set()
     matched_keys = set()
     for rar in rarities:
@@ -1169,6 +1192,10 @@ def main(argv):
             e["is_classic"] = (e.get("season") or 0) < current_season
             ov = start_overrides.get(e["player_slug"])
             on_club = (e.get("opp_type") == "Club")
+            inj = (injuries_feed.lookup(apif_rows, e["player"], e.get("team_name"),
+                                        e.get("kickoff")) if apif_rows else None)
+            if inj:
+                e["apif"] = f"{inj['type']}: {inj['reason']}"
             # Precedence: (1) a declared call-up is an authoritative absence from
             # the club game; (2) a researched override wins over everything else
             # (Nick may have CONFIRMED the player does start his club game); (3)
@@ -1187,6 +1214,15 @@ def main(argv):
                 # them, but not over a researched override (Nick's verified call)
                 e["start_prob"] = round(e["sorare_start"], 3)
                 e["start_src"] = "sorare_odds"
+            elif inj and inj["type"] == "Missing Fixture":
+                # listed OUT for this very game (injury or suspension incl.
+                # yellow-card bans, which our own red-card check can't see)
+                e["start_prob"] = round(e["start_prob"] * APIF_MISSING_FACTOR, 3)
+                e["start_src"] = "apif_out"
+                e["suspended"] = injuries_feed.is_suspension(inj)
+            elif inj and inj["type"] == "Questionable":
+                e["start_prob"] = round(e["start_prob"] * APIF_DOUBT_FACTOR, 3)
+                e["start_src"] = "apif_doubtful"
             elif suspension_signal(players.get(e["player_slug"]) or {}, e.get("opp_type")):
                 # red card in his last game of this stream -> banned next game
                 e["start_prob"] = round(e["start_prob"] * SUSPENSION_FACTOR, 3)
@@ -1210,11 +1246,16 @@ def main(argv):
         # 0% (e.g. suspended) player or a declared call-up must never be
         # fielded, even as a fallback.
         pools[rar] = [e for e in entries if e["start_prob"] >= 0.10]
+        scored.extend(entries)
         flagged = sorted({e["player"] for e in entries if e.get("intl_duty")
                           and e["start_prob"] >= 0.10})
         if flagged:
             print(f"  {rar}: Länderspiel-Verdacht (Klubspiel im Fenster, "
                   f"Sorare-% prüfen): {', '.join(flagged)}", file=sys.stderr)
+        apif = sorted({f"{e['player']} ({e['apif']})" for e in entries if e.get("apif")})
+        if apif:
+            print(f"  {rar}: API-Football meldet (prüfen): {', '.join(apif)}",
+                  file=sys.stderr)
         susp = sorted({e["player"] for e in entries if e.get("suspended")})
         if susp:
             print(f"  {rar}: Sperren-Verdacht (Rot im letzten Spiel, prüfen): "
@@ -1413,7 +1454,7 @@ def main(argv):
         ts = dt.datetime.now(dt.timezone.utc).isoformat()
         os.makedirs(os.path.dirname(args.log) or ".", exist_ok=True)
         with open(args.log, "a", encoding="utf-8") as fh:
-            for e in all_entries:
+            for e in scored:
                 key = (e["player_slug"], e.get("kickoff"))
                 if key in seen:
                     continue
@@ -1427,6 +1468,7 @@ def main(argv):
                     "sorare_start": e.get("sorare_start"), "sorare_sub": e.get("sorare_sub"),
                     "sorare_rel": e.get("sorare_rel"), "start_prob": e.get("start_prob"),
                     "start_src": e.get("start_src") or "model", "proj": e.get("proj"),
+                    "apif": e.get("apif"),
                 }, ensure_ascii=False) + "\n")
         print(f"Logged {len(seen)} predictions to {args.log} "
               f"(Sorare-Startquoten verfügbar: {n_odds})", file=sys.stderr)

@@ -38,3 +38,6 @@ lineups.json
 dashboard.html
 backtest.json
 *.csv
+
+# API-Football response cache (injuries_feed.py)
+.cache/

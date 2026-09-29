@@ -92,6 +92,7 @@ Alle dependency-frei (nur Python-Stdlib), lesen den Key aus `.env.local`:
 | … mit Ausschluss verletzter/gesperrter Spieler | `python3 lineup_suggest.py nicktd7 --exclude "slug-oder-name,…" --json lineups.json` |
 | … Matchup-Gewichtung (Gegnerstärke) | standardmäßig AN: liest `team_strength.json`, `--matchup-weight 0.20` (0 = aus) |
 | … National-Abstellungen (Länderspielpause) | UEFA automatisch aus dem Fixture; Nicht-UEFA in `international_callups.json` (per Fixture-Slug); s. u. |
+| Verletzungen/Sperren (API-Football) | `python3 injuries_feed.py status` · `date YYYY-MM-DD` · `selftest` (Einrichtung: `docs/network-setup.md`) |
 | Rewards je Spieler | `python3 rewards_by_player.py nicktd7 --json rewards.json` |
 | Backtest/Kalibrierung des Modells | `python3 backtest.py nicktd7 [--players "slug,…"] [--json backtest.json]` (misst Start-Kalibrierung/Brier + Projektions-Fehler retrospektiv aus Spiel-Logs) |
 | Scouting: Ersatz/Ziel-Spieler bewerten | `python3 scout.py --like <slug> --candidates "slug1,slug2,…" [--budget 40] [--position Defender]` (Matchup-Gewichtung standardmäßig an, `--matchup-weight 0`=aus) |
@@ -223,7 +224,7 @@ Bouanga/Son/Blake standen mit hoher Klub-Quote im Entwurf, obwohl abgestellt.)
   Nationalteam) wie das kommende → sehr wahrscheinlich gesperrt → abgewertet
   (×0,10, `start_src: suspension_risk`, stderr „Sperren-Verdacht … prüfen").
   Fängt die Sperren, die der Verletzungs-Feed übersieht. Gelb-Sperren (Schwellen
-  je Liga) sind so **nicht** abgedeckt → weiter manuell/extern.
+  je Liga) sind so **nicht** abgedeckt → dafür der API-Football-Feed (s. u.).
 - **Sorare-eigene Signale** (`... on Player` in `PLAYER_FIELDS`):
   - **Sorare-% = `nextClassicFixturePlayingStatusOdds.starterOddsBasisPoints`**
     (/10000). Liefert seit **14.09.2026 `null`** ([sorare/api #693](https://github.com/sorare/api/issues/693),
@@ -242,6 +243,14 @@ Bouanga/Son/Blake standen mit hoher Klub-Quote im Entwurf, obwohl abgestellt.)
     finale Quote + Quelle) → Grundlage, um Quellen später gegen echte Aufstellungen
     zu kalibrieren. **Test-/Experiment-Läufe immer mit `--log ''`**, damit das Log
     nur echte Vorhersagen enthält.
+- **API-Football-Feed (`injuries_feed.py`)**: Verletzungs- **und Sperr**meldungen
+  (inkl. **Gelbsperren**) je Spiel, Abruf pro Tag des GW-Fensters (Cache 3 h in
+  `.cache/`, Free-Plan ~100 Anfragen/Tag). Zuordnung zu Sorare-Spielern über
+  Name (auch „M. Nachname"/Rufname) + Team + Anstoß ±36 h; mehrdeutig → ignoriert.
+  „Missing Fixture" → ×0,10 (`apif_out`), „Questionable" → ×0,60 (`apif_doubtful`),
+  stderr „API-Football meldet (prüfen)". Vorrang: nach recherchiertem Override und
+  Sorare-%, **vor** den eigenen Heuristiken (Rot-Karte, Abstellung, Bank). Solange
+  Host/Key fehlen: automatischer Rückfall (Stand 29.09.: noch nicht freigegeben).
 - **Log-Reihenfolge:** `playerGameScores` kommt **most-recent-first** (Index 0 =
   neuestes Spiel) — Recency-Gewichtung und `played_projection` nutzen genau diese
   Reihenfolge (kein Umdrehen).

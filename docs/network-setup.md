@@ -95,6 +95,35 @@ mit `--no-sofascore` lässt sich das abschalten. Hinweise:
   ändern oder die Server-IP zeitweise per Cloudflare (403) blocken. Der Code
   fällt in dem Fall geräuschlos auf das Sorare-Modell zurück.
 
+## API-Football – Verletzungen & Sperren (inkl. Gelbsperren)
+
+`injuries_feed.py` holt pro Spieltag des GW-Fensters die Verletzungs- und
+Sperrmeldungen von **API-Football** (`v3.football.api-sports.io`); der
+Optimierer nutzt sie automatisch, sobald der Host erreichbar ist.
+
+1. Kostenloses Konto direkt bei **api-sports** anlegen (dashboard.api-football.com,
+   **nicht** über RapidAPI — dort gelten anderer Host und Header). Im Dashboard
+   den **API-Key** kopieren. Free-Plan: ca. 100 Anfragen/Tag.
+2. Umgebung bearbeiten → **API credentials** → **Add credential**:
+   - **Allowed websites:** `v3.football.api-sports.io`
+   - **Custom headers:** Name `x-apisports-key`, **Prefix leeren**, Value = Key
+   - **Connect**
+   (Ohne API-Credentials: **Network access** → Custom → `v3.football.api-sports.io`
+   erlauben und den Key als Umgebungsvariable `APIFOOTBALL_KEY` setzen.)
+3. **Neue** Sitzung starten.
+
+Testen (neue Sitzung):
+
+```bash
+python3 injuries_feed.py status            # Plan + Anfragen heute
+python3 injuries_feed.py date 2026-10-03   # Meldungen eines Tages
+```
+
+Meldet `status`/`date` einen Fehler wie „Free plans do not have access to this
+season", ist der Free-Plan auf alte Saisons beschränkt → dann entscheiden, ob
+der Pro-Plan (ca. 19 $/Monat) sich lohnt. Ohne Freigabe fällt der Optimierer
+geräuschlos auf die Sorare-Signale zurück (`--no-injuries-feed` schaltet ab).
+
 ## Sicherheit
 
 - Wurde der Key jemals geteilt (z. B. im Chat), **rotiere** ihn in den
