@@ -1,6 +1,6 @@
 {
   "_comment": "Researched START probabilities (--start-override). Jeder Wert ist an EINE GW gebunden (_fixture bzw. 'fixture' je Eintrag) und verfällt danach automatisch. 'researched' = Recherchedatum; hat der Spieler danach erneut gespielt, meldet lineup_suggest den Override als veraltet (neu prüfen). GRUNDREGEL #0: nur datumsgeprüfte Werte.",
-  "_updated": "2026-09-28",
+  "_updated": "2026-09-29",
   "_sources": {
     "gw717_md1_2026-09-26": "Nations League MD1 am 26.09.2026 (Gruppe 3 = ESP/CRO/ENG/CZE; ESP 3-2 ENG). Sorare-Spiel-Log (mins_played, last games) je Spieler abgefragt am 28.09.2026 -> wer MD1 startete, ist der stärkste MD2-Indikator.",
     "spain_2026-09-28": "ESP vs CRO 29.09. (yahoo/ESPN preview, 27.09.): Unai Simón 90' MD1 -> #1 (0.90); Laporte 90' MD1 -> gesetzt (0.90); Baena nur 35' (Joker) -> Rotation (0.40, unbestätigt); Grimaldo 0' MD1 (Cucurella LB) -> Ersatz (0.30, unbestätigt).",
@@ -17,59 +17,91 @@
     "maehle_2026-09-22": "Joakim Mæhle: Denmark squad + FotMob log (18/12/05 Sep je 90'), nailed DEN left-back. -> 0.90. (01.10. vs Portugal — beim finalen Check bestätigen.)",
     "vagiannidis_2026-09-22": "Georgios Vagiannidis: Greece squad, fit; Greece RB start UNCONFIRMED (competes w/ Rota). Modelliert ~0.85, finalise am Deadline.",
     "muric_2026-09-22": "Arijanet Muric: Kosovo #1 GK. -> 0.88 (01.10. vs Israel — beim finalen Check bestätigen).",
-    "hs_xi_2026-09-24": "24.09.-Fenster (überholt für GW717): DEN startete Bah+Kristensen+Mæhle+Froholdt; GRE startete Vagiannidis+Pavlidis. Für die 01.10.-Spiele neu prüfen."
+    "hs_xi_2026-09-24": "24.09.-Fenster (überholt für GW717): DEN startete Bah+Kristensen+Mæhle+Froholdt; GRE startete Vagiannidis+Pavlidis. Für die 01.10.-Spiele neu prüfen.",
+    "germany_2026-09-29": "bundesliga.com (28.09.2026) + beIN/TNT (17.09.2026): Klopp nominierte zwei Kader; Kader 1 (ter Stegen, Nübel, Tah, Kimmich, Ebnoutalib …) spielte 24./27.09. und ist zurück bei den Klubs -> 0. Kader 2 vs Serbien 01.10.: u. a. Atubolu/Dahmen/Urbig, Raum, Thiaw, Schlotterbeck, Wirtz, Burkardt, Woltemade. XI-Werte für Kader 2 = eigene Schätzung (unbestätigt). Sorare-Log bestätigt: Raum/Thiaw/Woltemade ohne Länderspiel-Einsatz im Fenster.",
+    "denmark_2026-09-29": "khelnow (29.09.2026) XI: Jorgensen; Kristensen, Andersen, Provstgaard, Mæhle; Hjulmand, Højbjerg; Isaksen, Damsgaard, Daramy; Højlund (Froholdt NICHT). Zweite Vorschau mit Froholdt in der Elf (Datum nicht bestätigt). Sorare-Log: Kristensen/Mæhle/J. Andersen 90'/90', Froholdt 75'/3', Bah 0' (24.09.). -> Froholdt 0.45, Bah 0.15.",
+    "spain_2026-09-29": "thehardtackle (29.09.2026): Unai; Pubill, Cubarsí, Laporte, Cucurella; Rodri, Pedri; Yamal, Olmo, Baena; Oyarzabal. WhoScored-Vorschau (29.09.): Huijsen+Cubarsí statt Laporte, Baena drin. -> Laporte 0.65, Baena 0.7, Grimaldo 0.2.",
+    "england_czechia_2026-09-29": "SI.com (29.09.2026): Pickford kehrt für Trafford zurück; Kane startet; CZE: Horníček; …Hranáč…; Šulc; Hložek. Zweite Vorschau (sportsgambler/whoscored 29.09.) gleiche CZE-Elf. -> Pickford 0.75, Kovář 0.05, Bucha 0.1, Hranáč 0.8.",
+    "greece_kosovo_2026-09-29": "Nur Sorare-Log (27.09.): Pavlidis 89', Vagiannidis 45', Murić 65' -> leicht angepasst, unbestätigt."
   },
   "_fixture": "football-1-2-oct-2026",
   "_researched": "2026-09-28",
-  "unai-simon-mendibil": 0.9,
-  "aymeric-laporte": 0.9,
-  "alejandro-baena-rodriguez": 0.4,
-  "alejandro-grimaldo-garcia": 0.3,
+  "unai-simon-mendibil": {
+    "p": 0.92,
+    "researched": "2026-09-29"
+  },
+  "aymeric-laporte": {
+    "p": 0.65,
+    "researched": "2026-09-29"
+  },
+  "alejandro-baena-rodriguez": {
+    "p": 0.7,
+    "researched": "2026-09-29"
+  },
+  "alejandro-grimaldo-garcia": {
+    "p": 0.2,
+    "researched": "2026-09-29"
+  },
   "ivan-perisic": 0.9,
   "remo-freuler": 0.92,
   "djibril-sow": 0.35,
   "nico-elvedi": 0.9,
   "dan-ndoye": 0.85,
-  "pavel-sulc": 0.85,
-  "adam-hlozek": 0.85,
-  "matej-kovar": 0.1,
-  "pavel-bucha": 0.15,
-  "jordan-pickford": 0.35,
+  "pavel-sulc": {
+    "p": 0.88,
+    "researched": "2026-09-29"
+  },
+  "adam-hlozek": {
+    "p": 0.88,
+    "researched": "2026-09-29"
+  },
+  "matej-kovar": {
+    "p": 0.05,
+    "researched": "2026-09-29"
+  },
+  "pavel-bucha": {
+    "p": 0.1,
+    "researched": "2026-09-29"
+  },
+  "jordan-pickford": {
+    "p": 0.75,
+    "researched": "2026-09-29"
+  },
   "harry-kane": 0.92,
   "eljif-elmas": 0.88,
   "leandro-barreiro-martins": 0.88,
   "james-wilson-2007-03-06": 0.15,
   "marc-andre-ter-stegen": {
-    "p": 0.9,
-    "researched": "2026-09-21"
+    "p": 0.0,
+    "researched": "2026-09-29"
   },
   "alexander-nubel": {
-    "p": 0.08,
-    "researched": "2026-09-21"
+    "p": 0.0,
+    "researched": "2026-09-29"
   },
   "nico-schlotterbeck": {
     "p": 0.85,
-    "researched": "2026-09-21"
+    "researched": "2026-09-29"
   },
   "jonathan-tah": {
-    "p": 0.85,
-    "researched": "2026-09-21"
+    "p": 0.0,
+    "researched": "2026-09-29"
   },
   "joshua-kimmich": {
-    "p": 0.92,
-    "researched": "2026-09-21"
+    "p": 0.0,
+    "researched": "2026-09-29"
   },
   "jamal-musiala": {
-    "p": 0.8,
-    "researched": "2026-09-21"
+    "p": 0.0,
+    "researched": "2026-09-29"
   },
   "kai-havertz": {
-    "p": 0.8,
-    "researched": "2026-09-21"
+    "p": 0.0,
+    "researched": "2026-09-29"
   },
   "younes-ebnoutalib": {
-    "p": 0.15,
-    "researched": "2026-09-22"
+    "p": 0.0,
+    "researched": "2026-09-29"
   },
   "mark-flekken": {
     "p": 0.1,
@@ -84,31 +116,63 @@
     "researched": "2026-09-21"
   },
   "joakim-maehle": {
-    "p": 0.95,
-    "researched": "2026-09-22"
+    "p": 0.92,
+    "researched": "2026-09-29"
   },
   "georgios-vagiannidis": {
-    "p": 0.85,
-    "researched": "2026-09-24"
+    "p": 0.7,
+    "researched": "2026-09-29"
   },
   "rasmus-nissen-kristensen": {
-    "p": 0.5,
-    "researched": "2026-09-22"
+    "p": 0.85,
+    "researched": "2026-09-29"
   },
   "arijanet-muric": {
-    "p": 0.88,
-    "researched": "2026-09-22"
+    "p": 0.85,
+    "researched": "2026-09-29"
   },
   "alexander-hartmann-bah": {
-    "p": 0.9,
-    "researched": "2026-09-24"
+    "p": 0.15,
+    "researched": "2026-09-29"
   },
   "victor-mow-froholdt": {
-    "p": 0.9,
-    "researched": "2026-09-24"
+    "p": 0.45,
+    "researched": "2026-09-29"
   },
   "evangelos-pavlidis": {
-    "p": 0.92,
-    "researched": "2026-09-24"
+    "p": 0.9,
+    "researched": "2026-09-29"
+  },
+  "david-raum": {
+    "p": 0.75,
+    "researched": "2026-09-29"
+  },
+  "malick-thiaw-2001-08-08": {
+    "p": 0.7,
+    "researched": "2026-09-29"
+  },
+  "florian-wirtz": {
+    "p": 0.8,
+    "researched": "2026-09-29"
+  },
+  "jonathan-burkardt": {
+    "p": 0.6,
+    "researched": "2026-09-29"
+  },
+  "nick-woltemade": {
+    "p": 0.5,
+    "researched": "2026-09-29"
+  },
+  "jonas-urbig": {
+    "p": 0.3,
+    "researched": "2026-09-29"
+  },
+  "joachim-andersen": {
+    "p": 0.88,
+    "researched": "2026-09-29"
+  },
+  "robin-hranac": {
+    "p": 0.8,
+    "researched": "2026-09-29"
   }
 }
