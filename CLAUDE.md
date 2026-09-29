@@ -145,8 +145,17 @@ verfügbar; NIE jemanden auf einer unbestätigten/alten Meldung benchen.**
   Wahrscheinlichkeit** je Spieler bilden. Darf Sorare bewusst widersprechen —
   aber nur gut belegt. Auch **Sperren** zählen (mein Verletzungsfeed übersieht sie).
 - 0 % / ganz niedrige Werte (gesperrt, klarer Ersatz) fliegen aus dem Pool
-  (kein Fielden von Nicht-Startern). Datei jede Länderspielpause neu erstellen;
-  für reine Club-GWs leeren/ignorieren (dann greift wieder das Vereinsmodell).
+  (kein Fielden von Nicht-Startern).
+- **Overrides verfallen automatisch (seit 29.09.2026):** Jeder Wert ist an **eine
+  GW** gebunden — Datei-Standard `"_fixture": "<fixture-slug>"` (+ `"_researched":
+  "YYYY-MM-DD"`), oder je Eintrag `{"p": 0.5, "fixture": "…", "researched": "…"}`.
+  Nur Overrides der gebauten GW greifen; andere gelten als verfallen, Einträge ohne
+  Bindung werden ignoriert. Für eine neue GW: `_fixture`/`_researched` auf die neue
+  GW setzen und **nur neu recherchierte** Werte übernehmen (alte als Objekt mit
+  echtem `researched`-Datum, falls bewusst weiterverwendet).
+- **Veraltet-Alarm:** Hat ein Spieler **nach** dem Recherchedatum erneut gespielt,
+  meldet der Optimierer „Override älter als letztes Spiel (neu prüfen)" → vor der
+  Deadline datiert neu bewerten (Froholdt-Fall: 90 % vom 24.09., dann 3' am 27.09.).
 
 ### Manuell deklarierte Wettbewerbe (API-unsichtbar) — nur je 1 GW
 
@@ -321,10 +330,9 @@ Sobald eine Classic-Deadline (Di/Fr 16:00 CET/CEST) durch und die GW gelockt ist
 bis Nick fragt):
 1. `python3 lineup_suggest.py nicktd7 --json <scratchpad>/next.json` (das Skript
    ermittelt nach dem Lock automatisch die nächste GW).
-2. **Reine Club-GW → `start_overrides` IGNORIEREN** (leere Datei `{}` via
-   `--start-override`), damit wieder das Vereinsmodell greift — die
-   Länderspiel-Overrides wären für Club-Spiele falsch. Länderspiel-GW →
-   recherchierte Overrides wie gehabt.
+2. **Overrides der alten GW verfallen automatisch** (GW-Bindung, s. o.) → in einer
+   reinen Club-GW greift ohne Zutun wieder das Vereinsmodell. Länderspiel-GW →
+   neu recherchierte Overrides mit `_fixture` der neuen GW anlegen.
    **⚠️ Achtung Länderspielpause:** Eine Woche hat zwei Nationalspiel-Runden
    (Matchday 1 + 2). Auch die **Wochenend-GW** enthält dann noch Nationalspiele
    (Matchday 2, ~Sa–Mo) → NICHT als Club-GW behandeln, Overrides **behalten**;

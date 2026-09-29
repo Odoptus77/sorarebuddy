@@ -1,5 +1,5 @@
 {
-  "_comment": "Researched START probabilities (--start-override), {player_slug: 0..1}. GRUNDREGEL #0: only entries backed by a date-verified source are included. GW717 (Nations League 2026-27, League-Phase): MD1 war 26.09.2026, MD2 spielt 29.09. + 01.10. Die 29.09.-Werte stützen sich auf das datierte Sorare-Spiel-Log der MD1 (26.09., wer 90'/0' spielte) + Vorschauen. Die 01.10.-Einträge stammen noch aus dem 24.09.-Fenster und sind beim finalen Deadline-Check (Di ~14:30 CEST) aufzufrischen.",
+  "_comment": "Researched START probabilities (--start-override). Jeder Wert ist an EINE GW gebunden (_fixture bzw. 'fixture' je Eintrag) und verfällt danach automatisch. 'researched' = Recherchedatum; hat der Spieler danach erneut gespielt, meldet lineup_suggest den Override als veraltet (neu prüfen). GRUNDREGEL #0: nur datumsgeprüfte Werte.",
   "_updated": "2026-09-28",
   "_sources": {
     "gw717_md1_2026-09-26": "Nations League MD1 am 26.09.2026 (Gruppe 3 = ESP/CRO/ENG/CZE; ESP 3-2 ENG). Sorare-Spiel-Log (mins_played, last games) je Spieler abgefragt am 28.09.2026 -> wer MD1 startete, ist der stärkste MD2-Indikator.",
@@ -19,40 +19,96 @@
     "muric_2026-09-22": "Arijanet Muric: Kosovo #1 GK. -> 0.88 (01.10. vs Israel — beim finalen Check bestätigen).",
     "hs_xi_2026-09-24": "24.09.-Fenster (überholt für GW717): DEN startete Bah+Kristensen+Mæhle+Froholdt; GRE startete Vagiannidis+Pavlidis. Für die 01.10.-Spiele neu prüfen."
   },
-  "unai-simon-mendibil": 0.90,
-  "aymeric-laporte": 0.90,
-  "alejandro-baena-rodriguez": 0.40,
-  "alejandro-grimaldo-garcia": 0.30,
-  "ivan-perisic": 0.90,
+  "_fixture": "football-1-2-oct-2026",
+  "_researched": "2026-09-28",
+  "unai-simon-mendibil": 0.9,
+  "aymeric-laporte": 0.9,
+  "alejandro-baena-rodriguez": 0.4,
+  "alejandro-grimaldo-garcia": 0.3,
+  "ivan-perisic": 0.9,
   "remo-freuler": 0.92,
   "djibril-sow": 0.35,
-  "nico-elvedi": 0.90,
+  "nico-elvedi": 0.9,
   "dan-ndoye": 0.85,
   "pavel-sulc": 0.85,
   "adam-hlozek": 0.85,
-  "matej-kovar": 0.10,
+  "matej-kovar": 0.1,
   "pavel-bucha": 0.15,
   "jordan-pickford": 0.35,
   "harry-kane": 0.92,
   "eljif-elmas": 0.88,
   "leandro-barreiro-martins": 0.88,
   "james-wilson-2007-03-06": 0.15,
-  "marc-andre-ter-stegen": 0.9,
-  "alexander-nubel": 0.08,
-  "nico-schlotterbeck": 0.85,
-  "jonathan-tah": 0.85,
-  "joshua-kimmich": 0.92,
-  "jamal-musiala": 0.8,
-  "kai-havertz": 0.8,
-  "younes-ebnoutalib": 0.15,
-  "mark-flekken": 0.1,
-  "samuel-jumpe-soares": 0.08,
-  "konrad-laimer": 0.02,
-  "joakim-maehle": 0.95,
-  "georgios-vagiannidis": 0.85,
-  "rasmus-nissen-kristensen": 0.5,
-  "arijanet-muric": 0.88,
-  "alexander-hartmann-bah": 0.9,
-  "victor-mow-froholdt": 0.9,
-  "evangelos-pavlidis": 0.92
+  "marc-andre-ter-stegen": {
+    "p": 0.9,
+    "researched": "2026-09-21"
+  },
+  "alexander-nubel": {
+    "p": 0.08,
+    "researched": "2026-09-21"
+  },
+  "nico-schlotterbeck": {
+    "p": 0.85,
+    "researched": "2026-09-21"
+  },
+  "jonathan-tah": {
+    "p": 0.85,
+    "researched": "2026-09-21"
+  },
+  "joshua-kimmich": {
+    "p": 0.92,
+    "researched": "2026-09-21"
+  },
+  "jamal-musiala": {
+    "p": 0.8,
+    "researched": "2026-09-21"
+  },
+  "kai-havertz": {
+    "p": 0.8,
+    "researched": "2026-09-21"
+  },
+  "younes-ebnoutalib": {
+    "p": 0.15,
+    "researched": "2026-09-22"
+  },
+  "mark-flekken": {
+    "p": 0.1,
+    "researched": "2026-09-21"
+  },
+  "samuel-jumpe-soares": {
+    "p": 0.08,
+    "researched": "2026-09-21"
+  },
+  "konrad-laimer": {
+    "p": 0.02,
+    "researched": "2026-09-21"
+  },
+  "joakim-maehle": {
+    "p": 0.95,
+    "researched": "2026-09-22"
+  },
+  "georgios-vagiannidis": {
+    "p": 0.85,
+    "researched": "2026-09-24"
+  },
+  "rasmus-nissen-kristensen": {
+    "p": 0.5,
+    "researched": "2026-09-22"
+  },
+  "arijanet-muric": {
+    "p": 0.88,
+    "researched": "2026-09-22"
+  },
+  "alexander-hartmann-bah": {
+    "p": 0.9,
+    "researched": "2026-09-24"
+  },
+  "victor-mow-froholdt": {
+    "p": 0.9,
+    "researched": "2026-09-24"
+  },
+  "evangelos-pavlidis": {
+    "p": 0.92,
+    "researched": "2026-09-24"
+  }
 }

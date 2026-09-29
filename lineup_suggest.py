@@ -1033,16 +1033,32 @@ def main(argv):
                   file=sys.stderr)
 
     # Researched start-probability overrides (mainly national-team games).
-    start_overrides = {}
+    # Each override is BOUND to one gameweek (fixture slug) and carries the
+    # date it was researched, so it expires with its GW instead of silently
+    # leaking into the next one (the Froholdt case). File format:
+    #   "_fixture": "<fixture-slug>"      default binding for plain numbers
+    #   "_researched": "YYYY-MM-DD"       default research date
+    #   "<player-slug>": 0.85             -> bound to _fixture/_researched
+    #   "<player-slug>": {"p": 0.5, "fixture": "...", "researched": "..."}
+    # Overrides without any binding are ignored (with a warning).
+    override_raw = {}
     if os.path.exists(args.start_override):
         try:
             with open(args.start_override, encoding="utf-8") as fh:
                 raw = json.load(fh)
-            start_overrides = {k: float(v) for k, v in raw.items()
-                               if not k.startswith("_")}
-            print(f"Start-prob overrides from {args.start_override}: "
-                  f"{len(start_overrides)} players.", file=sys.stderr)
-        except (ValueError, OSError) as exc:
+            d_fx = raw.get("_fixture")
+            d_date = raw.get("_researched") or raw.get("_updated")
+            for k, v in raw.items():
+                if k.startswith("_"):
+                    continue
+                if isinstance(v, dict):
+                    override_raw[k] = {"p": float(v["p"]),
+                                       "fixture": v.get("fixture", d_fx),
+                                       "researched": v.get("researched", d_date)}
+                else:
+                    override_raw[k] = {"p": float(v), "fixture": d_fx,
+                                       "researched": d_date}
+        except (ValueError, OSError, KeyError, TypeError) as exc:
             print(f"WARNING: could not read --start-override "
                   f"{args.start_override}: {exc}", file=sys.stderr)
 
@@ -1079,6 +1095,20 @@ def main(argv):
     # Sorare's odds describe the NEXT Classic fixture only -> ignore them when
     # building for an explicitly chosen (possibly later) fixture.
     use_sorare_odds = not args.no_sorare_odds and args.fixture is None
+
+    # Keep only the overrides bound to THIS gameweek; the rest have expired.
+    start_overrides = {k: o["p"] for k, o in override_raw.items()
+                       if o["fixture"] == fx["slug"]}
+    override_date = {k: override_raw[k]["researched"] for k in start_overrides}
+    expired = sorted(k for k, o in override_raw.items()
+                     if o["fixture"] and o["fixture"] != fx["slug"])
+    unbound = sorted(k for k, o in override_raw.items() if not o["fixture"])
+    if override_raw:
+        print(f"Start-prob overrides from {args.start_override}: "
+              f"{len(start_overrides)} aktiv für {fx['slug']}"
+              + (f", {len(expired)} verfallen (andere GW)" if expired else "")
+              + (f", {len(unbound)} ohne GW-Bindung ignoriert: {', '.join(unbound)}"
+                 if unbound else ""), file=sys.stderr)
 
     ws = dt.datetime.fromisoformat(fx["startDate"].replace("Z", "+00:00"))
     we = dt.datetime.fromisoformat(fx["endDate"].replace("Z", "+00:00"))
@@ -1212,6 +1242,11 @@ def main(argv):
             elif ov is not None:
                 e["start_prob"] = round(max(0.0, min(1.0, ov)), 3)
                 e["start_src"] = "researched"
+                # stale if he has played again SINCE the override was researched
+                last = ((((players.get(e["player_slug"]) or {}).get("playerGameScores")
+                          or [{}])[0].get("anyGame") or {}).get("date") or "")[:10]
+                e["override_stale"] = bool(last and override_date.get(e["player_slug"])
+                                           and last > override_date[e["player_slug"]])
             elif use_sorare_odds and e.get("sorare_start") is not None:
                 # Sorare's own starter odds (the app's %): news-aggregated and
                 # fresher than any of our automatic signals -> they win over
@@ -1265,6 +1300,12 @@ def main(argv):
         if susp:
             print(f"  {rar}: Sperren-Verdacht (Rot im letzten Spiel, prüfen): "
                   f"{', '.join(susp)}", file=sys.stderr)
+        stale = sorted({f"{e['player']} (recherchiert "
+                        f"{override_date.get(e['player_slug'])})"
+                        for e in entries if e.get("override_stale")})
+        if stale:
+            print(f"  {rar}: Override älter als letztes Spiel (neu prüfen): "
+                  f"{', '.join(stale)}", file=sys.stderr)
         conf = sorted({f"{e['player']} ({e['playing_status']}, "
                        f"{int(round(e['start_prob'] * 100))}% {e.get('start_src') or 'model'})"
                        for e in pools[rar] if e.get("status_conflict")})
