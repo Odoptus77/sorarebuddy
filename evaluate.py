@@ -228,7 +228,7 @@ def main(argv):
         print(f"{src:<17}{st['n']:>4}{st['mean_pred']:>11.2f}{st['actual']:>7.2f}{st['brier']:>8}")
 
     out_stats = {}
-    outs = [r for r in rows if r.get("start_src") in OUT_SIGNALS or r.get("apif", "") .startswith("Missing")]
+    outs = [r for r in rows if r.get("start_src") in OUT_SIGNALS or (r.get("apif") or "").startswith("Missing")]
     if outs:
         hit = sum(1 for r in outs if not r["started"])
         out_stats = {"n": len(outs), "correct_out": hit}

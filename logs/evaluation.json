@@ -1,0 +1,108 @@
+{
+  "updated": "2026-09-30T06:53:43.339539+00:00",
+  "evaluated": 23,
+  "pending": 0,
+  "upcoming": 121,
+  "brier": 0.1545,
+  "brier_raw": 0.1545,
+  "start_rate": 0.609,
+  "by_source": {
+    "researched": {
+      "n": 19,
+      "mean_pred": 0.667,
+      "actual": 0.684,
+      "brier": 0.1227
+    },
+    "natl_bench_auto": {
+      "n": 3,
+      "mean_pred": 0.041,
+      "actual": 0.333,
+      "brier": 0.3051
+    },
+    "model": {
+      "n": 1,
+      "mean_pred": 0.554,
+      "actual": 0.0,
+      "brier": 0.3069
+    }
+  },
+  "out_signals": {
+    "n": 3,
+    "correct_out": 2
+  },
+  "playing_status": {
+    "REGULAR": {
+      "n": 10,
+      "started": 4
+    },
+    "STARTER": {
+      "n": 10,
+      "started": 9
+    },
+    "SUPER_SUBSTITUTE": {
+      "n": 1,
+      "started": 1
+    },
+    "NOT_PLAYING": {
+      "n": 1,
+      "started": 0
+    },
+    "SUBSTITUTE": {
+      "n": 1,
+      "started": 0
+    }
+  },
+  "projection": {
+    "n": 15,
+    "mae": 15.06,
+    "bias": -0.05,
+    "groups": {
+      "Midfielder|national": {
+        "n": 6,
+        "bias": 7.27,
+        "mae": 9.87
+      },
+      "Forward|national": {
+        "n": 4,
+        "bias": -11.2,
+        "mae": 17.55
+      },
+      "Defender|national": {
+        "n": 3,
+        "bias": -4.62,
+        "mae": 26.18
+      },
+      "Goalkeeper|national": {
+        "n": 2,
+        "bias": 7.15,
+        "mae": 8.95
+      }
+    }
+  },
+  "misses": [
+    {
+      "player": "ladislav-krejci",
+      "kickoff": "2026-09-29T18:45:00Z",
+      "pred": 0.045,
+      "src": "natl_bench_auto",
+      "started": true,
+      "played": true
+    },
+    {
+      "player": "matej-kovar",
+      "kickoff": "2026-09-29T18:45:00Z",
+      "pred": 0.05,
+      "src": "researched",
+      "started": true,
+      "played": true
+    },
+    {
+      "player": "jordan-pickford",
+      "kickoff": "2026-09-29T18:45:00Z",
+      "pred": 0.75,
+      "src": "researched",
+      "started": false,
+      "played": false
+    }
+  ]
+}
