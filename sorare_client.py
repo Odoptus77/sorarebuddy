@@ -104,6 +104,8 @@ def graphql(query, variables=None, retries=3, timeout=45):
     exponential backoff before giving up.
     """
     _ensure_env()
+    if os.environ.get("SORARE_REFRESH_TOKEN"):
+        ensure_user_token()            # renews a (nearly) expired user token first
     payload = json.dumps({"query": query, "variables": variables or {}}).encode()
     headers = {
         "Content-Type": "application/json",
