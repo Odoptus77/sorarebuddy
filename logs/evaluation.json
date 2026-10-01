@@ -1,11 +1,11 @@
 {
-  "updated": "2026-09-30T06:53:43.339539+00:00",
-  "evaluated": 23,
+  "updated": "2026-10-01T06:53:02.241982+00:00",
+  "evaluated": 25,
   "pending": 0,
-  "upcoming": 121,
-  "brier": 0.1545,
-  "brier_raw": 0.1545,
-  "start_rate": 0.609,
+  "upcoming": 119,
+  "brier": 0.1591,
+  "brier_raw": 0.1591,
+  "start_rate": 0.6,
   "by_source": {
     "researched": {
       "n": 19,
@@ -20,10 +20,16 @@
       "brier": 0.3051
     },
     "model": {
+      "n": 2,
+      "mean_pred": 0.477,
+      "actual": 0.5,
+      "brier": 0.3341
+    },
+    "apif_doubtful": {
       "n": 1,
-      "mean_pred": 0.554,
+      "mean_pred": 0.25,
       "actual": 0.0,
-      "brier": 0.3069
+      "brier": 0.0625
     }
   },
   "out_signals": {
@@ -39,6 +45,10 @@
       "n": 10,
       "started": 9
     },
+    "SUBSTITUTE": {
+      "n": 3,
+      "started": 1
+    },
     "SUPER_SUBSTITUTE": {
       "n": 1,
       "started": 1
@@ -46,15 +56,11 @@
     "NOT_PLAYING": {
       "n": 1,
       "started": 0
-    },
-    "SUBSTITUTE": {
-      "n": 1,
-      "started": 0
     }
   },
   "projection": {
-    "n": 15,
-    "mae": 15.06,
+    "n": 16,
+    "mae": 14.13,
     "bias": -0.05,
     "groups": {
       "Midfielder|national": {
@@ -64,8 +70,8 @@
       },
       "Forward|national": {
         "n": 4,
-        "bias": -11.2,
-        "mae": 17.55
+        "bias": -11.22,
+        "mae": 17.57
       },
       "Defender|national": {
         "n": 3,
@@ -76,6 +82,11 @@
         "n": 2,
         "bias": 7.15,
         "mae": 8.95
+      },
+      "Forward|club": {
+        "n": 1,
+        "bias": 0.1,
+        "mae": 0.1
       }
     }
   },
