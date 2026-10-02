@@ -50,10 +50,12 @@ PACE = 0.25
 # flag it for a Sorare-% check (soft, not a hard drop -> a researched override
 # or a confirmed club start can still restore him).
 INTL_DUTY_FACTOR = 0.12
-# Same soft downweight for a player whose nation ALREADY played this break and
-# who logged 0 minutes in it -> unused squad member, unlikely to start the
-# upcoming national game (his club-minutes score is meaningless there).
-NATIONAL_BENCH_FACTOR = 0.12
+# Softer downweight for a player whose nation ALREADY played this break and
+# who logged 0 minutes in it (unused squad member). Was x0.12; the Treffer-Bilanz
+# of 02.10.2026 showed national coaches rotate a lot between the two matchdays
+# (2 of 6 flagged players started, e.g. Krejci 90', Baribo 69'; the club model
+# alone had them at ~39% vs 33% real) -> x0.6 (source "natl_bench_soft").
+NATIONAL_BENCH_FACTOR = 0.6
 NATIONAL_BENCH_DAYS = 12   # how far back to look for the nation's break games
 # A red card (straight or 2nd yellow) in the player's most recent game almost
 # always bans him from the next game of the SAME competition stream (club vs
@@ -698,7 +700,8 @@ def suspension_signal(pd, opp_type):
 # avg 0.83, NOT_PLAYING 0.13, SUBSTITUTE 0.31), so it is NOT used to move the
 # probability -- only to flag the rare strong contradictions for a manual check.
 _BENCH_STATUSES = ("NOT_PLAYING", "SUBSTITUTE", "RETIRED")
-_AUTO_SRCS = ("callup_out", "intl_duty_auto", "natl_bench_auto", "suspension_risk")
+_AUTO_SRCS = ("callup_out", "intl_duty_auto", "natl_bench_auto", "natl_bench_soft",
+              "suspension_risk")
 
 
 def _status_conflict(e):
@@ -1104,7 +1107,12 @@ def main(argv):
     #   "_fixture": "<fixture-slug>"      default binding for plain numbers
     #   "_researched": "YYYY-MM-DD"       default research date
     #   "<player-slug>": 0.85             -> bound to _fixture/_researched
-    #   "<player-slug>": {"p": 0.5, "fixture": "...", "researched": "..."}
+    #   "<player-slug>": {"p": 0.5, "fixture": "...", "researched": "...",
+    #                     "src": "sorare_app"}
+    # "src" names where the number comes from: "researched" (default, my own
+    # research) or "sorare_app" (the Sorare-% Nick reads in the app -- at the
+    # GW717 deadline it beat my research 4/4, so it gets its own source in the
+    # log and the Treffer-Bilanz can measure it separately).
     # Overrides without any binding are ignored (with a warning).
     override_raw = {}
     if os.path.exists(args.start_override):
@@ -1119,10 +1127,11 @@ def main(argv):
                 if isinstance(v, dict):
                     override_raw[k] = {"p": float(v["p"]),
                                        "fixture": v.get("fixture", d_fx),
-                                       "researched": v.get("researched", d_date)}
+                                       "researched": v.get("researched", d_date),
+                                       "src": v.get("src") or "researched"}
                 else:
                     override_raw[k] = {"p": float(v), "fixture": d_fx,
-                                       "researched": d_date}
+                                       "researched": d_date, "src": "researched"}
         except (ValueError, OSError, KeyError, TypeError) as exc:
             print(f"WARNING: could not read --start-override "
                   f"{args.start_override}: {exc}", file=sys.stderr)
@@ -1169,9 +1178,13 @@ def main(argv):
                 c = json.load(fh)
             if c.get("active"):
                 calib = c
-                print(f"Kalibrierung aktiv (aus {c.get('n')} ausgewerteten Spielen, "
-                      f"Stand {str(c.get('_updated'))[:10]}; Projektions-Faktor "
-                      f"{(c.get('proj_scale') or {}).get('value', 1.0)}).", file=sys.stderr)
+                bt = c.get("by_type") or {}
+                on = [t for t, v in bt.items() if v.get("active")] if bt else ["alle"]
+                print(f"Kalibrierung (aus {c.get('n')} ausgewerteten Spielen, Stand "
+                      f"{str(c.get('_updated'))[:10]}): Startquoten "
+                      f"{'korrigiert für ' + '/'.join(on) if on else 'unverändert (kein Out-of-sample-Gewinn)'}"
+                      f"; Projektions-Faktor {(c.get('proj_scale') or {}).get('value', 1.0)}.",
+                      file=sys.stderr)
             else:
                 print(f"Kalibrierung noch inaktiv ({c.get('n')}/{c.get('min_n')} "
                       f"Spiele ausgewertet).", file=sys.stderr)
@@ -1183,20 +1196,37 @@ def main(argv):
         pos = (e.get("positions") or ["?"])[0]
         return f"{pos}|{'national' if e.get('opp_type') == 'NationalTeam' else 'club'}"
 
+    _EXTERNAL_SRCS = ("sorare_app", "sorare_odds")
+
     def _calibrate(e):
-        """Apply the learned per-source correction to the final start prob and
-        the projection scale; keep the raw value for logging/learning."""
+        """Apply the learned correction (evaluate.py) to the final start prob and
+        the projection; keep the raw values for logging/learning. Calibration
+        is per game type (national / club) and only where evaluate.py found it
+        to help out of sample ('active')."""
         e["start_prob_raw"] = e["start_prob"]
         e["proj_raw"] = e["proj"]
         if not calib:
             return
         src = e.get("start_src") or "model"
+        gtype = "national" if e.get("opp_type") == "NationalTeam" else "club"
         if src != "callup_out" and e["start_prob"] > 0:
-            prm = (calib.get("sources") or {}).get(src) or calib.get("global") or {}
             p = min(0.99, max(0.01, e["start_prob"]))
-            z = prm.get("a", 0.0) + prm.get("b", 1.0) * math.log(p / (1 - p))
-            e["start_prob"] = round(1 / (1 + math.exp(-max(-30, min(30, z)))), 3)
-        e["proj_raw"] = e["proj"]
+            x = math.log(p / (1 - p))
+            z = None
+            if "by_type" in calib:
+                t = calib["by_type"].get(gtype) or {}
+                if t.get("active"):
+                    prm = (t.get("sources") or {}).get(src) or (
+                        {"a": 0.0, "b": 1.0} if src in _EXTERNAL_SRCS else t.get("global") or {})
+                    z = prm.get("a", 0.0) + prm.get("b", 1.0) * x
+                    if src not in _EXTERNAL_SRCS:
+                        z += ((t.get("status") or {}).get(e.get("playing_status") or "NONE")
+                              or {}).get("d", 0.0)
+            else:                       # legacy calibration.json (one fit for all)
+                prm = (calib.get("sources") or {}).get(src) or calib.get("global") or {}
+                z = prm.get("a", 0.0) + prm.get("b", 1.0) * x
+            if z is not None:
+                e["start_prob"] = round(1 / (1 + math.exp(-max(-30, min(30, z)))), 3)
         scale = (calib.get("proj_scale") or {}).get("value", 1.0)
         # finer factor per position x game type (e.g. defenders in national
         # games score less than their club form suggests), learned by evaluate.py
@@ -1351,7 +1381,7 @@ def main(argv):
                 e["intl_duty"] = True
             elif ov is not None:
                 e["start_prob"] = round(max(0.0, min(1.0, ov)), 3)
-                e["start_src"] = "researched"
+                e["start_src"] = override_raw[e["player_slug"]]["src"]
                 # stale if he has played again SINCE the override was researched
                 last = ((((players.get(e["player_slug"]) or {}).get("playerGameScores")
                           or [{}])[0].get("anyGame") or {}).get("date") or "")[:10]
@@ -1387,7 +1417,7 @@ def main(argv):
                 # unused in his nation's already-played break game(s) -> most
                 # likely sits again; club-minutes prob is meaningless here.
                 e["start_prob"] = round(e["start_prob"] * NATIONAL_BENCH_FACTOR, 3)
-                e["start_src"] = "natl_bench_auto"
+                e["start_src"] = "natl_bench_soft"
                 e["intl_duty"] = True
             _calibrate(e)
             e["ev"] = round(e["proj"] * e["start_prob"], 1)

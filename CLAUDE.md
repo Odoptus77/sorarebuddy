@@ -165,6 +165,15 @@ verfügbar; NIE jemanden auf einer unbestätigten/alten Meldung benchen.**
   Bindung werden ignoriert. Für eine neue GW: `_fixture`/`_researched` auf die neue
   GW setzen und **nur neu recherchierte** Werte übernehmen (alte als Objekt mit
   echtem `researched`-Datum, falls bewusst weiterverwendet).
+- **Sorare-App-% von Nick als eigene Quelle (seit 02.10.2026):** Nennt Nick
+  Prozente aus der App, als Override mit `"src": "sorare_app"` eintragen
+  (`{"p": 0.3, "fixture": "…", "researched": "YYYY-MM-DD", "src": "sorare_app"}`)
+  und **sofort** einen geloggten Lauf machen. Nur so landet die Zahl im
+  Vorhersage-Log und die Treffer-Bilanz misst sie getrennt. Bei der GW717-Deadline
+  lag die App **4 von 4** richtig, wo meine Recherche danebenlag (Vagiannidis,
+  Schlotterbeck, Pickford, Thiaw). Die Werte waren aber nie geloggt, weil ich nur
+  die Aufstellung umgebaut hatte. Beim Deadline-Check deshalb Nick **gezielt nach
+  den App-% der knappen Fälle fragen**; App-% schlägt meine Recherche.
 - **Veraltet-Alarm:** Hat ein Spieler **nach** dem Recherchedatum erneut gespielt,
   meldet der Optimierer „Override älter als letztes Spiel (neu prüfen)" → vor der
   Deadline datiert neu bewerten (Froholdt-Fall: 90 % vom 24.09., dann 3' am 27.09.).
@@ -227,7 +236,10 @@ Bouanga/Son/Blake standen mit hoher Klub-Quote im Entwurf, obwohl abgestellt.)
   Spieler als Nächstes ein **Länderspiel** und hat seine Nation im selben Fenster
   schon gespielt, prüft der Optimierer sein Spiel-Log: **0 Minuten in ALLEN schon
   gespielten Fenster-Länderspielen → unbenutzte Bank → automatisch abgewertet**
-  (×0,12, `start_src: natl_bench_auto`). Ersetzt die manuelle „für sein Land
+  (seit 02.10.2026 nur noch ×0,6, `start_src: natl_bench_soft`; vorher ×0,12 =
+  `natl_bench_auto`). Die Treffer-Bilanz vom 02.10. zeigte: 2 von 6 Markierten
+  starteten trotzdem (Krejčí, Baribo), Nationaltrainer rotieren zwischen den
+  Spieltagen stark. Ersetzt die manuelle „für sein Land
   gebenchte"-Recherche (Geertruida-Fall). Ein researched Override schlägt das,
   falls jemand fürs nächste Spiel doch startet. Braucht Team-Typ im Log →
   `PLAYER_FIELDS` liest `homeTeam/awayTeam.__typename` je Spiel.
@@ -284,16 +296,28 @@ Bouanga/Son/Blake standen mit hoher Klub-Quote im Entwurf, obwohl abgestellt.)
     für Spiele außerhalb des Fensters nötig. Flag `intl_duty`.
   - Nations-League-Spiele hatten am 29.09. **keine** Meldungen (Abdeckung v. a.
     Klubligen, z. B. MLS).
+- **API-Football-Account am 02.10.2026 gesperrt** („Your account is suspended“):
+  Der Feed fällt automatisch zurück (kein Absturz), bis Nick den Account im
+  API-Football-Dashboard klärt. Bis dahin Verletzungen/Sperren manuell prüfen.
 - **Treffer-Bilanz & Lernkreislauf (`evaluate.py`, seit 29.09.2026):** gleicht je
   Spieler & Spiel die **letzte Vorhersage vor Anpfiff** aus `logs/predictions.jsonl`
   mit dem Ergebnis ab — Startelf exakt über Sorares `gameStarted` (nicht über
   Minuten), dazu Minuten/Punkte. Bericht: Brier gesamt + **je Quelle** (Modell,
   Override, Sorare-%, API-Football, Abstellung/Bank/Rot), Trefferquote der
   Ausfall-Signale, reale Startquote je `playingStatus`, Projektions-MAE/Bias.
-  **Lernen:** schreibt `calibration.json` = regularisierte Platt-Skalierung je
-  Quelle (geschrumpft zur Gesamtkalibrierung, diese zu „keine Änderung") + ein
-  Projektions-Faktor. `lineup_suggest.py` wendet sie automatisch an, **sobald ≥ 30
-  Spiele ausgewertet** sind (`active`); gelernt wird aus der **Rohquote**
+  **Lernen:** schreibt `calibration.json` mit:
+  - einer regularisierten Platt-Skalierung je Quelle, **getrennt je Spieltyp**
+    (`by_type.national` / `by_type.club`, seit 02.10.2026), damit eine
+    Länderspielpause die Klub-Quoten nicht verbiegt;
+  - optional einem Offset je `playingStatus`;
+  - Projektions-Faktoren.
+
+  **Out-of-sample-Sperre (seit 02.10.2026):** Ein Teil der Kalibrierung wird nur
+  `active`, wenn er die Rohwerte im **Leave-one-out**-Test schlägt (Brier bzw.
+  Projektions-MAE). Ein Spieltyp braucht dafür ≥ 20 Spiele. Anlass: Am 02.10. sah
+  die Kalibrierung auf den Trainingsdaten gut aus (Brier 0,1995 → 0,189), war aber
+  out-of-sample **schlechter** (0,204), also reines Lernen von Rauschen.
+  `lineup_suggest.py` wendet nur die aktiven Teile an. Gelernt wird aus der **Rohquote**
   (`start_prob_raw` im Log), damit sich der Kreislauf nicht selbst verstärkt.
   `logs/evaluation.json` und `calibration.json` werden **committet** (nötig im
   nächsten Container). Tägliche Routine „Sorare Treffer-Bilanz" fährt das + meldet.
@@ -374,6 +398,35 @@ bis Nick fragt):
 3. Entwurf als Tabellen zeigen (mit Kapitän), offene Startelf-/Verfügbarkeitsfragen
    markieren; **final** beim nächsten Deadline-Check (~1,5 h vorher) datiert prüfen
    (GRUNDREGEL #0). Baseline erst nach Nicks Sorare-Bestätigung nachziehen.
+
+### D) Jede Treffer-Bilanz hinterfragen → Learnings umsetzen (Nicks Auftrag, 02.10.2026)
+
+Nach **jedem** `evaluate.py`-Lauf (tägliche Routine oder manuell) nicht nur die
+Zahlen melden, sondern das Modell **aktiv verbessern**:
+
+1. **Fehlgriffe einzeln untersuchen**, nicht nur zählen. Pro Miss die letzte
+   Vorhersage im Log ansehen: Quelle, Modell-%, `playingStatus`, Override-Datum,
+   Kader (`onGameSheet`). Frage: war das **vermeidbar**, und wenn ja, durch
+   welches Signal?
+2. **Muster suchen**, aufgeschlüsselt je Quelle × Spieltyp, je `playingStatus`,
+   je Quotenbereich und je Position × Spieltyp bei der Projektion. Fragen: Ist
+   eine Quelle systematisch zu hoch oder zu niedrig? Bringt ein Signal
+   überhaupt Information gegenüber dem Modell allein?
+3. **Prozess-Fehler prüfen:** Ist jede Information, die ich vor Anpfiff hatte
+   (z. B. Nicks App-%), auch im Log gelandet? Wenn nein, den Prozess reparieren.
+4. **Jede Änderung vorher backtesten** (Leave-one-out bzw. `backtest.py`) und nur
+   übernehmen, wenn sie **out-of-sample** besser ist. Bei wenigen Spielen
+   konservativ bleiben: lieber eine Konstante abschwächen als ein neues
+   Feature mit 6 Datenpunkten.
+5. **Umsetzen:** Code ändern, CLAUDE.md dokumentieren (mit Datum und Anlass),
+   committen und pushen, Nick kurz berichten:
+   - was ich gelernt habe;
+   - was ich geändert habe;
+   - Backtest vorher → nachher;
+   - was ich bewusst **nicht** geändert habe und warum.
+6. **Timing:** Keine Modelländerung in den letzten ~3 h vor einer
+   Classic-Deadline (Di/Fr 16:00). Dann nur notieren und nach dem Lock umsetzen.
+   Ausnahme: Nick gibt ausdrücklich grünes Licht.
 
 ## Konventionen
 

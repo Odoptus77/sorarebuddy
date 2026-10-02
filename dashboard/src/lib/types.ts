@@ -118,6 +118,10 @@ export type Calibration = {
   active: boolean;
   proj_scale?: { value: number; n: number };
   proj_scale_groups?: Record<string, { value: number; n: number }>;
+  /** Start-prob calibration per game type; only applied where it beat the raw
+   *  probabilities out of sample (leave-one-out Brier). */
+  by_type?: Record<string, { n: number; active: boolean; loo?: { raw: number | null; calibrated: number | null } }>;
+  proj_loo?: { raw: number | null; calibrated: number | null; active: boolean };
   brier_raw?: number;
   brier_calibrated_in_sample?: number;
 };

@@ -14,13 +14,17 @@ each data point performs:
 
 It then LEARNS a calibration from the evaluated games and writes
 calibration.json, which lineup_suggest.py applies automatically:
-  - start probability: regularised Platt scaling per source,
-      p_cal = sigmoid(a + b * logit(p_raw)),
-    shrunk towards a global fit, which is shrunk towards "no change" (a=0, b=1)
-    -> with few games nothing moves; the more evidence, the more it adapts;
+  - start probability, SEPARATELY per game type (national / club): regularised
+    Platt scaling per source, p_cal = sigmoid(a + b * logit(p_raw)), shrunk
+    towards the type-wide fit (shrunk towards "no change"; external sources
+    like Nick's Sorare-app % straight towards "no change"), optionally plus a
+    logit offset per Sorare playingStatus. A game type's calibration is only
+    ACTIVE if it beats the raw probabilities out of sample (leave-one-out
+    Brier) -> no learning of noise;
   - projection: one global scale factor (actual/predicted), shrunk towards 1,
     plus a factor per position x game type (club / national), shrunk towards
-    the global one (e.g. defenders score less in national games).
+    the global one (e.g. defenders score less in national games) -- with the
+    same leave-one-out guard (only used if it lowers the out-of-sample MAE).
 The raw (pre-calibration) probability is what gets learned from, so the loop
 does not feed on its own corrections.
 
@@ -54,7 +58,16 @@ LAMBDA = 8.0                            # prior strength (in "games")
 PROJ_MIN_N = 20
 PROJ_GROUP_MIN_N = 8                    # games per position x game type group
 OUT_SIGNALS = ("apif_out", "callup_out", "intl_duty_auto", "natl_bench_auto",
-               "suspension_risk")
+               "natl_bench_soft", "suspension_risk")
+# Calibration is learned SEPARATELY per game type (national vs club): an
+# international break must not reshape the club-game probabilities. A game type
+# only gets its own start-prob calibration from TYPE_MIN_N games; before that
+# its probabilities stay unchanged.
+TYPE_MIN_N = 20
+# External, already news-aware sources: no shrink towards OUR model's
+# miscalibration (prior = "no change") and no playingStatus offset on top.
+EXTERNAL_SRCS = ("sorare_app", "sorare_odds")
+NO_FIT_SRCS = ("callup_out",)
 
 OUTCOME_QUERY = """
 { players(slugs: [%s]) {
@@ -174,6 +187,127 @@ def fit_platt(pairs, prior=(0.0, 1.0), lam=LAMBDA):
     return round(a, 4), round(b, 4)
 
 
+def fit_offset(pairs, lam=LAMBDA):
+    """Regularised logit offset d: minimise log-loss of sigmoid(z + d) plus
+    lam*d^2 over (z, y) pairs (z = already calibrated logit)."""
+    d = 0.0
+    for _ in range(50):
+        g, h = 2 * lam * d, 2 * lam
+        for z, y in pairs:
+            s = _sig(z + d)
+            g += s - y
+            h += s * (1 - s)
+        step = g / h
+        d -= step
+        if abs(step) < 1e-7:
+            break
+    return round(d, 4)
+
+
+def _mae(pairs):
+    return round(sum(abs(p - a) for p, a in pairs) / len(pairs), 3) if pairs else None
+
+
+def fit_proj(played):
+    """Projection scale (actual/predicted, shrunk towards 1) + one factor per
+    position x game type (shrunk towards the global scale)."""
+    scale = 1.0
+    if played and len(played) >= PROJ_MIN_N:
+        ratio = sum(r["score"] for r in played) / max(1e-6, sum(_proj(r) for r in played))
+        w = len(played) / (len(played) + 30)
+        scale = round(max(0.8, min(1.25, 1 + w * (ratio - 1))), 3)
+    groups = defaultdict(list)
+    for r in played:
+        groups[proj_group(r)].append(r)
+    out = {}
+    for k, rs in groups.items():
+        if len(rs) < PROJ_GROUP_MIN_N:
+            continue
+        ratio = sum(r["score"] for r in rs) / max(1e-6, sum(_proj(r) for r in rs))
+        w = len(rs) / (len(rs) + 30)
+        out[k] = {"value": round(max(0.7, min(1.3, scale + w * (ratio - scale))), 3),
+                  "n": len(rs)}
+    return scale, out
+
+
+def proj_factor(scale, groups, r):
+    g = groups.get(proj_group(r))
+    return g["value"] if g else scale
+
+
+def game_type(r):
+    return "national" if r.get("opp_type") == "NationalTeam" else "club"
+
+
+def fit_type(rows, y):
+    """Start-prob calibration for one game type, switched on ONLY if it beats
+    the raw probabilities out of sample (leave-one-out Brier). In-sample gains
+    with a few dozen games are mostly overfitting (02.10.: in-sample 0.189 vs
+    raw 0.1995, but leave-one-out 0.204 = worse) -> this guard keeps the loop
+    from 'learning' noise. Tries with and without the playingStatus offsets
+    and keeps the better variant."""
+    rows = [r for r in rows if r["p_raw"] is not None
+            and r.get("start_src") not in NO_FIT_SRCS]
+    raw = brier([(r["p_raw"], y(r)) for r in rows])
+    best, best_loo = None, None
+    if len(rows) >= TYPE_MIN_N:
+        for with_status in (False, True):
+            loo = brier([(apply_type(_fit_type(rows[:i] + rows[i + 1:], y, with_status,
+                                               force=True), r), y(r))
+                         for i, r in enumerate(rows)])
+            if best_loo is None or loo < best_loo:
+                best, best_loo = with_status, loo
+    out = _fit_type(rows, y, bool(best))
+    out["loo"] = {"raw": raw, "calibrated": best_loo, "with_status": bool(best)}
+    out["active"] = bool(best_loo is not None and best_loo < raw)
+    return out
+
+
+def _fit_type(rows, y, with_status=True, force=False):
+    """Platt per source (shrunk towards the type-wide fit, external sources
+    towards 'no change') plus, optionally, a logit offset per Sorare
+    playingStatus (shrunk towards 0) learned from the stage-1 residuals."""
+    out = {"n": len(rows), "min_n": TYPE_MIN_N, "active": force or len(rows) >= TYPE_MIN_N}
+    g = fit_platt([(r["p_raw"], y(r)) for r in rows]) if rows else (0.0, 1.0)
+    out["global"] = {"a": g[0], "b": g[1]}
+    out["sources"] = {}
+    by_src = defaultdict(list)
+    for r in rows:
+        by_src[r.get("start_src") or "model"].append(r)
+    for src, rs in by_src.items():
+        prior = (0.0, 1.0) if src in EXTERNAL_SRCS else g
+        a, b = fit_platt([(r["p_raw"], y(r)) for r in rs], prior=prior)
+        out["sources"][src] = {"a": a, "b": b, "n": len(rs)}
+    out["status"] = {}
+    if not with_status:
+        return out
+    by_status = defaultdict(list)
+    for r in rows:
+        if (r.get("start_src") or "model") in EXTERNAL_SRCS:
+            continue
+        by_status[r.get("playing_status") or "NONE"].append(
+            (stage1_logit(out, r), y(r)))
+    out["status"] = {s: {"d": fit_offset(zs), "n": len(zs)} for s, zs in by_status.items()}
+    return out
+
+
+def stage1_logit(t, r):
+    src = r.get("start_src") or "model"
+    prm = t["sources"].get(src) or ({"a": 0.0, "b": 1.0} if src in EXTERNAL_SRCS
+                                    else t["global"])
+    return prm["a"] + prm["b"] * _logit(r["p_raw"])
+
+
+def apply_type(t, r):
+    """Calibrated start prob for one logged row (mirrors lineup_suggest)."""
+    if not t or not t.get("active"):
+        return r["p_raw"]
+    z = stage1_logit(t, r)
+    if (r.get("start_src") or "model") not in EXTERNAL_SRCS:
+        z += (t["status"].get(r.get("playing_status") or "NONE") or {}).get("d", 0.0)
+    return _sig(z)
+
+
 def brier(pairs):
     return round(sum((p - y) ** 2 for p, y in pairs) / len(pairs), 4) if pairs else None
 
@@ -279,52 +413,53 @@ def main(argv):
     calib = None
     if not args.no_fit:
         fit_pairs = [(r["p_raw"], y(r)) for r in rows
-                     if r["p_raw"] is not None and r.get("start_src") != "callup_out"]
+                     if r["p_raw"] is not None and r.get("start_src") not in NO_FIT_SRCS]
         calib = {"_updated": now.isoformat(), "n": len(fit_pairs),
                  "min_n": MIN_N_GLOBAL, "active": len(fit_pairs) >= MIN_N_GLOBAL}
         g = fit_platt(fit_pairs) if fit_pairs else (0.0, 1.0)
-        calib["global"] = {"a": g[0], "b": g[1]}
-        calib["sources"] = {}
-        for src, rs in by_src.items():
-            if src == "callup_out":
-                continue
-            pr = [(r["p_raw"], y(r)) for r in rs if r["p_raw"] is not None]
-            if pr:
-                a, b = fit_platt(pr, prior=g)
-                calib["sources"][src] = {"a": a, "b": b, "n": len(pr)}
-        scale = 1.0
-        if played and len(played) >= PROJ_MIN_N:
-            ratio = sum(r["score"] for r in played) / max(1e-6, sum(_proj(r) for r in played))
-            w = len(played) / (len(played) + 30)
-            scale = round(max(0.8, min(1.25, 1 + w * (ratio - 1))), 3)
+        calib["global"] = {"a": g[0], "b": g[1]}       # report only (all types)
+        calib["by_type"] = {t: fit_type([r for r in rows if game_type(r) == t], y)
+                            for t in ("national", "club")}
+        scale, grp = fit_proj(played)
+        # same out-of-sample guard as for the start probs: the factors are only
+        # used if they lower the leave-one-out MAE against the raw projection
+        loo_raw = _mae([(_proj(r), r["score"]) for r in played])
+        loo_cal = _mae([(_proj(r) * proj_factor(*fit_proj(played[:i] + played[i + 1:]), r),
+                         r["score"]) for i, r in enumerate(played)])
+        proj_on = bool(loo_raw is not None and loo_cal is not None and loo_cal < loo_raw)
+        calib["proj_loo"] = {"raw": loo_raw, "calibrated": loo_cal, "active": proj_on}
+        if not proj_on:
+            scale, grp = 1.0, {}
         calib["proj_scale"] = {"value": scale, "n": len(played)}
-        # per position x game type, shrunk towards the global scale
-        groups = defaultdict(list)
-        for r in played:
-            groups[proj_group(r)].append(r)
-        calib["proj_scale_groups"] = {}
-        for k, rs in groups.items():
-            if len(rs) < PROJ_GROUP_MIN_N:
-                continue
-            ratio = sum(r["score"] for r in rs) / max(1e-6, sum(_proj(r) for r in rs))
-            w = len(rs) / (len(rs) + 30)
-            calib["proj_scale_groups"][k] = {
-                "value": round(max(0.7, min(1.3, scale + w * (ratio - scale))), 3), "n": len(rs)}
-        cal_pairs = []
-        for r in rows:
-            if r["p_raw"] is None or r.get("start_src") == "callup_out":
-                continue
-            prm = calib["sources"].get(r.get("start_src") or "model", calib["global"])
-            cal_pairs.append((_sig(prm["a"] + prm["b"] * _logit(r["p_raw"])), y(r)))
+        calib["proj_scale_groups"] = grp
+        cal_pairs = [(apply_type(calib["by_type"][game_type(r)], r), y(r)) for r in rows
+                     if r["p_raw"] is not None and r.get("start_src") not in NO_FIT_SRCS]
         calib["brier_raw"] = brier(fit_pairs)
         calib["brier_calibrated_in_sample"] = brier(cal_pairs)
         with open(args.calibration, "w", encoding="utf-8") as fh:
             json.dump(calib, fh, ensure_ascii=False, indent=2)
             fh.write("\n")
-        state = "AKTIV" if calib["active"] else f"noch inaktiv (ab {MIN_N_GLOBAL} Spielen)"
-        print(f"\nLernkreislauf: Kalibrierung {state} | n={calib['n']} | global a={g[0]} b={g[1]}"
+        any_on = (calib["proj_loo"]["active"]
+                  or any(v["active"] for v in calib["by_type"].values()))
+        state = ("noch inaktiv (ab {} Spielen)".format(MIN_N_GLOBAL) if not calib["active"]
+                 else "AKTIV" if any_on else "bereit, aber nichts verbessert sich out-of-sample -> neutral")
+        types = " | ".join(
+            f"{t}: n={v['n']} " + (f"a={v['global']['a']} b={v['global']['b']}"
+                                   + ("; Status " + ", ".join(f"{s} {o['d']:+.2f}" for s, o in
+                                                             sorted(v["status"].items()))
+                                      if v["status"] else "")
+                                   + f" (LOO {v['loo']['raw']} -> {v['loo']['calibrated']})"
+                                   if v["active"] else
+                                   (f"neutral (LOO roh {v['loo']['raw']} vs kalibriert "
+                                    f"{v['loo']['calibrated']} -> keine Verbesserung)"
+                                    if v["loo"]["calibrated"] is not None
+                                    else f"neutral (ab {TYPE_MIN_N} Spielen)"))
+            for t, v in calib["by_type"].items())
+        print(f"\nLernkreislauf: Kalibrierung {state} | n={calib['n']} | {types}"
               f" | Brier roh {calib['brier_raw']} -> kalibriert {calib['brier_calibrated_in_sample']}"
               f" | Projektions-Faktor {scale}"
+              f" (LOO-MAE roh {calib['proj_loo']['raw']} -> {calib['proj_loo']['calibrated']}"
+              f"{'' if calib['proj_loo']['active'] else ', keine Verbesserung -> aus'})"
               + (" | je Gruppe: " + ", ".join(f"{k} {v['value']}" for k, v in
                                               calib["proj_scale_groups"].items())
                  if calib["proj_scale_groups"] else ""))

@@ -60,6 +60,8 @@ const SRC: Record<string, string> = {
   apif_doubtful: "API-Football: fraglich",
   intl_duty_auto: "Länderspiel-Abstellung",
   natl_bench_auto: "Nationalteam-Bank",
+  natl_bench_soft: "Nationalteam-Bank",
+  sorare_app: "Sorare-App (Nick)",
   suspension_risk: "Sperren-Verdacht",
   callup_out: "Abstellung (manuell)",
 };

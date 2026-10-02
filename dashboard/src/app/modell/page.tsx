@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 import { Badge, Card, DivergingBars, ErrorState, HBarChart, PageHeader, SourceNote, StatTile } from "@/components/ui";
 import { getModel } from "@/lib/data";
+import type { ModelData } from "@/lib/types";
 import { fmt1, fmtDate, fmtPct, fmtSigned, srcLabel } from "@/lib/format";
 
 export const metadata: Metadata = { title: "Modell · sorarebuddy" };
@@ -15,6 +16,15 @@ const GROUP: Record<string, string> = {
   national: "Länderspiel",
 };
 const groupLabel = (k: string) => k.split("|").map((p) => GROUP[p] ?? p).join(" · ");
+
+/** Which parts of the learned calibration are really switched on. */
+function calState(cal: ModelData["calibration"]) {
+  if (!cal?.active) return "inaktiv";
+  if (!cal.by_type) return "aktiv";
+  const on: string[] = Object.entries(cal.by_type).filter(([, v]) => v.active).map(([k]) => (k === "national" ? "Länderspiele" : "Klub"));
+  if (cal.proj_loo?.active) on.push("Projektion");
+  return on.length ? on.join(" + ") : "neutral";
+}
 
 export default async function Model() {
   const res = await getModel();
@@ -53,7 +63,7 @@ export default async function Model() {
         <StatTile label="Reale Startquote" value={fmtPct(ev.start_rate)} />
         <StatTile
           label="Kalibrierung"
-          value={cal?.active ? "aktiv" : "inaktiv"}
+          value={calState(cal)}
           sub={cal ? `${cal.n}/${cal.min_n} Spiele · Proj. ×${cal.proj_scale?.value ?? 1}` : "–"}
         />
       </div>

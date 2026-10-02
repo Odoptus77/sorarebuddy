@@ -1,5 +1,5 @@
 {
-  "updated": "2026-10-02T06:52:44.180200+00:00",
+  "updated": "2026-10-02T08:24:22.265833+00:00",
   "evaluated": 53,
   "pending": 6,
   "upcoming": 86,
@@ -60,8 +60,8 @@
   },
   "projection": {
     "n": 36,
-    "mae": 17.29,
-    "bias": 2.85,
+    "mae": 17.19,
+    "bias": 2.9,
     "groups": {
       "Midfielder|national": {
         "n": 11,
@@ -70,13 +70,13 @@
       },
       "Forward|national": {
         "n": 10,
-        "bias": 4.53,
-        "mae": 16.05
+        "bias": 4.65,
+        "mae": 16.17
       },
       "Defender|national": {
         "n": 9,
-        "bias": -4.64,
-        "mae": 26.42
+        "bias": -4.34,
+        "mae": 26.12
       },
       "Goalkeeper|national": {
         "n": 4,
@@ -85,8 +85,8 @@
       },
       "Defender|club": {
         "n": 1,
-        "bias": 11.84,
-        "mae": 11.84
+        "bias": 9.84,
+        "mae": 9.84
       },
       "Forward|club": {
         "n": 1,
