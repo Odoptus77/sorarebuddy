@@ -1,6 +1,6 @@
 {
   "_comment": "Researched START probabilities (--start-override). Jeder Wert ist an EINE GW gebunden (_fixture bzw. 'fixture' je Eintrag) und verfällt danach automatisch. 'researched' = Recherchedatum; hat der Spieler danach erneut gespielt, meldet lineup_suggest den Override als veraltet (neu prüfen). GRUNDREGEL #0: nur datumsgeprüfte Werte.",
-  "_updated": "2026-09-29",
+  "_updated": "2026-10-02",
   "_sources": {
     "gw717_md1_2026-09-26": "Nations League MD1 am 26.09.2026 (Gruppe 3 = ESP/CRO/ENG/CZE; ESP 3-2 ENG). Sorare-Spiel-Log (mins_played, last games) je Spieler abgefragt am 28.09.2026 -> wer MD1 startete, ist der stärkste MD2-Indikator.",
     "spain_2026-09-28": "ESP vs CRO 29.09. (yahoo/ESPN preview, 27.09.): Unai Simón 90' MD1 -> #1 (0.90); Laporte 90' MD1 -> gesetzt (0.90); Baena nur 35' (Joker) -> Rotation (0.40, unbestätigt); Grimaldo 0' MD1 (Cucurella LB) -> Ersatz (0.30, unbestätigt).",
@@ -24,7 +24,8 @@
     "england_czechia_2026-09-29": "SI.com (29.09.2026): Pickford kehrt für Trafford zurück; Kane startet; CZE: Horníček; …Hranáč…; Šulc; Hložek. Zweite Vorschau (sportsgambler/whoscored 29.09.) gleiche CZE-Elf. -> Pickford 0.75, Kovář 0.05, Bucha 0.1, Hranáč 0.8.",
     "greece_kosovo_2026-09-29": "Nur Sorare-Log (27.09.): Pavlidis 89', Vagiannidis 45', Murić 65' -> leicht angepasst, unbestätigt.",
     "vagiannidis_2026-09-29": "Nick (29.09., ~15:45 CEST): Sorare-App zeigt 0 % Startquote (API liefert null, #693). Grund unbestätigt; 45' am 27.09. (Wechsel Saliakas). -> 0, aus HS genommen, Froholdt rein.",
-    "germany_gw718_2026-09-29": "Klopps Kader 2 spielt Serbien (01.10.) UND Griechenland (04.10., Thessaloniki); Kader 1 (ter Stegen, Nübel, Tah, Kimmich, Ebnoutalib, Musiala, Havertz) ist bei den Klubs -> 0 für GW718. Quellen: beIN/TNT 17.09.2026 (zwei Kader, Spielplan), bundesliga.com 28.09.2026 (Kader 2)."
+    "germany_gw718_2026-09-29": "Klopps Kader 2 spielt Serbien (01.10.) UND Griechenland (04.10., Thessaloniki); Kader 1 (ter Stegen, Nübel, Tah, Kimmich, Ebnoutalib, Musiala, Havertz) ist bei den Klubs -> 0 für GW718. Quellen: beIN/TNT 17.09.2026 (zwei Kader, Spielplan), bundesliga.com 28.09.2026 (Kader 2).",
+    "spain_gw718_2026-10-02": "ESP vs CZE 03.10.: Sorare-App 40 % (Nick, 02.10.). Spiel-Log: Baena 26.09. 35' Joker, 29.09. 68' Start -> Rotation. Sports Mole (01.10.2026) erwartet Rodri/Olmo zurück, Baena NICHT in der XI, Laporte zurück in der IV; Khelnow (01.10.2026) kopiert die Kroatien-Elf mit Baena; Goal (30.09.2026) ohne XI. Šulc (CZE) gesperrt laut Goal + Khelnow."
   },
   "_fixture": "football-1-2-oct-2026",
   "_researched": "2026-09-28",
@@ -37,8 +38,10 @@
     "researched": "2026-09-29"
   },
   "alejandro-baena-rodriguez": {
-    "p": 0.7,
-    "researched": "2026-09-29"
+    "p": 0.4,
+    "fixture": "football-2-6-oct-2026",
+    "researched": "2026-10-02",
+    "src": "sorare_app"
   },
   "alejandro-grimaldo-garcia": {
     "p": 0.2,
