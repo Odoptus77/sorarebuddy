@@ -174,6 +174,9 @@ verfügbar; NIE jemanden auf einer unbestätigten/alten Meldung benchen.**
   Schlotterbeck, Pickford, Thiaw). Die Werte waren aber nie geloggt, weil ich nur
   die Aufstellung umgebaut hatte. Beim Deadline-Check deshalb Nick **gezielt nach
   den App-% der knappen Fälle fragen**; App-% schlägt meine Recherche.
+  **Bestätigt am 02.10. (Lacroix):** App 10 % gegen vier datierte Vorschauen + Spiel-Log
+  (2× Start) → Ergebnis: 3 Min. als Joker. Die App lag damit **5 von 5** richtig, wo sie
+  meiner Recherche widersprach. Bei Widerspruch App-% übernehmen, nicht die Recherche.
 - **Veraltet-Alarm:** Hat ein Spieler **nach** dem Recherchedatum erneut gespielt,
   meldet der Optimierer „Override älter als letztes Spiel (neu prüfen)" → vor der
   Deadline datiert neu bewerten (Froholdt-Fall: 90 % vom 24.09., dann 3' am 27.09.).
