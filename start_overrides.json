@@ -26,7 +26,8 @@
     "vagiannidis_2026-09-29": "Nick (29.09., ~15:45 CEST): Sorare-App zeigt 0 % Startquote (API liefert null, #693). Grund unbestätigt; 45' am 27.09. (Wechsel Saliakas). -> 0, aus HS genommen, Froholdt rein.",
     "germany_gw718_2026-09-29": "Klopps Kader 2 spielt Serbien (01.10.) UND Griechenland (04.10., Thessaloniki); Kader 1 (ter Stegen, Nübel, Tah, Kimmich, Ebnoutalib, Musiala, Havertz) ist bei den Klubs -> 0 für GW718. Quellen: beIN/TNT 17.09.2026 (zwei Kader, Spielplan), bundesliga.com 28.09.2026 (Kader 2).",
     "spain_gw718_2026-10-02": "ESP vs CZE 03.10.: Sorare-App 40 % (Nick, 02.10.). Spiel-Log: Baena 26.09. 35' Joker, 29.09. 68' Start -> Rotation. Sports Mole (01.10.2026) erwartet Rodri/Olmo zurück, Baena NICHT in der XI, Laporte zurück in der IV; Khelnow (01.10.2026) kopiert die Kroatien-Elf mit Baena; Goal (30.09.2026) ohne XI. Šulc (CZE) gesperrt laut Goal + Khelnow.",
-    "france_gw718_2026-10-02": "FRA vs ITA 02.10. 20:45: Nick meldet Sorare-App 10 % für Lacroix (02.10., ~13:30 CEST). Dagegen: Spiel-Log 25.09. + 28.09. je 90' Start (einzige IV mit 2 Starts); Saliba + Konaté verletzt nicht im Kader; thehardtackle (01.10.2026), Rotowire (01.10.2026), SI (02.10.2026) alle mit Lacroix in der XI; keine Ausfallmeldung gefunden. -> KEIN Override (Modell 79 %), App-Wert hier nur notiert, nach dem Spiel App vs. Recherche auswerten. Nachtrag: Screenshot der App (02.10.) zeigt 10 % vs ITA und 30 % vs BEL (beide rot/F); FotMob-Vorschau (abgerufen 02.10.) ebenfalls mit Lacroix in der XI, ohne Ausfall. Vermutung: Sorares Quelle stuft den Erst-Nominierten noch als Ersatz ein (Saliba/Konaté-Ausfall nicht berücksichtigt)."
+    "france_gw718_2026-10-02": "FRA vs ITA 02.10. 20:45: Nick meldet Sorare-App 10 % für Lacroix (02.10., ~13:30 CEST). Dagegen: Spiel-Log 25.09. + 28.09. je 90' Start (einzige IV mit 2 Starts); Saliba + Konaté verletzt nicht im Kader; thehardtackle (01.10.2026), Rotowire (01.10.2026), SI (02.10.2026) alle mit Lacroix in der XI; keine Ausfallmeldung gefunden. -> KEIN Override (Modell 79 %), App-Wert hier nur notiert, nach dem Spiel App vs. Recherche auswerten. Nachtrag: Screenshot der App (02.10.) zeigt 10 % vs ITA und 30 % vs BEL (beide rot/F); FotMob-Vorschau (abgerufen 02.10.) ebenfalls mit Lacroix in der XI, ohne Ausfall. Vermutung: Sorares Quelle stuft den Erst-Nominierten noch als Ersatz ein (Saliba/Konaté-Ausfall nicht berücksichtigt).",
+    "norway_gw718_2026-10-02": "NOR vs POR 04.10.: Sorare-App 20 % für Aursnes (Nick, 02.10.). Spiel-Log: Start 24.09. (66'), 27.09. (90'), 01.10. (45')."
   },
   "_fixture": "football-1-2-oct-2026",
   "_researched": "2026-09-28",
@@ -187,5 +188,11 @@
   "robin-hranac": {
     "p": 0.8,
     "researched": "2026-09-29"
+  },
+  "fredrik-aursnes": {
+    "p": 0.2,
+    "fixture": "football-2-6-oct-2026",
+    "researched": "2026-10-02",
+    "src": "sorare_app"
   }
 }
