@@ -56,7 +56,8 @@ INTL_DUTY_FACTOR = 0.12
 # (2 of 6 flagged players started, e.g. Krejci 90', Baribo 69'; the club model
 # alone had them at ~39% vs 33% real) -> x0.6 (source "natl_bench_soft").
 NATIONAL_BENCH_FACTOR = 0.6
-NATIONAL_BENCH_DAYS = 12   # how far back to look for the nation's break games
+NATIONAL_BENCH_DAYS = 16   # how far back to look for the nation's break games (12 missed
+#   the first game of a long window: Laporte 90' on 26.09. was ignored for GW719, 02.10.2026)
 # A red card (straight or 2nd yellow) in the player's most recent game almost
 # always bans him from the next game of the SAME competition stream (club vs
 # national). Soft downweight + flag (not a hard drop: reds get rescinded, and
