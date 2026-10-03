@@ -239,8 +239,9 @@ Bouanga/Son/Blake standen mit hoher Klub-Quote im Entwurf, obwohl abgestellt.)
   Spieler als Nächstes ein **Länderspiel** und hat seine Nation im selben Fenster
   schon gespielt, prüft der Optimierer sein Spiel-Log: **0 Minuten in ALLEN schon
   gespielten Fenster-Länderspielen → unbenutzte Bank → automatisch abgewertet**
-  (seit 02.10.2026 nur noch ×0,6, `start_src: natl_bench_soft`; vorher ×0,12 =
-  `natl_bench_auto`). Die Treffer-Bilanz vom 02.10. zeigte: 2 von 6 Markierten
+  (seit 03.10.2026 ×0,4, `start_src: natl_bench_soft`; 02.10. ×0,6; vorher ×0,12 =
+  `natl_bench_auto`). Bilanz 03.10.: insgesamt 2 von 11 Markierten gestartet, Brier
+  zwischen ×0,3 und ×0,5 flach, Optimum ×0,4. Die Treffer-Bilanz vom 02.10. zeigte: 2 von 6 Markierten
   starteten trotzdem (Krejčí, Baribo), Nationaltrainer rotieren zwischen den
   Spieltagen stark. Ersetzt die manuelle „für sein Land
   gebenchte"-Recherche (Geertruida-Fall). Ein researched Override schlägt das,
@@ -328,6 +329,13 @@ Bouanga/Son/Blake standen mit hoher Klub-Quote im Entwurf, obwohl abgestellt.)
   `Defender|national`, ab 8 Spielen je Gruppe, zur globalen Skala geschrumpft):
   GW715 zeigte, dass Verteidiger in Länderspielen deutlich unter ihrer Klub-Form
   punkten. Gelernt aus `proj_raw` (Log-Feld, vor Skalierung), Position aus `pos`.
+- **Bilanz 03.10.2026 (83 Spiele):** Das Vereinsmodell ist in **Länderspielen** zu
+  sicher. Spieler mit Klub-Status STARTER: Modell 85 %, real gestartet 65 % (n=34).
+  6 von 34 standen nicht einmal im Kader (z. B. Wanner, Bolla). Die Kalibrierung
+  für Länderspiele ist seitdem aktiv (b≈0,71, zieht die Quoten zur Mitte, gewinnt
+  knapp im Leave-one-out-Test). Lehre für Deadline-Checks: Bei Länderspielen jeden
+  aufgestellten Spieler mit Modell-Quote auf **Kader/Abreise** prüfen, nicht nur
+  die recherchierten.
 - **Log-Reihenfolge:** `playerGameScores` kommt **most-recent-first** (Index 0 =
   neuestes Spiel) — Recency-Gewichtung und `played_projection` nutzen genau diese
   Reihenfolge (kein Umdrehen).

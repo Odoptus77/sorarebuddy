@@ -1,29 +1,35 @@
 {
-  "updated": "2026-10-02T08:24:22.265833+00:00",
-  "evaluated": 53,
-  "pending": 6,
-  "upcoming": 86,
-  "brier": 0.1995,
-  "brier_raw": 0.1995,
-  "start_rate": 0.585,
+  "updated": "2026-10-03T06:53:17.641879+00:00",
+  "evaluated": 83,
+  "pending": 1,
+  "upcoming": 98,
+  "brier": 0.1985,
+  "brier_raw": 0.1985,
+  "start_rate": 0.518,
   "by_source": {
     "researched": {
-      "n": 35,
-      "mean_pred": 0.655,
-      "actual": 0.6,
-      "brier": 0.1809
+      "n": 40,
+      "mean_pred": 0.573,
+      "actual": 0.525,
+      "brier": 0.1583
     },
     "model": {
-      "n": 11,
-      "mean_pred": 0.723,
-      "actual": 0.727,
-      "brier": 0.2156
+      "n": 31,
+      "mean_pred": 0.661,
+      "actual": 0.645,
+      "brier": 0.2542
     },
     "natl_bench_auto": {
       "n": 6,
       "mean_pred": 0.046,
       "actual": 0.333,
       "brier": 0.3016
+    },
+    "natl_bench_soft": {
+      "n": 5,
+      "mean_pred": 0.279,
+      "actual": 0.0,
+      "brier": 0.0786
     },
     "apif_doubtful": {
       "n": 1,
@@ -33,65 +39,70 @@
     }
   },
   "out_signals": {
-    "n": 6,
-    "correct_out": 4
+    "n": 11,
+    "correct_out": 9
   },
   "playing_status": {
     "STARTER": {
-      "n": 22,
-      "started": 18
+      "n": 37,
+      "started": 25
     },
     "REGULAR": {
-      "n": 21,
-      "started": 8
+      "n": 30,
+      "started": 10
     },
     "SUBSTITUTE": {
-      "n": 6,
-      "started": 2
+      "n": 9,
+      "started": 3
     },
     "SUPER_SUBSTITUTE": {
-      "n": 2,
-      "started": 2
+      "n": 4,
+      "started": 3
     },
     "NOT_PLAYING": {
-      "n": 2,
-      "started": 1
+      "n": 3,
+      "started": 2
     }
   },
   "projection": {
-    "n": 36,
-    "mae": 17.19,
-    "bias": 2.9,
+    "n": 51,
+    "mae": 16.66,
+    "bias": 0.87,
     "groups": {
       "Midfielder|national": {
-        "n": 11,
-        "bias": 5.05,
-        "mae": 14.17
+        "n": 16,
+        "bias": 1.47,
+        "mae": 14.31
       },
       "Forward|national": {
-        "n": 10,
-        "bias": 4.65,
-        "mae": 16.17
+        "n": 13,
+        "bias": 3.85,
+        "mae": 16.46
       },
       "Defender|national": {
-        "n": 9,
-        "bias": -4.34,
-        "mae": 26.12
+        "n": 12,
+        "bias": -1.93,
+        "mae": 22.04
       },
       "Goalkeeper|national": {
         "n": 4,
         "bias": 7.75,
         "mae": 13.95
       },
-      "Defender|club": {
-        "n": 1,
-        "bias": 9.84,
-        "mae": 9.84
-      },
       "Forward|club": {
+        "n": 3,
+        "bias": 5.0,
+        "mae": 5.0
+      },
+      "Defender|club": {
+        "n": 2,
+        "bias": -3.5,
+        "mae": 13.34
+      },
+      "Goalkeeper|club": {
         "n": 1,
-        "bias": 0.6,
-        "mae": 0.6
+        "bias": -44.7,
+        "mae": 44.7
       }
     }
   },
@@ -129,6 +140,22 @@
       "played": true
     },
     {
+      "player": "paul-wanner",
+      "kickoff": "2026-10-01T18:45:00Z",
+      "pred": 0.862,
+      "src": "model",
+      "started": false,
+      "played": false
+    },
+    {
+      "player": "bendeguz-bolla",
+      "kickoff": "2026-10-02T18:45:00Z",
+      "pred": 0.853,
+      "src": "model",
+      "started": false,
+      "played": false
+    },
+    {
       "player": "arijanet-muric",
       "kickoff": "2026-10-01T18:45:00Z",
       "pred": 0.85,
@@ -140,22 +167,6 @@
       "player": "nico-schlotterbeck",
       "kickoff": "2026-10-01T18:45:00Z",
       "pred": 0.85,
-      "src": "researched",
-      "started": false,
-      "played": false
-    },
-    {
-      "player": "jordan-pickford",
-      "kickoff": "2026-09-29T18:45:00Z",
-      "pred": 0.75,
-      "src": "researched",
-      "started": false,
-      "played": false
-    },
-    {
-      "player": "david-raum",
-      "kickoff": "2026-10-01T18:45:00Z",
-      "pred": 0.75,
       "src": "researched",
       "started": false,
       "played": false

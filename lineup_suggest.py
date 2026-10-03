@@ -55,7 +55,9 @@ INTL_DUTY_FACTOR = 0.12
 # of 02.10.2026 showed national coaches rotate a lot between the two matchdays
 # (2 of 6 flagged players started, e.g. Krejci 90', Baribo 69'; the club model
 # alone had them at ~39% vs 33% real) -> x0.6 (source "natl_bench_soft").
-NATIONAL_BENCH_FACTOR = 0.6
+# Bilanz 03.10.: 5 more flagged at x0.6, none started (2 of 11 overall) ->
+# Brier over all 11 is flat between x0.3 and x0.5 (best x0.4: 0.150 vs 0.156) -> x0.4.
+NATIONAL_BENCH_FACTOR = 0.4
 NATIONAL_BENCH_DAYS = 16   # how far back to look for the nation's break games (12 missed
 #   the first game of a long window: Laporte 90' on 26.09. was ignored for GW719, 02.10.2026)
 # A red card (straight or 2nd yellow) in the player's most recent game almost
