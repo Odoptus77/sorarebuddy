@@ -406,6 +406,10 @@ bis Nick fragt):
    Länderspiel am Mi, dann wieder am Sa), sucht der Optimierer seit 29.09.2026
    über `so5Fixture.anyGames` ihr erstes Spiel im geplanten Fenster (Nation, wenn
    er gerade bei der Nation ist, sonst Klub) — vorher fielen sie aus dem Entwurf.
+   **Fix 03.10.2026:** Ist der Spieler nicht bei seiner Nation, zählt nur sein
+   Klubspiel. Vorher fiel der Optimierer auf das Länderspiel seines Landes zurück
+   und plante Klubspieler ohne Nominierung ein (Ortuño/Albacete und Aitor Fraga
+   standen für Spanien – Kroatien im GW719-Entwurf).
 3. Entwurf als Tabellen zeigen (mit Kapitän), offene Startelf-/Verfügbarkeitsfragen
    markieren; **final** beim nächsten Deadline-Check (~1,5 h vorher) datiert prüfen
    (GRUNDREGEL #0). Baseline erst nach Nicks Sorare-Bestätigung nachziehen.

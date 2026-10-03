@@ -298,7 +298,10 @@ def _game_in_window(pd, ng, ws, we, fx_games):
                       for s in ("homeTeam", "awayTeam"))
     nat_g = _in(fx_games["nation"].get(nat)) if nat else None
     club_g = _in(fx_games["club"].get(club)) if club else None
-    return (nat_g or club_g) if with_nation else (club_g or nat_g)
+    # Not with his nation -> only his club game counts. Falling back to the
+    # nation's game here put club-only players (Ortuno, Albacete; not in the
+    # Spain squad) into Spain's national game (bug found 03.10.2026).
+    return (nat_g or club_g) if with_nation else club_g
 
 
 def fetch_nation_last_games(fx_slug):
