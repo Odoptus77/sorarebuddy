@@ -1429,6 +1429,12 @@ def main(argv):
             e["ev"] = round(e["proj"] * e["start_prob"], 1)
             apply_matchup(e)
             e["status_conflict"] = _status_conflict(e)
+            # A club's no. 1 is often only the backup for his country: in
+            # national games the club model put keepers at 76% vs 25% real
+            # (Bilanz 04.10.2026: Simon, Kovar ...) -> flag for a check.
+            e["gk_check"] = (e.get("opp_type") == "NationalTeam"
+                             and (e.get("positions") or [None])[0] == "Goalkeeper"
+                             and (e.get("start_src") or "model") == "model")
         # Drop (near-)certain non-starters AFTER overrides too: a researched
         # 0% (e.g. suspended) player or a declared call-up must never be
         # fielded, even as a fallback.
@@ -1459,6 +1465,11 @@ def main(argv):
         if conf:
             print(f"  {rar}: Sorare-Status widerspricht Startquote (prüfen): "
                   f"{', '.join(conf)}", file=sys.stderr)
+        gks = sorted({f"{e['player']} ({int(round(e['start_prob'] * 100))}%)"
+                      for e in pools[rar] if e.get("gk_check")})
+        if gks:
+            print(f"  {rar}: Torwart im Länderspiel nur mit Modell-Quote "
+                  f"(Nummer 1 prüfen / App-%): {', '.join(gks)}", file=sys.stderr)
         print(f"  {rar}: {len(pools[rar])} eligible players", file=sys.stderr)
     if excluded:
         if dropped:

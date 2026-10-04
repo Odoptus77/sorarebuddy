@@ -1,88 +1,103 @@
 {
-  "_updated": "2026-10-03T06:53:17.641879+00:00",
-  "n": 83,
+  "_updated": "2026-10-04T06:52:41.435634+00:00",
+  "n": 106,
   "min_n": 30,
   "active": true,
   "global": {
-    "a": -0.0374,
-    "b": 0.7072
+    "a": -0.0967,
+    "b": 0.6693
   },
   "by_type": {
     "national": {
-      "n": 74,
+      "n": 96,
       "min_n": 20,
       "active": true,
       "global": {
-        "a": -0.0536,
-        "b": 0.7137
+        "a": -0.1077,
+        "b": 0.6671
       },
       "sources": {
         "researched": {
-          "a": -0.089,
-          "b": 0.7575,
+          "a": -0.1244,
+          "b": 0.7405,
           "n": 40
         },
         "model": {
-          "a": -0.0272,
-          "b": 0.5712,
-          "n": 23
+          "a": -0.1094,
+          "b": 0.4879,
+          "n": 39
         },
         "natl_bench_auto": {
-          "a": 0.0094,
-          "b": 0.5348,
+          "a": -0.0477,
+          "b": 0.4973,
           "n": 6
         },
         "natl_bench_soft": {
-          "a": -0.1438,
-          "b": 0.7987,
-          "n": 5
+          "a": -0.2012,
+          "b": 0.7773,
+          "n": 9
+        },
+        "sorare_app": {
+          "a": 0.0369,
+          "b": 0.9851,
+          "n": 1
+        },
+        "suspension_risk": {
+          "a": -0.1158,
+          "b": 0.6881,
+          "n": 1
         }
       },
       "status": {},
       "loo": {
-        "raw": 0.1949,
-        "calibrated": 0.1946,
+        "raw": 0.205,
+        "calibrated": 0.2009,
         "with_status": false
       }
     },
     "club": {
-      "n": 9,
+      "n": 10,
       "min_n": 20,
       "active": false,
       "global": {
-        "a": 0.0225,
-        "b": 0.951
+        "a": 0.0174,
+        "b": 0.9633
       },
       "sources": {
         "apif_doubtful": {
-          "a": 0.0064,
-          "b": 0.9687,
+          "a": 0.0015,
+          "b": 0.9808,
           "n": 1
         },
         "model": {
-          "a": 0.0583,
-          "b": 0.8903,
+          "a": 0.0536,
+          "b": 0.9014,
           "n": 8
+        },
+        "suspension_risk": {
+          "a": 0.0118,
+          "b": 0.9766,
+          "n": 1
         }
       },
       "status": {},
       "loo": {
-        "raw": 0.2281,
+        "raw": 0.206,
         "calibrated": null,
         "with_status": false
       }
     }
   },
   "proj_loo": {
-    "raw": 16.657,
-    "calibrated": 16.898,
+    "raw": 16.568,
+    "calibrated": 16.655,
     "active": false
   },
   "proj_scale": {
     "value": 1.0,
-    "n": 51
+    "n": 66
   },
   "proj_scale_groups": {},
-  "brier_raw": 0.1985,
-  "brier_calibrated_in_sample": 0.1869
+  "brier_raw": 0.2051,
+  "brier_calibrated_in_sample": 0.1909
 }

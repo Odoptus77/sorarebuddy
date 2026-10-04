@@ -1,23 +1,29 @@
 {
-  "updated": "2026-10-03T06:53:17.641879+00:00",
-  "evaluated": 83,
+  "updated": "2026-10-04T06:52:41.435634+00:00",
+  "evaluated": 106,
   "pending": 1,
-  "upcoming": 98,
-  "brier": 0.1985,
-  "brier_raw": 0.1985,
-  "start_rate": 0.518,
+  "upcoming": 75,
+  "brier": 0.2051,
+  "brier_raw": 0.2051,
+  "start_rate": 0.509,
   "by_source": {
+    "model": {
+      "n": 47,
+      "mean_pred": 0.699,
+      "actual": 0.617,
+      "brier": 0.2589
+    },
     "researched": {
       "n": 40,
       "mean_pred": 0.573,
       "actual": 0.525,
       "brier": 0.1583
     },
-    "model": {
-      "n": 31,
-      "mean_pred": 0.661,
-      "actual": 0.645,
-      "brier": 0.2542
+    "natl_bench_soft": {
+      "n": 9,
+      "mean_pred": 0.275,
+      "actual": 0.111,
+      "brier": 0.1103
     },
     "natl_bench_auto": {
       "n": 6,
@@ -25,69 +31,75 @@
       "actual": 0.333,
       "brier": 0.3016
     },
-    "natl_bench_soft": {
-      "n": 5,
-      "mean_pred": 0.279,
+    "suspension_risk": {
+      "n": 2,
+      "mean_pred": 0.077,
       "actual": 0.0,
-      "brier": 0.0786
+      "brier": 0.0059
     },
     "apif_doubtful": {
       "n": 1,
       "mean_pred": 0.25,
       "actual": 0.0,
       "brier": 0.0625
+    },
+    "sorare_app": {
+      "n": 1,
+      "mean_pred": 0.4,
+      "actual": 1.0,
+      "brier": 0.36
     }
   },
   "out_signals": {
-    "n": 11,
-    "correct_out": 9
+    "n": 17,
+    "correct_out": 14
   },
   "playing_status": {
     "STARTER": {
-      "n": 37,
-      "started": 25
+      "n": 48,
+      "started": 32
     },
     "REGULAR": {
-      "n": 30,
-      "started": 10
+      "n": 39,
+      "started": 14
     },
     "SUBSTITUTE": {
-      "n": 9,
+      "n": 10,
       "started": 3
     },
     "SUPER_SUBSTITUTE": {
-      "n": 4,
+      "n": 5,
       "started": 3
     },
     "NOT_PLAYING": {
-      "n": 3,
+      "n": 4,
       "started": 2
     }
   },
   "projection": {
-    "n": 51,
-    "mae": 16.66,
-    "bias": 0.87,
+    "n": 66,
+    "mae": 16.57,
+    "bias": 1.44,
     "groups": {
       "Midfielder|national": {
-        "n": 16,
-        "bias": 1.47,
-        "mae": 14.31
+        "n": 23,
+        "bias": 3.78,
+        "mae": 12.86
       },
       "Forward|national": {
-        "n": 13,
-        "bias": 3.85,
-        "mae": 16.46
+        "n": 17,
+        "bias": -0.62,
+        "mae": 18.01
       },
       "Defender|national": {
-        "n": 12,
-        "bias": -1.93,
-        "mae": 22.04
+        "n": 15,
+        "bias": 2.99,
+        "mae": 21.91
       },
       "Goalkeeper|national": {
-        "n": 4,
-        "bias": 7.75,
-        "mae": 13.95
+        "n": 5,
+        "bias": 2.06,
+        "mae": 15.3
       },
       "Forward|club": {
         "n": 3,
@@ -132,6 +144,22 @@
       "played": true
     },
     {
+      "player": "unai-simon-mendibil",
+      "kickoff": "2026-10-03T18:45:00Z",
+      "pred": 0.948,
+      "src": "model",
+      "started": false,
+      "played": false
+    },
+    {
+      "player": "emir-karic",
+      "kickoff": "2026-10-02T18:45:00Z",
+      "pred": 0.948,
+      "src": "model",
+      "started": false,
+      "played": false
+    },
+    {
       "player": "thai-baribo",
       "kickoff": "2026-10-01T18:45:00Z",
       "pred": 0.057,
@@ -152,22 +180,6 @@
       "kickoff": "2026-10-02T18:45:00Z",
       "pred": 0.853,
       "src": "model",
-      "started": false,
-      "played": false
-    },
-    {
-      "player": "arijanet-muric",
-      "kickoff": "2026-10-01T18:45:00Z",
-      "pred": 0.85,
-      "src": "researched",
-      "started": false,
-      "played": false
-    },
-    {
-      "player": "nico-schlotterbeck",
-      "kickoff": "2026-10-01T18:45:00Z",
-      "pred": 0.85,
-      "src": "researched",
       "started": false,
       "played": false
     }

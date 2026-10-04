@@ -336,6 +336,13 @@ Bouanga/Son/Blake standen mit hoher Klub-Quote im Entwurf, obwohl abgestellt.)
   knapp im Leave-one-out-Test). Lehre für Deadline-Checks: Bei Länderspielen jeden
   aufgestellten Spieler mit Modell-Quote auf **Kader/Abreise** prüfen, nicht nur
   die recherchierten.
+- **Bilanz 04.10.2026 (106 Spiele):** **Torhüter in Länderspielen** sind mit reiner
+  Modell-Quote unbrauchbar: 76 % vorhergesagt, 25 % gestartet (n=4, z. B. Unai Simón
+  95 % → nicht gespielt, Kovář 79 % → nicht gespielt). Recherchierte Torhüter lagen
+  dagegen genau richtig (34 % vs. 33 %, n=9). Umsetzung: kein Eingriff in die Quote
+  (n zu klein), aber der Optimierer meldet „Torwart im Länderspiel nur mit
+  Modell-Quote (Nummer 1 prüfen / App-%)“. Beim Deadline-Check jeden solchen
+  Torwart recherchieren oder Nick nach den App-% fragen.
 - **Log-Reihenfolge:** `playerGameScores` kommt **most-recent-first** (Index 0 =
   neuestes Spiel) — Recency-Gewichtung und `played_projection` nutzen genau diese
   Reihenfolge (kein Umdrehen).
