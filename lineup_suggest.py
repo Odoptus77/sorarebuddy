@@ -353,10 +353,32 @@ def fetch_nation_last_games(fx_slug):
 DUTY_RETURN_BUFFER = dt.timedelta(hours=24)
 
 
-def _on_national_duty(entry, nation_last_game):
+def _called_up(pd, ko):
+    """True if the player's game log shows a national-team game (any minutes,
+    bench included) within NATIONAL_BENCH_DAYS before `ko` -> he is in his
+    country's squad this break. Players never on a national sheet in the
+    window were not called up."""
+    cutoff = ko - dt.timedelta(days=NATIONAL_BENCH_DAYS)
+    for g in (pd.get("playerGameScores") or []):
+        ag = g.get("anyGame") or {}
+        try:
+            gd = dt.datetime.fromisoformat((ag.get("date") or "").replace("Z", "+00:00"))
+        except Exception:
+            continue
+        if cutoff <= gd <= ko and (
+                (ag.get("homeTeam") or {}).get("__typename") == "NationalTeam"
+                or (ag.get("awayTeam") or {}).get("__typename") == "NationalTeam"):
+            return True
+    return False
+
+
+def _on_national_duty(entry, nation_last_game, pd=None):
     """True if the player's nation is still on duty when his CLUB game kicks off
     -> he is with his country and will miss the club game. Compares his club
-    kickoff against his nation's LAST game in the window (+ a return buffer)."""
+    kickoff against his nation's LAST game in the window (+ a return buffer).
+    Since 05.10.2026 the player must also have been in a national squad this
+    break (game log): Buksa and Aitor Fraga were flagged only because their
+    nation played, yet both started their club games (not called up)."""
     last = nation_last_game.get(entry.get("nat_code"))
     if last is None:
         return False                     # nation not playing this window
@@ -367,7 +389,9 @@ def _on_national_duty(entry, nation_last_game):
         kdt = dt.datetime.fromisoformat(ko.replace("Z", "+00:00"))
     except Exception:
         return True
-    return kdt <= last + DUTY_RETURN_BUFFER
+    if kdt > last + DUTY_RETURN_BUFFER:
+        return False
+    return pd is None or _called_up(pd, kdt)
 
 
 def fetch_competitions(fx_slug, rarities):
@@ -1414,7 +1438,7 @@ def main(argv):
                 e["start_prob"] = round(e["start_prob"] * SUSPENSION_FACTOR, 3)
                 e["start_src"] = "suspension_risk"
                 e["suspended"] = True
-            elif on_club and _on_national_duty(e, nation_last_game):
+            elif on_club and _on_national_duty(e, nation_last_game, players.get(e["player_slug"]) or {}):
                 e["start_prob"] = round(e["start_prob"] * INTL_DUTY_FACTOR, 3)
                 e["start_src"] = "intl_duty_auto"
                 e["intl_duty"] = True

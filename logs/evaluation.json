@@ -1,35 +1,41 @@
 {
-  "updated": "2026-10-04T06:52:41.435634+00:00",
-  "evaluated": 106,
-  "pending": 1,
-  "upcoming": 75,
-  "brier": 0.2051,
-  "brier_raw": 0.2051,
-  "start_rate": 0.509,
+  "updated": "2026-10-05T06:52:54.075204+00:00",
+  "evaluated": 137,
+  "pending": 7,
+  "upcoming": 38,
+  "brier": 0.2077,
+  "brier_raw": 0.2077,
+  "start_rate": 0.533,
   "by_source": {
     "model": {
-      "n": 47,
-      "mean_pred": 0.699,
-      "actual": 0.617,
-      "brier": 0.2589
+      "n": 68,
+      "mean_pred": 0.706,
+      "actual": 0.632,
+      "brier": 0.2285
     },
     "researched": {
-      "n": 40,
-      "mean_pred": 0.573,
-      "actual": 0.525,
-      "brier": 0.1583
+      "n": 42,
+      "mean_pred": 0.554,
+      "actual": 0.524,
+      "brier": 0.1608
     },
     "natl_bench_soft": {
-      "n": 9,
-      "mean_pred": 0.275,
-      "actual": 0.111,
-      "brier": 0.1103
+      "n": 13,
+      "mean_pred": 0.272,
+      "actual": 0.154,
+      "brier": 0.1137
     },
     "natl_bench_auto": {
-      "n": 6,
-      "mean_pred": 0.046,
-      "actual": 0.333,
-      "brier": 0.3016
+      "n": 7,
+      "mean_pred": 0.048,
+      "actual": 0.286,
+      "brier": 0.259
+    },
+    "intl_duty_auto": {
+      "n": 2,
+      "mean_pred": 0.052,
+      "actual": 1.0,
+      "brier": 0.8997
     },
     "suspension_risk": {
       "n": 2,
@@ -37,88 +43,96 @@
       "actual": 0.0,
       "brier": 0.0059
     },
+    "sorare_app": {
+      "n": 2,
+      "mean_pred": 0.3,
+      "actual": 1.0,
+      "brier": 0.5
+    },
     "apif_doubtful": {
       "n": 1,
       "mean_pred": 0.25,
       "actual": 0.0,
       "brier": 0.0625
-    },
-    "sorare_app": {
-      "n": 1,
-      "mean_pred": 0.4,
-      "actual": 1.0,
-      "brier": 0.36
     }
   },
   "out_signals": {
-    "n": 17,
-    "correct_out": 14
+    "n": 24,
+    "correct_out": 18
   },
   "playing_status": {
     "STARTER": {
-      "n": 48,
-      "started": 32
+      "n": 55,
+      "started": 38
     },
     "REGULAR": {
-      "n": 39,
-      "started": 14
+      "n": 59,
+      "started": 26
     },
     "SUBSTITUTE": {
-      "n": 10,
-      "started": 3
+      "n": 12,
+      "started": 4
     },
     "SUPER_SUBSTITUTE": {
-      "n": 5,
+      "n": 6,
       "started": 3
     },
     "NOT_PLAYING": {
-      "n": 4,
+      "n": 5,
       "started": 2
     }
   },
   "projection": {
-    "n": 66,
-    "mae": 16.57,
-    "bias": 1.44,
+    "n": 88,
+    "mae": 15.41,
+    "bias": 1.0,
     "groups": {
       "Midfielder|national": {
-        "n": 23,
-        "bias": 3.78,
-        "mae": 12.86
+        "n": 28,
+        "bias": 3.04,
+        "mae": 11.14
       },
       "Forward|national": {
-        "n": 17,
-        "bias": -0.62,
-        "mae": 18.01
+        "n": 23,
+        "bias": 2.41,
+        "mae": 17.35
       },
       "Defender|national": {
-        "n": 15,
-        "bias": 2.99,
-        "mae": 21.91
+        "n": 21,
+        "bias": -1.02,
+        "mae": 20.21
       },
       "Goalkeeper|national": {
-        "n": 5,
-        "bias": 2.06,
-        "mae": 15.3
+        "n": 7,
+        "bias": 1.03,
+        "mae": 15.74
       },
       "Forward|club": {
+        "n": 4,
+        "bias": 4.87,
+        "mae": 4.87
+      },
+      "Goalkeeper|club": {
         "n": 3,
-        "bias": 5.0,
-        "mae": 5.0
+        "bias": -16.07,
+        "mae": 21.13
       },
       "Defender|club": {
         "n": 2,
         "bias": -3.5,
         "mae": 13.34
-      },
-      "Goalkeeper|club": {
-        "n": 1,
-        "bias": -44.7,
-        "mae": 44.7
       }
     }
   },
   "misses": [
+    {
+      "player": "adam-buksa",
+      "kickoff": "2026-10-04T19:00:00Z",
+      "pred": 0.042,
+      "src": "intl_duty_auto",
+      "started": true,
+      "played": true
+    },
     {
       "player": "ladislav-krejci",
       "kickoff": "2026-09-29T18:45:00Z",
@@ -168,20 +182,12 @@
       "played": true
     },
     {
-      "player": "paul-wanner",
-      "kickoff": "2026-10-01T18:45:00Z",
-      "pred": 0.862,
-      "src": "model",
-      "started": false,
-      "played": false
-    },
-    {
-      "player": "bendeguz-bolla",
-      "kickoff": "2026-10-02T18:45:00Z",
-      "pred": 0.853,
-      "src": "model",
-      "started": false,
-      "played": false
+      "player": "aitor-fraga-torres",
+      "kickoff": "2026-10-04T12:00:00Z",
+      "pred": 0.061,
+      "src": "intl_duty_auto",
+      "started": true,
+      "played": true
     }
   ]
 }

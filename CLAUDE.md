@@ -216,7 +216,12 @@ Bouanga/Son/Blake standen mit hoher Klub-Quote im Entwurf, obwohl abgestellt.)
   dem letzten Länderspiel seiner Nation liegt (sonst ist er zurück und spielt). Er
   wird dann **stark abgewertet** (×0,12) und geflaggt (`intl_duty`, `start_src:
   intl_duty_auto`) — kein harter Ausschluss, damit ein researched Override oder ein
-  bestätigter Klub-Start ihn zurückholt. Selbst-abschaltend: reine Klub-GW → keine
+  bestätigter Klub-Start ihn zurückholt. **Seit 05.10.2026 nur noch, wenn er laut
+  Spiel-Log in diesem Fenster in einem Länderspielkader stand** (auch 0 Minuten):
+  Buksa und Aitor Fraga wurden nur wegen ihres Landes geflaggt (4–6 %) und
+  starteten ihr Klubspiel (nicht nominiert). Grenze: Wer nominiert ist, aber noch
+  kein Länderspiel im Fenster hatte, wird nicht erkannt → `international_callups.json`.
+  Selbst-abschaltend: reine Klub-GW → keine
   Länderspiele im Fixture → keine Abwertung. Ausgabe-Feld `international_break: true/false`.
 - **Grenze der API:** Sorares Fixture führt **nur die Länderspiele, die es selbst
   austrägt** (praktisch **UEFA**). **Nicht-UEFA**-Abstellungen (viele
