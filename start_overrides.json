@@ -29,7 +29,8 @@
     "france_gw718_2026-10-02": "FRA vs ITA 02.10. 20:45: Nick meldet Sorare-App 10 % für Lacroix (02.10., ~13:30 CEST). Dagegen: Spiel-Log 25.09. + 28.09. je 90' Start (einzige IV mit 2 Starts); Saliba + Konaté verletzt nicht im Kader; thehardtackle (01.10.2026), Rotowire (01.10.2026), SI (02.10.2026) alle mit Lacroix in der XI; keine Ausfallmeldung gefunden. -> KEIN Override (Modell 79 %), App-Wert hier nur notiert, nach dem Spiel App vs. Recherche auswerten. Nachtrag: Screenshot der App (02.10.) zeigt 10 % vs ITA und 30 % vs BEL (beide rot/F); FotMob-Vorschau (abgerufen 02.10.) ebenfalls mit Lacroix in der XI, ohne Ausfall. Vermutung: Sorares Quelle stuft den Erst-Nominierten noch als Ersatz ein (Saliba/Konaté-Ausfall nicht berücksichtigt).",
     "norway_gw718_2026-10-02": "NOR vs POR 04.10.: Sorare-App 20 % für Aursnes (Nick, 02.10.). Spiel-Log: Start 24.09. (66'), 27.09. (90'), 01.10. (45').",
     "germany_gw718_2026-10-02": "GER vs GRE 04.10.: Schlotterbeck AUS - Außenbandverletzung rechtes Sprunggelenk (bundesliga.com 30.09.2026) + Spiel-Log: nicht im Kader 27.09. und 01.10. -> 0. Burkardt: Spiel-Log nur Joker (27.09. 25', 01.10. 13'), Woltemade startete 01.10. (77'); Vorschau (bavarianfootballworks, Datum nicht prüfbar/403) sieht Klopp eher bei der Serbien-Elf -> 0.35 (unbestätigt).",
-    "gw719_2026-10-06": "Vorschauen vom 06.10.2026: thehardtackle + GiveMeSport (ENG-CZE): Pickford startet (Trafford hatte MD1/MD2), Krejčí gesperrt (Gelb-Rot vs ESP 03.10.), CZE-Tor Kinský (nicht Kovář), IV Chaloupek/Vitík/Šlama/Sacek (ohne Hranáč), Hložek vorn. Sports Mole + SI (CRO-ESP): Simón im Tor; Laporte und Baena nur bei SI (Sports Mole: Huijsen, Muñoz); Perišić in KEINER der beiden Elfen (Spiel-Log: 3× Start, aber 0:7 gegen England -> Umbau erwartet). Spiel-Log-Muster: Laporte/Simón/Kovář/Hranáč rotieren je Spiel."
+    "gw719_2026-10-06": "Vorschauen vom 06.10.2026: thehardtackle + GiveMeSport (ENG-CZE): Pickford startet (Trafford hatte MD1/MD2), Krejčí gesperrt (Gelb-Rot vs ESP 03.10.), CZE-Tor Kinský (nicht Kovář), IV Chaloupek/Vitík/Šlama/Sacek (ohne Hranáč), Hložek vorn. Sports Mole + SI (CRO-ESP): Simón im Tor; Laporte und Baena nur bei SI (Sports Mole: Huijsen, Muñoz); Perišić in KEINER der beiden Elfen (Spiel-Log: 3× Start, aber 0:7 gegen England -> Umbau erwartet). Spiel-Log-Muster: Laporte/Simón/Kovář/Hranáč rotieren je Spiel.",
+    "gw719_app_2026-10-06": "Nick, App 06.10.: Noah Allen (Chicago Fire) 0 %."
   },
   "_fixture": "football-1-2-oct-2026",
   "_researched": "2026-09-28",
@@ -212,5 +213,11 @@
     "p": 0.0,
     "fixture": "football-7-9-oct-2026",
     "researched": "2026-10-06"
+  },
+  "noah-allen": {
+    "p": 0.0,
+    "fixture": "football-7-9-oct-2026",
+    "researched": "2026-10-06",
+    "src": "sorare_app"
   }
 }
