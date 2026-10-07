@@ -62,6 +62,12 @@ const SRC: Record<string, string> = {
   natl_bench_auto: "Nationalteam-Bank",
   natl_bench_soft: "Nationalteam-Bank",
   sorare_app: "Sorare-App (Nick)",
+  sofa_pred_start: "SofaScore: voraussichtl. Startelf",
+  sofa_pred_bench: "SofaScore: voraussichtl. Bank",
+  sofa_pred_out: "SofaScore: nicht in voraussichtl. XI",
+  sofa_conf_start: "SofaScore: Startelf bestätigt",
+  sofa_conf_bench: "SofaScore: Bank bestätigt",
+  sofa_conf_out: "SofaScore: nicht im Kader",
   suspension_risk: "Sperren-Verdacht",
   callup_out: "Abstellung (manuell)",
 };

@@ -763,45 +763,56 @@ def sorare_start_odds(pd):
             o.get("reliability"))
 
 
-def apply_sofascore(entries, index):
-    """Fuse SofaScore predicted/confirmed XIs into each entry's start_prob.
-    Confirmed lineups override the model; predicted lineups blend with it.
-    Returns (n_confirmed, n_predicted) for logging."""
+# SofaScore predicted / confirmed XIs (sofascore_lineups.py). A PREDICTED XI
+# (1-2 days before kickoff) is blended with the model prob; a CONFIRMED
+# teamsheet (~1 h before kickoff) replaces it. Sources are logged separately
+# (sofa_pred_start / sofa_pred_bench / sofa_conf_*) so evaluate.py measures
+# them on their own and learns their calibration.
+SOFA_PRED_W = 0.65          # weight of the predicted XI vs. the model prob
+SOFA_PRED_OUT_W = 0.5       # ... when he is merely MISSING from a full predicted XI
+SOFA_PRED_START = 0.85
+SOFA_PRED_BENCH = 0.18
+SOFA_CONF_START = 0.95
+SOFA_CONF_BENCH = 0.08
+SOFA_CONF_OUT = 0.10        # teamsheet out, player not on it (or name unmatched)
+SOFA_KICKOFF_TOL = 3 * 3600 # s: SofaScore's next event must be THIS game
+
+
+def sofa_signal(e, index):
+    """SofaScore XI for the entry's team and game -> ("pred"|"conf", started)
+    or None when there is no usable signal. started is None only with "conf"
+    (= teamsheet is out and the player is not on it). The signal only applies
+    when SofaScore's next event IS the planned game (kickoff within
+    SOFA_KICKOFF_TOL), so a cup game in between can't be mistaken for it."""
     from sofascore_lineups import _norm
-    n_conf = n_pred = 0
-    for e in entries:
-        info = index.get(e.get("club_name"))
-        if not info or not info.get("players"):
-            continue
-        xi = info["players"]
-        pn = _norm(e["player"])
-        started = xi.get(pn)
-        if started is None and e.get("player"):
-            # last-name fallback, only if it maps to exactly one XI player
-            ln = _norm(e["player"].split()[-1])
-            if len(ln) >= 4:
-                hits = [(nm, st) for nm, st in xi.items() if nm.endswith(ln) or ln in nm]
-                if len(hits) == 1:
-                    started = hits[0][1]
-        conf = info.get("confirmed")
-        if started is None:
-            if conf:                      # teamsheet out and player not on it
-                e["start_prob"] = min(e["start_prob"], 0.10)
-                e["sofa_status"] = "confirmed_out"
-                e["ev"] = round(e["proj"] * e["start_prob"], 1)
-                n_conf += 1
-            continue
-        if conf:
-            e["start_prob"] = 0.95 if started else 0.08
-            e["sofa_status"] = "confirmed_start" if started else "confirmed_bench"
-            n_conf += 1
-        else:
-            target = 0.85 if started else 0.18
-            e["start_prob"] = round(0.35 * e["start_prob"] + 0.65 * target, 3)
-            e["sofa_status"] = "pred_start" if started else "pred_bench"
-            n_pred += 1
-        e["ev"] = round(e["proj"] * e["start_prob"], 1)
-    return n_conf, n_pred
+    info = index.get(e.get("team_name")) if index else None
+    if not info or not info.get("players"):
+        return None
+    try:
+        ko_ts = dt.datetime.fromisoformat(e["kickoff"].replace("Z", "+00:00")).timestamp()
+    except Exception:
+        return None
+    if info.get("start") is None or abs(info["start"] - ko_ts) > SOFA_KICKOFF_TOL:
+        return None
+    xi = info["players"]
+    started = xi.get(_norm(e.get("player")))
+    if started is None and e.get("player"):
+        # fallback: every name token (>= 3 chars) occurs in exactly ONE XI
+        # name -- covers "Minjae Kim" vs "Kim Min-jae", "Alejandro Grimaldo"
+        # vs "Álex Grimaldo" (last name alone when it is >= 4 chars)
+        toks = [t for t in (_norm(x) for x in e["player"].split()) if len(t) >= 3]
+        if toks and (len(toks) >= 2 or len(toks[0]) >= 4):
+            hits = [st for nm, st in xi.items()
+                    if all(t in nm for t in toks) or (len(toks[-1]) >= 4 and toks[-1] in nm)]
+            if len(hits) == 1:
+                started = hits[0]
+    conf = bool(info.get("confirmed"))
+    if started is None and not conf:
+        # a full predicted XI is out and he is not in it (predicted XIs carry
+        # no bench) -> weaker negative signal; name mismatches end up here
+        # too, hence the lower weight and the "prüfen" line in stderr
+        return ("pred", None) if len(xi) >= 11 else None
+    return ("conf" if conf else "pred"), started
 
 
 def eligible_entry(card, pd, ws, we, fx_games=None):
@@ -1097,10 +1108,11 @@ def main(argv):
                          "calibration against the real outcomes. COMMITTED on "
                          "purpose (Nick, 2026-09-29). '' disables -- use that "
                          "for tests/experiments so they don't pollute the log.")
-    ap.add_argument("--sofascore", action="store_true",
-                    help="opt in to SofaScore predicted-lineup enrichment "
-                         "(needs api.sofascore.com allowed; SofaScore IP-blocks "
-                         "datacenter egress, so this usually falls back)")
+    ap.add_argument("--no-sofascore", action="store_true",
+                    help="disable the SofaScore predicted/confirmed-XI signal "
+                         "(on by default; falls back automatically when "
+                         "api.sofascore.com is unreachable)")
+    ap.add_argument("--sofascore", action="store_true", help=argparse.SUPPRESS)  # legacy no-op
     args = ap.parse_args(argv)
     rarities = [r.strip() for r in args.rarities.split(",") if r.strip()]
 
@@ -1226,7 +1238,8 @@ def main(argv):
         pos = (e.get("positions") or ["?"])[0]
         return f"{pos}|{'national' if e.get('opp_type') == 'NationalTeam' else 'club'}"
 
-    _EXTERNAL_SRCS = ("sorare_app", "sorare_odds")
+    _EXTERNAL_SRCS = ("sorare_app", "sorare_odds", "sofa_pred_start", "sofa_pred_bench",
+                      "sofa_pred_out", "sofa_conf_start", "sofa_conf_bench", "sofa_conf_out")
 
     def _calibrate(e):
         """Apply the learned correction (evaluate.py) to the final start prob and
@@ -1373,6 +1386,13 @@ def main(argv):
     scored = []           # every rated entry incl. ones dropped below -> for the log
     dropped = set()
     matched_keys = set()
+    use_sofa = not args.no_sofascore
+    sofa_all = {}         # team name -> SofaScore XI info, shared across rarities
+    if use_sofa:
+        import sofascore_lineups as sofa
+        use_sofa = sofa.ping()
+        if not use_sofa:
+            print("SofaScore nicht erreichbar -> nur Modell/Overrides.", file=sys.stderr)
     for rar in rarities:
         entries = []
         for c in cards:
@@ -1392,6 +1412,25 @@ def main(argv):
             if not e:
                 continue
             entries.append(e)
+        sofa_index = {}
+        if use_sofa and entries:
+            try:
+                teams = {e.get("team_name") for e in entries if e.get("team_name")}
+                new = teams - set(sofa_all)
+                if new:
+                    print(f"SofaScore: löse XIs für {len(new)} Teams auf...", file=sys.stderr)
+                    sofa_all.update(sofa.build_club_index(new, verbose=False))
+                sofa_index = {t: sofa_all[t] for t in teams if t in sofa_all}
+                n_xi = sum(1 for v in sofa_index.values() if v.get("players"))
+                n_conf = sum(1 for v in sofa_index.values() if v.get("players") and v.get("confirmed"))
+                missing = sorted(t for t, v in sofa_index.items() if not v.get("found"))
+                print(f"SofaScore: {len(sofa_index)} Teams, {n_xi} mit XI ({n_conf} bestätigt)"
+                      + (f"; nicht gefunden: {', '.join(missing)}" if missing else ""),
+                      file=sys.stderr)
+            except Exception as exc:
+                sofa_index = {}
+                print(f"SofaScore übersprungen: {type(exc).__name__}: {str(exc)[:160]}",
+                      file=sys.stderr)
         for e in entries:
             e["is_classic"] = (e.get("season") or 0) < current_season
             ov = start_overrides.get(e["player_slug"])
@@ -1400,6 +1439,9 @@ def main(argv):
                                         e.get("kickoff")) if apif_rows else None)
             if inj:
                 e["apif"] = f"{inj['type']}: {inj['reason']}"
+            sig = sofa_signal(e, sofa_index) if sofa_index else None
+            apif_out = bool(inj and inj["type"] == "Missing Fixture")
+            red_card = suspension_signal(players.get(e["player_slug"]) or {}, e.get("opp_type"))
             # Precedence: (1) a declared call-up is an authoritative absence from
             # the club game; (2) a researched override wins over everything else
             # (Nick may have CONFIRMED the player does start his club game); (3)
@@ -1417,13 +1459,42 @@ def main(argv):
                           or [{}])[0].get("anyGame") or {}).get("date") or "")[:10]
                 e["override_stale"] = bool(last and override_date.get(e["player_slug"])
                                            and last > override_date[e["player_slug"]])
+            elif sig and sig[0] == "conf":
+                # official teamsheet is out: ground truth, beats every signal
+                # except a declared call-up / researched override above
+                st = sig[1]
+                if st is None:
+                    e["start_prob"] = round(min(e["start_prob"], SOFA_CONF_OUT), 3)
+                    e["start_src"], e["sofa_status"] = "sofa_conf_out", "confirmed_out"
+                else:
+                    e["start_prob"] = SOFA_CONF_START if st else SOFA_CONF_BENCH
+                    e["start_src"] = "sofa_conf_start" if st else "sofa_conf_bench"
+                    e["sofa_status"] = "confirmed_start" if st else "confirmed_bench"
             elif use_sorare_odds and e.get("sorare_start") is not None:
                 # Sorare's own starter odds (the app's %): news-aggregated and
                 # fresher than any of our automatic signals -> they win over
                 # them, but not over a researched override (Nick's verified call)
                 e["start_prob"] = round(e["sorare_start"], 3)
                 e["start_src"] = "sorare_odds"
-            elif inj and inj["type"] == "Missing Fixture":
+            elif sig and not apif_out and not red_card:
+                # SofaScore's PREDICTED XI (1-2 days out): blended with the
+                # model. A listed absence (API-Football) or a red card in his
+                # last game still wins -- predicted XIs often ignore those.
+                st = sig[1]
+                p = e["start_prob"]
+                if st:          # two agreeing signals never lower the prob
+                    e["start_prob"] = round(max(p, (1 - SOFA_PRED_W) * p
+                                                + SOFA_PRED_W * SOFA_PRED_START), 3)
+                    e["start_src"], e["sofa_status"] = "sofa_pred_start", "pred_start"
+                elif st is False:
+                    e["start_prob"] = round((1 - SOFA_PRED_W) * p
+                                            + SOFA_PRED_W * SOFA_PRED_BENCH, 3)
+                    e["start_src"], e["sofa_status"] = "sofa_pred_bench", "pred_bench"
+                else:           # full predicted XI published, he is not in it
+                    e["start_prob"] = round((1 - SOFA_PRED_OUT_W) * p
+                                            + SOFA_PRED_OUT_W * SOFA_PRED_BENCH, 3)
+                    e["start_src"], e["sofa_status"] = "sofa_pred_out", "pred_out"
+            elif apif_out:
                 # listed OUT for this very game (injury or suspension incl.
                 # yellow-card bans, which our own red-card check can't see)
                 e["start_prob"] = round(e["start_prob"] * APIF_MISSING_FACTOR, 3)
@@ -1433,7 +1504,7 @@ def main(argv):
             elif inj and inj["type"] == "Questionable":
                 e["start_prob"] = round(e["start_prob"] * APIF_DOUBT_FACTOR, 3)
                 e["start_src"] = "apif_doubtful"
-            elif suspension_signal(players.get(e["player_slug"]) or {}, e.get("opp_type")):
+            elif red_card:
                 # red card in his last game of this stream -> banned next game
                 e["start_prob"] = round(e["start_prob"] * SUSPENSION_FACTOR, 3)
                 e["start_src"] = "suspension_risk"
@@ -1494,6 +1565,17 @@ def main(argv):
         if gks:
             print(f"  {rar}: Torwart im Länderspiel nur mit Modell-Quote "
                   f"(Nummer 1 prüfen / App-%): {', '.join(gks)}", file=sys.stderr)
+        if sofa_index:
+            n_sofa = sum(1 for e in entries if (e.get("start_src") or "").startswith("sofa_"))
+            print(f"  {rar}: SofaScore-XI für {n_sofa} Spieler übernommen", file=sys.stderr)
+            bench = sorted({f"{e['player']} ({e.get('team_name')}, "
+                            f"{int(round(e['start_prob'] * 100))}%)"
+                            for e in entries
+                            if e.get("sofa_status") in ("pred_bench", "pred_out",
+                                                        "confirmed_bench", "confirmed_out")})
+            if bench:
+                print(f"  {rar}: SofaScore sieht nicht in der Startelf (prüfen, auch "
+                      f"Namensabgleich): {', '.join(bench)}", file=sys.stderr)
         print(f"  {rar}: {len(pools[rar])} eligible players", file=sys.stderr)
     if excluded:
         if dropped:
@@ -1504,26 +1586,7 @@ def main(argv):
                   f"{', '.join(sorted(unmatched))} (typo? or player has no game "
                   f"this GW anyway)", file=sys.stderr)
 
-    # --- SofaScore predicted/confirmed XI enrichment (optional) ------------
-    sofa_used = False
-    all_pool_entries = [e for rar in rarities for e in pools.get(rar, [])]
-    if args.sofascore and all_pool_entries:
-        try:
-            import sofascore_lineups as sofa
-            if sofa.ping():
-                clubs = {e.get("club_name") for e in all_pool_entries if e.get("club_name")}
-                print(f"SofaScore: resolving XIs for {len(clubs)} clubs...", file=sys.stderr)
-                index = sofa.build_club_index(clubs)
-                nc, npd = apply_sofascore(all_pool_entries, index)
-                sofa_used = True
-                print(f"SofaScore applied: {nc} confirmed, {npd} predicted signals",
-                      file=sys.stderr)
-            else:
-                print("SofaScore not reachable — falling back to Sorare-only model "
-                      "(allow api.sofascore.com in the network policy).", file=sys.stderr)
-        except Exception as e:
-            print(f"SofaScore enrichment skipped: {type(e).__name__}: {str(e)[:160]}",
-                  file=sys.stderr)
+    sofa_used = any((e.get("start_src") or "").startswith("sofa_") for e in scored)
 
     out = {"fixture": {"slug": fx["slug"], "gameWeek": fx["gameWeek"],
                        "start": fx["startDate"], "end": fx["endDate"]},
@@ -1699,7 +1762,7 @@ def main(argv):
                     "start_src": e.get("start_src") or "model", "proj": e.get("proj"),
                     "proj_raw": e.get("proj_raw"),
                     "pos": (e.get("positions") or [None])[0],
-                    "apif": e.get("apif"),
+                    "apif": e.get("apif"), "sofa": e.get("sofa_status"),
                 }, ensure_ascii=False) + "\n")
         print(f"Logged {len(seen)} predictions to {args.log} "
               f"(Sorare-Startquoten verfügbar: {n_odds})", file=sys.stderr)

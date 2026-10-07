@@ -107,7 +107,7 @@ Alle dependency-frei (nur Python-Stdlib), lesen den Key aus `.env.local`:
 | **GW-Bilanz (echte Aufstellungen, OAuth)** | `python3 lineup_review.py [--last 4] [--gw 716]` (Nicks gesetzte Lineups + Platz/Score/Rewards, Ausfälle, Kapitäns-Verlust, Prognose vs. Ergebnis je Position × Spieltyp; braucht Login, s. u.) |
 | Backtest/Kalibrierung des Modells | `python3 backtest.py nicktd7 [--players "slug,…"] [--json backtest.json]` (misst Start-Kalibrierung/Brier + Projektions-Fehler retrospektiv aus Spiel-Logs) |
 | Scouting: Ersatz/Ziel-Spieler bewerten | `python3 scout.py --like <slug> --candidates "slug1,slug2,…" [--budget 40] [--position Defender]` (Matchup-Gewichtung standardmäßig an, `--matchup-weight 0`=aus) |
-| Voraussichtliche Startelf (SofaScore) | `python3 sofascore_lineups.py "Real Madrid"` |
+| Voraussichtliche Startelf (SofaScore) | `python3 sofascore_lineups.py "Real Madrid"` — im Optimierer **standardmäßig an** (`--no-sofascore` = aus), s. u. |
 | HTML-Dashboard aus club.json | `python3 build_dashboard.py club.json --out dashboard.html` |
 | **Web-Dashboard (Next.js)** | `dashboard/` — Übersicht/Aufstellungen/Kader/GW-Bilanz/Modell; Daten serverseitig vom Backend (`SORAREBUDDY_API_URL`) oder aus den lokalen JSONs; Hosting auf dem Hostinger-VPS: `deploy/hostinger.md` §8 (`deploy/install-dashboard.sh`) |
 
@@ -252,6 +252,51 @@ Bouanga/Son/Blake standen mit hoher Klub-Quote im Entwurf, obwohl abgestellt.)
   gebenchte"-Recherche (Geertruida-Fall). Ein researched Override schlägt das,
   falls jemand fürs nächste Spiel doch startet. Braucht Team-Typ im Log →
   `PLAYER_FIELDS` liest `homeTeam/awayTeam.__typename` je Spiel.
+
+### Voraussichtliche Aufstellungen aus SofaScore (seit 07.10.2026, Nicks Auftrag)
+
+- **Anlass:** Meine Recherche-Quoten im Mittelbereich waren Münzwurf-Qualität
+  (Bilanz 07.10.). Die voraussichtliche Elf 1–2 Tage vor dem Spiel ist für
+  Klub-GWs das stärkste verfügbare Signal. `api.sofascore.com` ist vom
+  Cloud-Container aus **erreichbar** (am 07.10. geprüft; der alte Hinweis
+  „blockt Datacenter-IPs" stimmte nicht mehr) → **kein VPS-Umweg nötig**. Fällt
+  die Erreichbarkeit weg, läuft der Optimierer automatisch ohne (Ping-Check).
+- **Was passiert:** `lineup_suggest.py` löst je Team (Feld `team_name`, also auch
+  Nationalteams) die nächste Partie auf SofaScore auf und übernimmt die
+  XI **nur, wenn es dieselbe Partie ist** (Anstoß ±3 h; sonst z. B. Pokalspiel
+  dazwischen → kein Signal). Quellen im Log/`start_src`:
+  - `sofa_pred_start` (in der voraussichtlichen XI): `max(p, 0,35·p + 0,65·0,85)` —
+    zwei übereinstimmende Signale senken die Quote nie;
+  - `sofa_pred_bench` (explizit Bank; voraussichtliche XIs haben meist keine Bank):
+    `0,35·p + 0,65·0,18`;
+  - `sofa_pred_out` (volle XI ≥ 11 Namen veröffentlicht, Spieler fehlt):
+    `0,5·p + 0,5·0,18` — schwächer, weil hier auch **Namens-Fehlabgleiche** landen;
+  - `sofa_conf_start/bench/out` (offizieller Spielberichtsbogen, ~1 h vor Anpfiff):
+    0,95 / 0,08 / max. 0,10.
+- **Vorrang:** Callup-Liste → recherchierter Override / App-% → **bestätigte XI** →
+  Sorare-% → **voraussichtliche XI** (verliert aber gegen API-Football „Missing
+  Fixture" und Rot-Karten-Sperre, weil voraussichtliche XIs Sperren oft ignorieren)
+  → Abstellung/Bank → Modell. In reinen Klub-GWs gibt es keine Overrides → SofaScore
+  ist dort praktisch die Hauptquelle.
+- **Namensabgleich:** normalisiert (Akzente, ß→ss, ø→o …), exakt oder über
+  Namens-Tokens (deckt „Minjae Kim" vs „Kim Min-jae", „Alejandro" vs „Álex
+  Grimaldo"). Teamnamen: Sorares lange Namen werden um Sponsor-/Rechtsform-Tokens
+  gekürzt („SK Puntigamer Sturm Graz" → „Sturm Graz", „Trabzonspor Kulübü");
+  Aliase in `sofascore_lineups._ALIASES` (Inter, Sanse). Testlauf 07.10.: 140 Teams
+  alle gefunden, 102 mit XI, 268 Spieler mit Signal.
+- **Beim Deadline-Check:** die stderr-Zeile „SofaScore sieht nicht in der Startelf
+  (prüfen, auch Namensabgleich)" durchgehen — v. a. Spieler mit Sorare-Status
+  STARTER (erscheinen zusätzlich unter „Sorare-Status widerspricht Startquote").
+  Audit 07.10.: alle geprüften `pred_out`-Fälle waren echt (Krejčí, Kristensen,
+  Kim Min-jae, Grimaldo, Moura nicht in der XI), nur Groß/Gross war ein ß-Fehler
+  (behoben).
+- **Kalibrierung:** sofa_*-Quellen gelten in `evaluate.py` als **extern** (Prior
+  „keine Änderung", kein Status-Offset) und werden erst ab n ≥ 20 je Spieltyp
+  separat gelernt; `sofa_pred_bench/out`, `sofa_conf_bench/out` zählen als
+  Ausfall-Signale. **Noch nicht backgetestet** (kein historisches XI-Archiv) → GW720
+  liefert die erste Messung; Gewichte 0,65/0,5 sind Startwerte.
+- Cache: `.cache/sofa_teams.json` (Team-IDs, dauerhaft) und `.cache/sofa_xi.json`
+  (XIs, 30 Min.) — gitignored.
 
 ### Modell-Qualität messen & kalibrieren (`backtest.py`)
 

@@ -58,7 +58,8 @@ LAMBDA = 8.0                            # prior strength (in "games")
 PROJ_MIN_N = 20
 PROJ_GROUP_MIN_N = 8                    # games per position x game type group
 OUT_SIGNALS = ("apif_out", "callup_out", "intl_duty_auto", "natl_bench_auto",
-               "natl_bench_soft", "suspension_risk")
+               "natl_bench_soft", "suspension_risk", "sofa_pred_bench",
+               "sofa_pred_out", "sofa_conf_bench", "sofa_conf_out")
 # Calibration is learned SEPARATELY per game type (national vs club): an
 # international break must not reshape the club-game probabilities. A game type
 # only gets its own start-prob calibration from TYPE_MIN_N games; before that
@@ -66,7 +67,8 @@ OUT_SIGNALS = ("apif_out", "callup_out", "intl_duty_auto", "natl_bench_auto",
 TYPE_MIN_N = 20
 # External, already news-aware sources: no shrink towards OUR model's
 # miscalibration (prior = "no change") and no playingStatus offset on top.
-EXTERNAL_SRCS = ("sorare_app", "sorare_odds")
+EXTERNAL_SRCS = ("sorare_app", "sorare_odds", "sofa_pred_start", "sofa_pred_bench",
+                 "sofa_pred_out", "sofa_conf_start", "sofa_conf_bench", "sofa_conf_out")
 NO_FIT_SRCS = ("callup_out",)
 
 OUTCOME_QUERY = """
