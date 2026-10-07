@@ -1,41 +1,41 @@
 {
-  "_updated": "2026-10-06T06:52:40.468713+00:00",
-  "n": 145,
+  "_updated": "2026-10-07T06:52:38.740060+00:00",
+  "n": 169,
   "min_n": 30,
   "active": true,
   "global": {
-    "a": -0.06,
-    "b": 0.6416
+    "a": -0.0142,
+    "b": 0.6689
   },
   "by_type": {
     "national": {
-      "n": 131,
+      "n": 153,
       "min_n": 20,
       "active": true,
       "global": {
-        "a": -0.1191,
-        "b": 0.704
+        "a": -0.0665,
+        "b": 0.7212
       },
       "sources": {
         "researched": {
-          "a": -0.1156,
-          "b": 0.7653,
-          "n": 47
+          "a": -0.0095,
+          "b": 0.7372,
+          "n": 56
         },
         "model": {
-          "a": -0.1517,
-          "b": 0.5811,
-          "n": 60
+          "a": -0.1119,
+          "b": 0.6395,
+          "n": 72
         },
         "natl_bench_auto": {
-          "a": -0.0622,
-          "b": 0.5412,
+          "a": -0.0097,
+          "b": 0.5585,
           "n": 7
         },
         "natl_bench_soft": {
-          "a": -0.2176,
-          "b": 0.8569,
-          "n": 14
+          "a": -0.1761,
+          "b": 0.8913,
+          "n": 15
         },
         "sorare_app": {
           "a": 0.0837,
@@ -43,66 +43,71 @@
           "n": 2
         },
         "suspension_risk": {
-          "a": -0.1265,
-          "b": 0.7232,
+          "a": -0.0739,
+          "b": 0.7406,
           "n": 1
         }
       },
       "status": {},
       "loo": {
-        "raw": 0.1939,
-        "calibrated": 0.1908,
+        "raw": 0.1902,
+        "calibrated": 0.1893,
         "with_status": false
       }
     },
     "club": {
-      "n": 14,
+      "n": 16,
       "min_n": 20,
       "active": false,
       "global": {
-        "a": 0.0891,
-        "b": 0.7136
+        "a": 0.0947,
+        "b": 0.7356
       },
       "sources": {
         "apif_doubtful": {
-          "a": 0.0689,
-          "b": 0.7358,
+          "a": 0.0748,
+          "b": 0.7575,
           "n": 1
         },
         "model": {
-          "a": 0.0984,
-          "b": 0.7041,
-          "n": 10
+          "a": 0.1094,
+          "b": 0.7384,
+          "n": 11
         },
         "intl_duty_auto": {
-          "a": 0.1829,
-          "b": 0.4384,
+          "a": 0.1896,
+          "b": 0.4571,
           "n": 2
         },
         "suspension_risk": {
-          "a": 0.0793,
-          "b": 0.737,
+          "a": 0.0853,
+          "b": 0.7582,
+          "n": 1
+        },
+        "sorare_app": {
+          "a": -0.0006,
+          "b": 1.0028,
           "n": 1
         }
       },
       "status": {},
       "loo": {
-        "raw": 0.289,
+        "raw": 0.2532,
         "calibrated": null,
         "with_status": false
       }
     }
   },
   "proj_loo": {
-    "raw": 15.482,
-    "calibrated": 15.554,
+    "raw": 14.985,
+    "calibrated": 15.052,
     "active": false
   },
   "proj_scale": {
     "value": 1.0,
-    "n": 88
+    "n": 104
   },
   "proj_scale_groups": {},
-  "brier_raw": 0.2031,
-  "brier_calibrated_in_sample": 0.1925
+  "brier_raw": 0.1962,
+  "brier_calibrated_in_sample": 0.1884
 }

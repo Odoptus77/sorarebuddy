@@ -348,6 +348,17 @@ Bouanga/Son/Blake standen mit hoher Klub-Quote im Entwurf, obwohl abgestellt.)
   (n zu klein), aber der Optimierer meldet „Torwart im Länderspiel nur mit
   Modell-Quote (Nummer 1 prüfen / App-%)“. Beim Deadline-Check jeden solchen
   Torwart recherchieren oder Nick nach den App-% fragen.
+- **Bilanz 07.10.2026 (169 Spiele, davon 25 neu aus GW719, Brier dort 0,168):**
+  Recherchierte Quoten im Mittelbereich (0,15–0,8, n=20) treffen im Schnitt
+  (vorhergesagt ≈ 0,49, real ≈ 0,50), sind aber **innerhalb** dieses Bereichs nicht
+  geordnet: 0,35–0,6 → 71 % gestartet, 0,6–0,8 → 38 %. Ein „unklarer“ Recherche-Fall
+  ist also praktisch ein Münzwurf. Keine Modelländerung (n zu klein, nicht monoton).
+  **Prozess-Lehre:** Beim letzten Check (14:50) standen Laporte und Baena in zwei
+  datierten Vorschauen in der Startelf, der Override blieb aber bei 0,5. Beide
+  starteten. Neue Belege beim finalen Check deshalb **sofort** in
+  `start_overrides.json` übernehmen und einen geloggten Lauf machen, nicht nur im Chat
+  nennen. GK-Alarm (Dúbravka → Greif spielte), Bank-Detektor (Wilson) und App-% (Noah
+  Allen 0 %) lagen richtig.
 - **Log-Reihenfolge:** `playerGameScores` kommt **most-recent-first** (Index 0 =
   neuestes Spiel) — Recency-Gewichtung und `played_projection` nutzen genau diese
   Reihenfolge (kein Umdrehen).
