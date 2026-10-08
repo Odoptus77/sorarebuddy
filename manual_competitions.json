@@ -1,5 +1,19 @@
 {
-  "_comment": "Wettbewerbe, die die Sorare-API NICHT ausgibt und die Nick mir pro Gameweek nennt. Key = Fixture-Slug -> gilt NUR für diese GW (danach automatisch veraltet, weil ein anderes Fixture aktuell ist). Felder je Eintrag: rarity, label, format, size, teams_cap, max_classic, hotstreak, national_confederation ('europe' = nur UEFA-Nationalspieler).",
+  "_comment": "Wettbewerbe, die die Sorare-API NICHT ausgibt und die Nick mir pro Gameweek nennt. Key = Fixture-Slug -> gilt NUR für diese GW (danach automatisch veraltet, weil ein anderes Fixture aktuell ist). Felder je Eintrag: rarity, label, format, size, teams_cap, max_classic, hotstreak, national_confederation ('europe' = nur UEFA-Nationalspieler). Optional 'fixed': Liste von Spieler-/Karten-Slugs, die Nick dort SCHON gesetzt hat (+ 'captain') -> wird nicht optimiert, die Karten verlassen nur den Pool (Single-Use).",
+  "football-9-13-oct-2026": [
+    {
+      "rarity": "limited",
+      "label": "Champions' Inferno (Stufe 1, von Nick gesetzt)",
+      "format": "Inferno",
+      "size": 5,
+      "teams_cap": 1,
+      "hotstreak": false,
+      "max_classic": 3,
+      "fixed": ["marko-dmitrovic", "abner-vinicius-da-silva-santos", "mads-bidstrup", "serhou-guirassy", "niclas-fullkrug"],
+      "captain": "serhou-guirassy",
+      "_note": "08.10.2026: 2 Inferno (Abner, Bidstrup) + 3 Classic; Aufstellung laut Nick gesetzt, genaue Besetzung noch zu bestätigen"
+    }
+  ],
   "football-23-25-sep-2026": [
     {
       "rarity": "limited",

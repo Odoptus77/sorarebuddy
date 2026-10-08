@@ -1364,6 +1364,9 @@ def main(argv):
                     "max_classic": m.get("max_classic", 1),
                     "national_confederation": m.get("national_confederation"),
                     "manual": True,
+                    # "fixed": player/card slugs Nick has ALREADY fielded there
+                    # (nothing is optimised; the cards just leave the pool)
+                    "fixed": m.get("fixed"), "captain": m.get("captain"),
                 })
                 print(f"  + manueller Wettbewerb: {m.get('label')}", file=sys.stderr)
         except (ValueError, OSError) as exc:
@@ -1629,6 +1632,51 @@ def main(argv):
 
     all_entries = sum(pools.values(), [])
 
+    # Lineups Nick has ALREADY set in a competition the API doesn't expose
+    # (e.g. the Champions' Inferno): declared as "fixed" (player or card
+    # slugs) on a manual competition. Nothing is optimised for them, but
+    # their cards leave the single-use pool before anything else is built,
+    # so no other lineup plans with a card that is already in use.
+    used_global = set()
+    fixed_comps = [c for c in comps if c.get("manual") and c.get("fixed")]
+    comps = [c for c in comps if c not in fixed_comps]
+    for comp in fixed_comps:
+        cards = []
+        for ref in comp["fixed"]:
+            key = _norm(ref)
+            cands_ = [e for e in pools.get(comp["rarity"], [])
+                      if e["slug"] not in used_global
+                      and key in (_norm(e["slug"]), _norm(e["player_slug"]))]
+            if not cands_:
+                print(f"WARNING: {comp['label']}: '{ref}' nicht im Pool (kein Spiel im "
+                      f"Fenster, verkauft oder Startquote < 10 %?)", file=sys.stderr)
+                continue
+            # the exact card if a card slug was given, else his in-season card
+            e = min(cands_, key=lambda x: (_norm(x["slug"]) != key, bool(x.get("is_classic"))))
+            c = dict(e); c["slot"] = (e.get("positions") or ["Extra"])[0]
+            cards.append(c); used_global.add(e["slug"])
+        if not cards:
+            continue
+        _ev_ = lambda c: c.get("ev", c["proj"])
+        cap_key = _norm(comp.get("captain") or "")
+        cap = next((c for c in cards if cap_key and _norm(c["player_slug"]) == cap_key), None) \
+            or max(cards, key=_ev_)
+        cap["captain"] = True
+        t = {"cards": cards, "complete": len(cards) == comp["size"],
+             "cap_used": round(sum(c["cap_score"] for c in cards), 1), "over_cap": False,
+             "projected_total": round(sum(c["proj"] for c in cards) + cap["proj"], 1),
+             "expected_total": round(sum(_ev_(c) for c in cards) + _ev_(cap), 1),
+             "avg_start": round(sum(c.get("start_prob", 0) for c in cards) / len(cards), 3),
+             "min_start": round(min(c.get("start_prob", 0) for c in cards), 3),
+             "risk_floor": None, "fixed": True}
+        w0, w1 = window([t])
+        out["competitions"].append({**{k: comp[k] for k in
+                                    ("rarity", "label", "format", "mode", "size", "cap", "teams_cap")},
+                                    "in_season": True, "prize_weight": None, "fixed": True,
+                                    "deadline_first": w0, "deadline_last": w1, "teams": [t]})
+        print(f"  {comp['rarity']} · {comp['label']} [gesetzt]: {len(cards)}/{comp['size']} Karten "
+              f"(EV{t['expected_total']}) aus dem Pool genommen", file=sys.stderr)
+
     def build_pool(comp, avail):
         # Contender Hot Streak: 4 in-season Contender-league cards + 1 classic
         # from ANY league (blog rule), so widen the pool with all classics.
@@ -1677,7 +1725,7 @@ def main(argv):
     # field near-certain starters; each further team relaxes the floor so the
     # weaker teams can take upside punts.
     START_FLOORS = [0.75, 0.55, 0.40, 0.25]
-    used_global = set()
+    # used_global already holds the cards of fixed (manually set) lineups
     for comp in comps:
         teams = []
         # Single-use pool across ALL competitions (incl. manual/API-invisible

@@ -200,6 +200,14 @@ verfügbar; NIE jemanden auf einer unbestätigten/alten Meldung benchen.**
   Wettbewerben (z. B. In-Season-Pavlidis in der HS, Classic-Pavlidis in All-Star).
 - Felder je Eintrag: `rarity, label, format, size, teams_cap, max_classic,
   hotstreak, national_confederation` (`"europe"` = nur UEFA-Nationalspieler).
+- **Von Nick bereits gesetzte Teams (`"fixed"`, seit 08.10.2026):** Hat Nick in
+  einem API-unsichtbaren Wettbewerb schon eine Aufstellung gesetzt (Anlass:
+  Champions' Inferno, Stufe 1, GW720), dann `"fixed": ["player-slug", …]` (+
+  `"captain"`) in den Eintrag. Der Optimierer rechnet dort nichts, nimmt die Karten
+  aber **zuerst aus dem Single-Use-Pool** und zeigt das Team als `[gesetzt]` —
+  sonst würde er z. B. Guirassy nochmal als All-Star-Kapitän verplanen. Spieler
+  ohne Spiel im Fenster / mit Startquote < 10 % lösen eine WARNING aus. Karten-
+  Slug statt Spieler-Slug, wenn Nick mehrere Karten des Spielers hat.
 
 ### National-Abstellungen in Länderspielpausen (Optimierer erkennt sie)
 
