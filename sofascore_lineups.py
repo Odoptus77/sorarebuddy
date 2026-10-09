@@ -139,8 +139,11 @@ def search_team(name, cache=None):
     for q in _candidates(name):
         try:
             d = _get("/search/all?q=" + urllib.parse.quote(q))
+            # men's teams only: "RCD Espanyol de Barcelona" is SofaScore's name
+            # for the WOMEN's side (gender F), the men play as "Espanyol"
             cands = [(r.get("entity") or {}) for r in (d.get("results") or [])
-                     if r.get("type") == "team"]
+                     if r.get("type") == "team"
+                     and (r.get("entity") or {}).get("gender") != "F"]
         except Exception as e:
             print(f"  search '{q}' failed: {type(e).__name__}", file=sys.stderr)
             cands = []

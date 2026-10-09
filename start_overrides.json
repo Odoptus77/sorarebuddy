@@ -1,6 +1,6 @@
 {
   "_comment": "Researched START probabilities (--start-override). Jeder Wert ist an EINE GW gebunden (_fixture bzw. 'fixture' je Eintrag) und verfällt danach automatisch. 'researched' = Recherchedatum; hat der Spieler danach erneut gespielt, meldet lineup_suggest den Override als veraltet (neu prüfen). GRUNDREGEL #0: nur datumsgeprüfte Werte.",
-  "_updated": "2026-10-02",
+  "_updated": "2026-10-09",
   "_sources": {
     "gw717_md1_2026-09-26": "Nations League MD1 am 26.09.2026 (Gruppe 3 = ESP/CRO/ENG/CZE; ESP 3-2 ENG). Sorare-Spiel-Log (mins_played, last games) je Spieler abgefragt am 28.09.2026 -> wer MD1 startete, ist der stärkste MD2-Indikator.",
     "spain_2026-09-28": "ESP vs CRO 29.09. (yahoo/ESPN preview, 27.09.): Unai Simón 90' MD1 -> #1 (0.90); Laporte 90' MD1 -> gesetzt (0.90); Baena nur 35' (Joker) -> Rotation (0.40, unbestätigt); Grimaldo 0' MD1 (Cucurella LB) -> Ersatz (0.30, unbestätigt).",
@@ -30,7 +30,9 @@
     "norway_gw718_2026-10-02": "NOR vs POR 04.10.: Sorare-App 20 % für Aursnes (Nick, 02.10.). Spiel-Log: Start 24.09. (66'), 27.09. (90'), 01.10. (45').",
     "germany_gw718_2026-10-02": "GER vs GRE 04.10.: Schlotterbeck AUS - Außenbandverletzung rechtes Sprunggelenk (bundesliga.com 30.09.2026) + Spiel-Log: nicht im Kader 27.09. und 01.10. -> 0. Burkardt: Spiel-Log nur Joker (27.09. 25', 01.10. 13'), Woltemade startete 01.10. (77'); Vorschau (bavarianfootballworks, Datum nicht prüfbar/403) sieht Klopp eher bei der Serbien-Elf -> 0.35 (unbestätigt).",
     "gw719_2026-10-06": "Vorschauen vom 06.10.2026: thehardtackle + GiveMeSport (ENG-CZE): Pickford startet (Trafford hatte MD1/MD2), Krejčí gesperrt (Gelb-Rot vs ESP 03.10.), CZE-Tor Kinský (nicht Kovář), IV Chaloupek/Vitík/Šlama/Sacek (ohne Hranáč), Hložek vorn. Sports Mole + SI (CRO-ESP): Simón im Tor; Laporte und Baena nur bei SI (Sports Mole: Huijsen, Muñoz); Perišić in KEINER der beiden Elfen (Spiel-Log: 3× Start, aber 0:7 gegen England -> Umbau erwartet). Spiel-Log-Muster: Laporte/Simón/Kovář/Hranáč rotieren je Spiel.",
-    "gw719_app_2026-10-06": "Nick, App 06.10.: Noah Allen (Chicago Fire) 0 %."
+    "gw719_app_2026-10-06": "Nick, App 06.10.: Noah Allen (Chicago Fire) 0 %.",
+    "psv_gw720_2026-10-09": "PSV-Heerenveen 09.10. 20:00: voetbalprimeur (Video, 08.10.2026) + feanonline/Eindhovens Dagblad (08.10.2026), Bosz-PK vom Donnerstag: Wanner 'herstart komt te vroeg' (verletzt aus der Länderspielpause) -> 0.05; Geertruida nach Verletzung 'zou het kunnen halen' -> 0.35; Dest (spielte Di-Nacht) + Perišić (Di 79') - Bosz entscheidet nach Gespräch, SofaScore-XI ohne beide -> je 0.5 (unbestätigt). Keine neuen Verletzungen.",
+    "lukeba_gw720_2026-10-09": "Lukeba (RB Leipzig vs Frankfurt 10.10.): Sorare activeInjuries 'Groin Injury' bis 11.10.2026 + Spiel-Log: kein Einsatz seit 13.09. (DNP 20.09.). SofaScore hat ihn trotzdem in der voraussichtlichen XI (vermutlich alte Elf) -> 0.2."
   },
   "_fixture": "football-1-2-oct-2026",
   "_researched": "2026-09-28",
@@ -54,9 +56,9 @@
     "researched": "2026-09-29"
   },
   "ivan-perisic": {
-    "p": 0.45,
-    "fixture": "football-7-9-oct-2026",
-    "researched": "2026-10-06"
+    "p": 0.5,
+    "fixture": "football-9-13-oct-2026",
+    "researched": "2026-10-09"
   },
   "remo-freuler": 0.92,
   "djibril-sow": 0.35,
@@ -219,5 +221,25 @@
     "fixture": "football-7-9-oct-2026",
     "researched": "2026-10-06",
     "src": "sorare_app"
+  },
+  "paul-wanner": {
+    "p": 0.05,
+    "fixture": "football-9-13-oct-2026",
+    "researched": "2026-10-09"
+  },
+  "lutsharel-geertruida": {
+    "p": 0.35,
+    "fixture": "football-9-13-oct-2026",
+    "researched": "2026-10-09"
+  },
+  "sergino-dest": {
+    "p": 0.5,
+    "fixture": "football-9-13-oct-2026",
+    "researched": "2026-10-09"
+  },
+  "castello-lukeba": {
+    "p": 0.2,
+    "fixture": "football-9-13-oct-2026",
+    "researched": "2026-10-09"
   }
 }
