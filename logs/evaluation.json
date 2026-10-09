@@ -1,17 +1,17 @@
 {
-  "updated": "2026-10-08T06:53:36.866822+00:00",
-  "evaluated": 171,
+  "updated": "2026-10-09T06:53:49.440227+00:00",
+  "evaluated": 172,
   "pending": 0,
-  "upcoming": 366,
-  "brier": 0.2002,
-  "brier_raw": 0.1995,
-  "start_rate": 0.515,
+  "upcoming": 368,
+  "brier": 0.2014,
+  "brier_raw": 0.2008,
+  "start_rate": 0.512,
   "by_source": {
     "model": {
-      "n": 85,
-      "mean_pred": 0.685,
-      "actual": 0.612,
-      "brier": 0.2246
+      "n": 86,
+      "mean_pred": 0.684,
+      "actual": 0.605,
+      "brier": 0.2268
     },
     "researched": {
       "n": 56,
@@ -66,7 +66,7 @@
       "started": 47
     },
     "REGULAR": {
-      "n": 72,
+      "n": 73,
       "started": 31
     },
     "SUBSTITUTE": {
@@ -83,9 +83,9 @@
     }
   },
   "projection": {
-    "n": 104,
-    "mae": 14.98,
-    "bias": 1.01,
+    "n": 105,
+    "mae": 15.07,
+    "bias": 0.77,
     "groups": {
       "Midfielder|national": {
         "n": 34,
@@ -121,6 +121,11 @@
         "n": 3,
         "bias": -14.27,
         "mae": 23.0
+      },
+      "Midfielder|club": {
+        "n": 1,
+        "bias": -24.8,
+        "mae": 24.8
       }
     }
   },
