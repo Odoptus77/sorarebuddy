@@ -32,7 +32,8 @@
     "gw719_2026-10-06": "Vorschauen vom 06.10.2026: thehardtackle + GiveMeSport (ENG-CZE): Pickford startet (Trafford hatte MD1/MD2), Krejčí gesperrt (Gelb-Rot vs ESP 03.10.), CZE-Tor Kinský (nicht Kovář), IV Chaloupek/Vitík/Šlama/Sacek (ohne Hranáč), Hložek vorn. Sports Mole + SI (CRO-ESP): Simón im Tor; Laporte und Baena nur bei SI (Sports Mole: Huijsen, Muñoz); Perišić in KEINER der beiden Elfen (Spiel-Log: 3× Start, aber 0:7 gegen England -> Umbau erwartet). Spiel-Log-Muster: Laporte/Simón/Kovář/Hranáč rotieren je Spiel.",
     "gw719_app_2026-10-06": "Nick, App 06.10.: Noah Allen (Chicago Fire) 0 %.",
     "psv_gw720_2026-10-09": "PSV-Heerenveen 09.10. 20:00: voetbalprimeur (Video, 08.10.2026) + feanonline/Eindhovens Dagblad (08.10.2026), Bosz-PK vom Donnerstag: Wanner 'herstart komt te vroeg' (verletzt aus der Länderspielpause) -> 0.05; Geertruida nach Verletzung 'zou het kunnen halen' -> 0.35; Dest (spielte Di-Nacht) + Perišić (Di 79') - Bosz entscheidet nach Gespräch, SofaScore-XI ohne beide -> je 0.5 (unbestätigt). Keine neuen Verletzungen.",
-    "lukeba_gw720_2026-10-09": "Lukeba (RB Leipzig vs Frankfurt 10.10.): Sorare activeInjuries 'Groin Injury' bis 11.10.2026 + Spiel-Log: kein Einsatz seit 13.09. (DNP 20.09.). SofaScore hat ihn trotzdem in der voraussichtlichen XI (vermutlich alte Elf) -> 0.2."
+    "lukeba_gw720_2026-10-09": "Lukeba (RB Leipzig vs Frankfurt 10.10.): Sorare activeInjuries 'Groin Injury' bis 11.10.2026 + Spiel-Log: kein Einsatz seit 13.09. (DNP 20.09.). SofaScore hat ihn trotzdem in der voraussichtlichen XI (vermutlich alte Elf) -> 0.2.",
+    "wanner_gw721_2026-10-09": "Wanner (PSV vs Leipzig 13.10., CL): Bosz-PK 08.10.2026 (feanonline/Eindhovens Dagblad): verletzt aus der Länderspielpause zurück, 'herstart komt te vroeg'; Bosz am 02.10.: 'aantal weken' -> 0.05 auch für GW721 (vor Di-Deadline neu prüfen)."
   },
   "_fixture": "football-1-2-oct-2026",
   "_researched": "2026-09-28",
@@ -224,7 +225,7 @@
   },
   "paul-wanner": {
     "p": 0.05,
-    "fixture": "football-9-13-oct-2026",
+    "fixture": "football-13-16-oct-2026",
     "researched": "2026-10-09"
   },
   "lutsharel-geertruida": {
