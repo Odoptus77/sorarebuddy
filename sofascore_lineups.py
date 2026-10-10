@@ -22,6 +22,14 @@ XI_TTL seconds) so back-to-back optimizer runs don't hammer the API.
 CLI:
     python3 sofascore_lineups.py "Real Madrid"      # show next-match XI
     python3 sofascore_lineups.py --ping             # connectivity check
+    python3 sofascore_lineups.py --audit            # list cached team ids
+                                                    # (flags women's/reserve/
+                                                    # namesake resolutions)
+
+Team resolution (since 10.10.2026): all search hits for the name variants are
+pooled, women's sides and reserve/youth teams are dropped (unless the Sorare
+name itself is a reserve team) and the most popular remaining team wins; an
+exact name match only wins when it is at least a third as popular.
 """
 import json
 import os
@@ -63,7 +71,31 @@ _STOP = {"spor", "kulubu", "calcio", "sv", "sk", "fc", "cs", "cf", "ac", "ca", "
          "ud", "de", "futbol", "bergamasca", "puntigamer", "tumosan", "yeni", "deportivo",
          "funchal", "kieler", "1900", "1895", "1902", "club", "clube"}
 _ALIASES = {"fcinternazionalemilano": "Inter",
-            "realsociedaddefutboliisanse": "Real Sociedad B"}
+            "realsociedaddefutboliisanse": "Real Sociedad B",
+            "sportingclubedeportugal": "Sporting CP",
+            "korearepublic": "South Korea"}
+# Sorare localises some national-team names to German ("Deutschland",
+# "Türkei", "Republik Moldau"); SofaScore's search wants the English names.
+_NATION_DE = {
+    "Deutschland": "Germany", "Spanien": "Spain", "Frankreich": "France",
+    "Italien": "Italy", "Österreich": "Austria", "Schweiz": "Switzerland",
+    "Schweden": "Sweden", "Norwegen": "Norway", "Dänemark": "Denmark",
+    "Kroatien": "Croatia", "Serbien": "Serbia", "Slowenien": "Slovenia",
+    "Slowakei": "Slovakia", "Tschechien": "Czechia", "Ungarn": "Hungary",
+    "Griechenland": "Greece", "Türkei": "Türkiye", "Bulgarien": "Bulgaria",
+    "Rumänien": "Romania", "Estland": "Estonia", "Lettland": "Latvia",
+    "Litauen": "Lithuania", "Georgien": "Georgia", "Irland": "Ireland",
+    "Nordirland": "Northern Ireland", "Schottland": "Scotland",
+    "Nordmazedonien": "North Macedonia", "Republik Moldau": "Moldova",
+    "Bosnien und Herzegowina": "Bosnia & Herzegovina", "Belgien": "Belgium",
+    "Polen": "Poland", "Niederlande": "Netherlands", "Finnland": "Finland",
+    "Russland": "Russia", "Albanien": "Albania", "Zypern": "Cyprus",
+    "Luxemburg": "Luxembourg", "Island": "Iceland", "Kasachstan": "Kazakhstan",
+    "Armenien": "Armenia", "Aserbaidschan": "Azerbaijan", "Weißrussland": "Belarus",
+    "Färöer": "Faroe Islands", "Färöer-Inseln": "Faroe Islands",
+}
+for _de, _en in _NATION_DE.items():
+    _ALIASES.setdefault(_norm(_de), _en)
 
 
 def _candidates(name):
@@ -128,6 +160,49 @@ def _save_team_cache(c):
     _save_json(_TEAM_CACHE, c)
 
 
+# reserve / youth sides ("Espanyol B", "Leeds United U21", "Chicago Fire FC II",
+# "YRKV Mechelen Reserve", "Juventus Next Gen U23")
+_RESERVE = re.compile(r"(?:^|[\s.])(?:U\d{2}|B|II|III|Reserves?|Next Gen|Youth|"
+                      r"Amateure|Jong|Academy|Sub-?\d{2})(?=$|[\s.])", re.I)
+
+
+def _is_reserve(name):
+    return bool(_RESERVE.search(name or ""))
+
+
+def _pick(pool, keys, want_reserve):
+    """Most popular men's team (SofaScore userCount) among the search hits.
+
+    Audit 10.10.2026: exact-name matching picked doppelgängers with a handful of
+    followers ("Arsenal FC" from Guinea-Bissau, "Juventus FC" with 45 users,
+    "CA Boca Juniors" with 182) and reserve/women's sides ("Espanyol B",
+    "Chelsea FC" = the women's team) over the obvious first teams (millions of
+    users). Popularity is the robust signal; an exact name match only wins when
+    it is at least a third as popular as the top hit."""
+    cands = [e for e in pool.values()
+             if e.get("gender") != "F" and _is_reserve(e.get("name")) == want_reserve]
+    if not cands:
+        return None
+    users = lambda e: e.get("userCount") or 0
+    # national teams: only by exact name ("Portugal"), never as the popular
+    # namesake of a club ("Sporting Clube de Portugal" -> Portugal NT)
+    is_exact = lambda e: _norm(e.get("name")) in keys or _norm(e.get("shortName")) in keys
+    nat = [e for e in cands if e.get("national")]
+    exact_nat = [e for e in nat if is_exact(e)]
+    if exact_nat:
+        return max(exact_nat, key=users)
+    clubs = [e for e in cands if not e.get("national")]
+    if clubs and max(users(e) for e in clubs) >= 1000:
+        cands = clubs
+    top = max(cands, key=users)
+    exact = [e for e in cands if is_exact(e)]
+    if exact:
+        ex = max(exact, key=users)
+        if users(ex) >= 0.3 * users(top):
+            return ex
+    return top
+
+
 def search_team(name, cache=None):
     """Return a SofaScore team id for a club name (best match), or None."""
     if cache is None:
@@ -135,34 +210,53 @@ def search_team(name, cache=None):
     key = _norm(name)
     if cache.get(key):
         return cache[key]
-    tid = None
-    for q in _candidates(name):
+    queries = _candidates(name)
+    keys = {key, _norm(_ALIASES.get(key, ""))} - {""}
+    want_reserve = any(_is_reserve(q) for q in queries)
+    pool = {}
+    for q in queries:
         try:
             d = _get("/search/all?q=" + urllib.parse.quote(q))
-            # men's teams only: "RCD Espanyol de Barcelona" is SofaScore's name
-            # for the WOMEN's side (gender F), the men play as "Espanyol"
-            cands = [(r.get("entity") or {}) for r in (d.get("results") or [])
-                     if r.get("type") == "team"
-                     and (r.get("entity") or {}).get("gender") != "F"]
+            for r in (d.get("results") or []):
+                ent = r.get("entity") or {}
+                if r.get("type") == "team" and ent.get("id"):
+                    pool.setdefault(ent["id"], ent)
         except Exception as e:
             print(f"  search '{q}' failed: {type(e).__name__}", file=sys.stderr)
-            cands = []
         time.sleep(PACE)
-        if not cands:
-            continue
-        # exact normalized match (on the Sorare name or this query) first,
-        # else the first team SofaScore ranks for the query
-        qk = _norm(q)
-        best = next((ent for ent in cands
-                     if _norm(ent.get("name")) in (key, qk)
-                     or _norm(ent.get("shortName")) in (key, qk)), cands[0])
-        tid = best.get("id")
-        if tid:
-            break
+    best = _pick(pool, keys, want_reserve)
+    tid = best.get("id") if best else None
     if tid:                                  # misses are retried next run
         cache[key] = tid
         _save_team_cache(cache)
     return tid
+
+
+def audit_cache():
+    """Print every cached team id with SofaScore's name/gender/popularity so a
+    wrong resolution (women's side, reserve team, namesake) is visible."""
+    cache = _load_team_cache()
+    bad = 0
+    for key, tid in sorted(cache.items()):
+        try:
+            t = _get(f"/team/{tid}").get("team") or {}
+        except Exception as e:
+            print(f"  {key:40s} {tid:>8} ERR {type(e).__name__}")
+            continue
+        nm = t.get("name") or "?"
+        flag = ""
+        reserve_ok = _is_reserve(_ALIASES.get(key, ""))      # Sanse is meant
+        keys = {key, _norm(_ALIASES.get(key, ""))} - {""}
+        nat_ok = _norm(nm) in keys or _norm(t.get("shortName")) in keys
+        if t.get("gender") == "F" or (_is_reserve(nm) and not reserve_ok) \
+                or (t.get("national") and not nat_ok) \
+                or (t.get("userCount") or 0) < 1000:
+            flag = "  <-- CHECK"
+            bad += 1
+        print(f"  {key:40s} {tid:>8} {nm:35s} g={t.get('gender')} "
+              f"users={t.get('userCount')}{flag}")
+        time.sleep(PACE / 2)
+    print(f"{len(cache)} teams, {bad} flagged")
 
 
 def _next_event(team_id):
@@ -254,6 +348,9 @@ def main(argv):
         return
     if argv[0] == "--ping":
         print("OK" if ping() else "UNREACHABLE")
+        return
+    if argv[0] == "--audit":
+        audit_cache()
         return
     name = argv[0]
     tid = search_team(name)

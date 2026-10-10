@@ -1,11 +1,11 @@
 {
-  "_updated": "2026-10-09T06:53:49.440227+00:00",
-  "n": 172,
+  "_updated": "2026-10-10T06:53:02.985354+00:00",
+  "n": 208,
   "min_n": 30,
   "active": true,
   "global": {
-    "a": -0.0504,
-    "b": 0.6558
+    "a": 0.0073,
+    "b": 0.6332
   },
   "by_type": {
     "national": {
@@ -56,58 +56,73 @@
       }
     },
     "club": {
-      "n": 17,
+      "n": 53,
       "min_n": 20,
-      "active": false,
+      "active": true,
       "global": {
-        "a": 0.0606,
-        "b": 0.7182
+        "a": 0.1415,
+        "b": 0.6266
       },
       "sources": {
         "apif_doubtful": {
-          "a": 0.0408,
-          "b": 0.7399,
+          "a": 0.1193,
+          "b": 0.651,
           "n": 1
         },
         "model": {
-          "a": 0.046,
-          "b": 0.7071,
-          "n": 12
+          "a": 0.1427,
+          "b": 0.473,
+          "n": 29
         },
         "intl_duty_auto": {
-          "a": 0.1552,
-          "b": 0.4406,
+          "a": 0.2291,
+          "b": 0.3694,
           "n": 2
         },
         "suspension_risk": {
-          "a": 0.0511,
-          "b": 0.7409,
+          "a": 0.1295,
+          "b": 0.6553,
           "n": 1
         },
         "sorare_app": {
           "a": -0.0006,
           "b": 1.0028,
           "n": 1
+        },
+        "sofa_pred_start": {
+          "a": 0.0451,
+          "b": 1.0347,
+          "n": 14
+        },
+        "researched": {
+          "a": 0.1034,
+          "b": 0.6677,
+          "n": 4
+        },
+        "sofa_pred_out": {
+          "a": 0.0474,
+          "b": 0.94,
+          "n": 1
         }
       },
       "status": {},
       "loo": {
-        "raw": 0.263,
-        "calibrated": null,
+        "raw": 0.2376,
+        "calibrated": 0.2276,
         "with_status": false
       }
     }
   },
   "proj_loo": {
-    "raw": 15.062,
-    "calibrated": 15.166,
+    "raw": 15.144,
+    "calibrated": 15.214,
     "active": false
   },
   "proj_scale": {
     "value": 1.0,
-    "n": 105
+    "n": 135
   },
   "proj_scale_groups": {},
-  "brier_raw": 0.2008,
-  "brier_calibrated_in_sample": 0.1917
+  "brier_raw": 0.2051,
+  "brier_calibrated_in_sample": 0.1903
 }

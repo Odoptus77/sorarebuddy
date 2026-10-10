@@ -208,6 +208,12 @@ verfügbar; NIE jemanden auf einer unbestätigten/alten Meldung benchen.**
   sonst würde er z. B. Guirassy nochmal als All-Star-Kapitän verplanen. Spieler
   ohne Spiel im Fenster / mit Startquote < 10 % lösen eine WARNING aus. Karten-
   Slug statt Spieler-Slug, wenn Nick mehrere Karten des Spielers hat.
+  **Lehre GW720 (10.10.2026):** Beim Zusammenstellen eines solchen Teams **jede**
+  Karte (auch die Classic-Karten, nicht nur die neu gescouteten) vor der Deadline
+  einzeln datiert prüfen (Presse ≤ 7 Tage + SofaScore-XI). Dmitrović (TW, 93 %
+  Modell) stand nicht im Tor — ein Artikel vom 03.10. hatte den Wechsel zu
+  Fortuño angedeutet, ich hatte nur die Inferno-Karten recherchiert. Das
+  Inferno-Team kam so auf ~182 statt 320 Punkte.
 
 ### National-Abstellungen in Länderspielpausen (Optimierer erkennt sie)
 
@@ -290,8 +296,28 @@ Bouanga/Son/Blake standen mit hoher Klub-Quote im Entwurf, obwohl abgestellt.)
   Namens-Tokens (deckt „Minjae Kim" vs „Kim Min-jae", „Alejandro" vs „Álex
   Grimaldo"). Teamnamen: Sorares lange Namen werden um Sponsor-/Rechtsform-Tokens
   gekürzt („SK Puntigamer Sturm Graz" → „Sturm Graz", „Trabzonspor Kulübü");
-  Aliase in `sofascore_lineups._ALIASES` (Inter, Sanse). Testlauf 07.10.: 140 Teams
-  alle gefunden, 102 mit XI, 268 Spieler mit Signal.
+  Aliase in `sofascore_lineups._ALIASES` (Inter, Sanse, Sporting CP, South Korea)
+  + deutsche Nationsnamen (`_NATION_DE`: „Deutschland" → Germany …). Testlauf
+  07.10.: 140 Teams alle gefunden, 102 mit XI, 268 Spieler mit Signal.
+- **Team-Auflösung nach Popularität (seit 10.10.2026, Anlass Dmitrović):** Der
+  Cache-Audit nach der Bilanz 10.10. fand **22 von 140 Teams falsch aufgelöst**:
+  Frauenteams (Chelsea, Villarreal, Sporting, Standard, Nice, Rio Ave, Marítimo,
+  Racing), Reserve-/Jugendteams (Espanyol **B**, Leeds U21, Bologna U19, Chicago
+  Fire II, Mechelen Reserve) und Namensvettern mit einer Handvoll Followern
+  („Arsenal FC" aus Guinea-Bissau, „Juventus FC" mit 45 Nutzern, Boca, River,
+  Beşiktaş, Toulouse, Aston Villa, QPR statt Rangers, Benfica-Nebenverein). Der
+  exakte Namensabgleich war die Falle. Jetzt: alle Treffer der Namensvarianten
+  werden gesammelt, Frauen- und Reserveteams fliegen raus (außer der Sorare-Name
+  ist selbst ein B-Team), Nationalteams nur bei exaktem Namen, dann gewinnt das
+  Team mit den meisten SofaScore-Followern (`userCount`); ein exakter Name nur,
+  wenn er mindestens ein Drittel so populär ist. **`python3 sofascore_lineups.py
+  --audit`** listet den Cache mit Name/Geschlecht/Followern und markiert
+  Verdachtsfälle — nach jeder Änderung an der Auflösung laufen lassen. Ergebnis
+  10.10.: 87 Teams, 0 markiert; GW721-Pool 72 Teams, 55 mit XI (vorher 48).
+  Folge für die Bilanz: Für die betroffenen Klubs gab es bis 10.10. **kein**
+  SofaScore-Signal (Dmitrović 93 % Modell → spielte nicht; Espanyol war als
+  Espanyol B aufgelöst), Fehlsignale sind wegen des Anstoß-Abgleichs (±3 h)
+  nicht aufgetreten.
 - **Beim Deadline-Check:** die stderr-Zeile „SofaScore sieht nicht in der Startelf
   (prüfen, auch Namensabgleich)" durchgehen — v. a. Spieler mit Sorare-Status
   STARTER (erscheinen zusätzlich unter „Sorare-Status widerspricht Startquote").
@@ -412,6 +438,25 @@ Bouanga/Son/Blake standen mit hoher Klub-Quote im Entwurf, obwohl abgestellt.)
   `start_overrides.json` übernehmen und einen geloggten Lauf machen, nicht nur im Chat
   nennen. GK-Alarm (Dúbravka → Greif spielte), Bank-Detektor (Wilson) und App-% (Noah
   Allen 0 %) lagen richtig.
+- **Bilanz 10.10.2026 (208 Spiele, davon 37 neu = Freitag GW720, erste Klub-GW
+  mit SofaScore):** `sofa_pred_start` **12 von 14 gestartet** (vorhergesagt 79 %,
+  real 86 %, Brier 0,13) — hob Bidstrup (31 → 66 %), Mads (33 → 67 %), Openda
+  (43 → 70 %) und Kovář (51 → 73 %) richtig in die Startelf; Sané und Haidara
+  kamen nur von der Bank. Startwert 0,85 bleibt (passt). `sofa_pred_out` 1 von 1
+  daneben (Schlotterbeck 22 % → 90 Min.; Sorare-Status-Alarm hatte gewarnt) →
+  n=1, keine Änderung, Gewicht 0,5 bleibt. **Reines Klub-Modell** (n=29) ist an
+  den Rändern falsch: ≥ 90 % vorhergesagt → 71 % gestartet, < 50 % → 60 %
+  gestartet. Die **Klub-Kalibrierung ist seit diesem Lauf aktiv** (n=53,
+  b≈0,63, Leave-one-out 0,238 → 0,228) und zieht genau das zur Mitte.
+  **Torhüter im Klubspiel** werden in der Projektion um ~21 Punkte unterschätzt
+  (n=5: Kovář 85 vs. 41, Brey 74 vs. 29, Park 68 vs. 49) → noch kein Eingriff,
+  `proj_scale_groups` lernt es ab 8 Spielen selbst. **Fehlgriffe:** Dmitrović
+  93 % Modell → 0 Min. (El Gol Digital hatte am 03.10. den Torwartwechsel zu
+  Fortuño angedeutet; Espanyol war bei SofaScore falsch aufgelöst, s. o.), Lee
+  You-hyeon 93 % → Joker, Hwang Seo-woong 79 % → nicht im Kader (K-League nur
+  Modell, keine SofaScore-Abdeckung geprüft). Recherche-Overrides (Dest 0,5 →
+  Start, Perišić 0,5 → Joker, Geertruida 0,35 → fehlte, Wanner 0,05 → fehlte)
+  lagen im Rahmen.
 - **Log-Reihenfolge:** `playerGameScores` kommt **most-recent-first** (Index 0 =
   neuestes Spiel) — Recency-Gewichtung und `played_projection` nutzen genau diese
   Reihenfolge (kein Umdrehen).
