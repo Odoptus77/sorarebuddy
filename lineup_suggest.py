@@ -768,9 +768,14 @@ def sorare_start_odds(pd):
 # teamsheet (~1 h before kickoff) replaces it. Sources are logged separately
 # (sofa_pred_start / sofa_pred_bench / sofa_conf_*) so evaluate.py measures
 # them on their own and learns their calibration.
-SOFA_PRED_W = 0.65          # weight of the predicted XI vs. the model prob
+SOFA_PRED_W = 0.65          # weight of the predicted XI vs. the model prob (bench)
 SOFA_PRED_OUT_W = 0.5       # ... when he is merely MISSING from a full predicted XI
-SOFA_PRED_START = 0.85
+# 11.10.2026 (Treffer-Bilanz, n=105 pred_start): inside the predicted XI the
+# model prob carries little information (model < 0.5 -> 88 % started), so the
+# XI gets more weight and a lower target. 0.65/0.85 -> 0.80/0.80: Brier
+# 0.1490 -> 0.1449, better on both the early and the late half of the games.
+SOFA_PRED_START_W = 0.80
+SOFA_PRED_START = 0.80
 SOFA_PRED_BENCH = 0.18
 SOFA_CONF_START = 0.95
 SOFA_CONF_BENCH = 0.08
@@ -1486,8 +1491,8 @@ def main(argv):
                 st = sig[1]
                 p = e["start_prob"]
                 if st:          # two agreeing signals never lower the prob
-                    e["start_prob"] = round(max(p, (1 - SOFA_PRED_W) * p
-                                                + SOFA_PRED_W * SOFA_PRED_START), 3)
+                    e["start_prob"] = round(max(p, (1 - SOFA_PRED_START_W) * p
+                                                + SOFA_PRED_START_W * SOFA_PRED_START), 3)
                     e["start_src"], e["sofa_status"] = "sofa_pred_start", "pred_start"
                 elif st is False:
                     e["start_prob"] = round((1 - SOFA_PRED_W) * p

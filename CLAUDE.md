@@ -279,8 +279,9 @@ Bouanga/Son/Blake standen mit hoher Klub-Quote im Entwurf, obwohl abgestellt.)
   Nationalteams) die nächste Partie auf SofaScore auf und übernimmt die
   XI **nur, wenn es dieselbe Partie ist** (Anstoß ±3 h; sonst z. B. Pokalspiel
   dazwischen → kein Signal). Quellen im Log/`start_src`:
-  - `sofa_pred_start` (in der voraussichtlichen XI): `max(p, 0,35·p + 0,65·0,85)` —
-    zwei übereinstimmende Signale senken die Quote nie;
+  - `sofa_pred_start` (in der voraussichtlichen XI): `max(p, 0,2·p + 0,8·0,80)` —
+    zwei übereinstimmende Signale senken die Quote nie (bis 11.10.2026:
+    `0,35·p + 0,65·0,85`, s. Bilanz 11.10.);
   - `sofa_pred_bench` (explizit Bank; voraussichtliche XIs haben meist keine Bank):
     `0,35·p + 0,65·0,18`;
   - `sofa_pred_out` (volle XI ≥ 11 Namen veröffentlicht, Spieler fehlt):
@@ -457,6 +458,29 @@ Bouanga/Son/Blake standen mit hoher Klub-Quote im Entwurf, obwohl abgestellt.)
   Modell, keine SofaScore-Abdeckung geprüft). Recherche-Overrides (Dest 0,5 →
   Start, Perišić 0,5 → Joker, Geertruida 0,35 → fehlte, Wanner 0,05 → fehlte)
   lagen im Rahmen.
+- **Bilanz 11.10.2026 (437 Spiele, davon 229 neu = Wochenende GW720):** Brier
+  gesamt 0,186 (Basisrate 0,247). **SofaScore trägt:** `sofa_pred_start` n=105,
+  vorhergesagt 82 %, real 81 %; gegenüber dem Modell allein Brier 0,178 → 0,149.
+  `sofa_pred_out` n=69, vorhergesagt 30 %, real 25 %; Modell allein 0,222 → 0,183.
+  Ausfall-Signale 72 von 95 richtig. **Innerhalb der voraussichtlichen XI sagt
+  das Modell kaum noch etwas:** Modell < 50 % → 88 % gestartet, 50–70 % → 52 %.
+  Schwachpunkt: Klub-Status REGULAR + `pred_start` (n=17) 77 % vorhergesagt, 53 %
+  real. **Geändert:** `pred_start`-Gewicht 0,65 → 0,80, Zielwert 0,85 → 0,80
+  (`SOFA_PRED_START_W`). Brier dieser Quelle 0,1490 → 0,1449, in beiden
+  Zeithälften besser (0,136 → 0,130 und 0,162 → 0,160). Das Optimum im Raster
+  (Gewicht 1,0, Ziel 0,70) gewinnt nur in der frühen Hälfte → bewusst nicht
+  genommen. **Nicht geändert:** `pred_out` (10-fach-Kreuzvalidierung der
+  gefitteten Werte 0,193 schlechter als die aktuellen 0,183). Die
+  **Klub-Kalibrierung ist wieder neutral** (n=282, im Leave-one-out kein Gewinn
+  mehr, weil die SofaScore-Quoten jetzt den Großteil tragen); der
+  **Projektions-Faktor ist erstmals aktiv** (0,976, LOO-MAE 14,37 → 14,28;
+  Klub-Torhüter 0,93). **Fehlgriff-Muster:** 6 von 32 Fehlgriffen standen gar
+  nicht im Kader (Laporte, Vallci, Latte Lath, Laimer, Evander, Ayodele Thomas),
+  Laporte und Laimer standen trotzdem in SofaScores voraussichtlicher XI.
+  Die voraussichtliche Elf erkennt kurzfristige Kaderausfälle also nicht — beim
+  Deadline-Check Spieler ohne Kaderplatz im letzten Spiel (`onGameSheet` false)
+  trotz `pred_start` einzeln prüfen. Celentano (89 %, Stamm-Torwart) saß 90
+  Minuten auf der Bank; Grund ungeklärt.
 - **Log-Reihenfolge:** `playerGameScores` kommt **most-recent-first** (Index 0 =
   neuestes Spiel) — Recency-Gewichtung und `played_projection` nutzen genau diese
   Reihenfolge (kein Umdrehen).
