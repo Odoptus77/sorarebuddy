@@ -481,6 +481,20 @@ Bouanga/Son/Blake standen mit hoher Klub-Quote im Entwurf, obwohl abgestellt.)
   Deadline-Check Spieler ohne Kaderplatz im letzten Spiel (`onGameSheet` false)
   trotz `pred_start` einzeln prüfen. Celentano (89 %, Stamm-Torwart) saß 90
   Minuten auf der Bank; Grund ungeklärt.
+- **Bilanz 12.10.2026 (528 Spiele, davon 91 neu = Sonntag GW720 + MLS):** Brier
+  gesamt 0,183. Neue Spiele: `sofa_pred_start` 0,143 (Modell allein 0,173),
+  `sofa_pred_out` 0,162 (Modell allein 0,210), reines Modell 0,195. Die
+  **Klub-Kalibrierung ist wieder aktiv** (n=373, b≈0,93, a≈−0,17, LOO 0,1782 →
+  0,1772; senkt die Quoten leicht). **Die neuen `pred_start`-Gewichte vom 11.10.
+  sind noch nicht gemessen:** Für die Wochenendspiele einer GW stammt die letzte
+  geloggte Vorhersage vom Freitag vor dem Lock (danach rechnen die Syncs schon die
+  nächste GW) — erste Messung erst mit GW721. **Fehlgriffe:** Szoboszlai (95 %,
+  SofaScore-XI) und Zorgane (75 %) nicht im Kader; Becker, Aouchiche, Ebimbe gegen
+  Freiburg alle drei auf der Bank (Vorhersage 2 Tage vor Anpfiff). Hohe Quoten
+  (≥ 70 %) ohne Kaderplatz insgesamt 16 von 250 (6 %). **Nicht geändert:**
+  `pred_out` liegt weiter etwas zu hoch (30 % vorhergesagt, 23 % real, n=94).
+  Zielwert 0,18 → 0,12 wäre in beiden Zeithälften besser, in der späten aber nur
+  um 0,0007 → zu wenig Beleg, nach GW721 erneut prüfen.
 - **Log-Reihenfolge:** `playerGameScores` kommt **most-recent-first** (Index 0 =
   neuestes Spiel) — Recency-Gewichtung und `played_projection` nutzen genau diese
   Reihenfolge (kein Umdrehen).
