@@ -406,6 +406,16 @@ Bouanga/Son/Blake standen mit hoher Klub-Quote im Entwurf, obwohl abgestellt.)
   Projektions-MAE). Ein Spieltyp braucht dafür ≥ 20 Spiele. Anlass: Am 02.10. sah
   die Kalibrierung auf den Trainingsdaten gut aus (Brier 0,1995 → 0,189), war aber
   out-of-sample **schlechter** (0,204), also reines Lernen von Rauschen.
+  **Hysterese beim An-/Abschalten (seit 13.10.2026, Nicks Freigabe vom 12.10.):**
+  Die Klub-Kalibrierung sprang bei Leave-one-out-Gewinnen um 0,001 täglich zwischen
+  aktiv und neutral hin und her und baute dabei jedes Mal den halben Entwurf um.
+  Jetzt schaltet ein Spieltyp nur **ein**, wenn er die Rohquoten um ≥ 0,002 Brier
+  schlägt (`CALIB_ON_GAIN`), und erst wieder **aus**, wenn er klar schlechter ist
+  (Gewinn < −0,001, `CALIB_OFF_GAIN`). Projektions-Faktoren analog (ein ab 0,05,
+  aus unter −0,02 MAE-Punkten). Der Vorzustand kommt aus der alten
+  `calibration.json` (`loo.was_active`, `loo.gain`). Nachgespielt auf der Historie
+  02.–13.10.: Klub hätte 10.→13.10. durchgehend aktiv bleiben (statt an/aus/an),
+  Länderspiele schalten einen Tag später ein (04.10. statt 03.10. mit Gewinn 0,0003).
   `lineup_suggest.py` wendet nur die aktiven Teile an. Gelernt wird aus der **Rohquote**
   (`start_prob_raw` im Log), damit sich der Kreislauf nicht selbst verstärkt.
   `logs/evaluation.json` und `calibration.json` werden **committet** (nötig im

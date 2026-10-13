@@ -1,17 +1,17 @@
 {
-  "updated": "2026-10-13T06:52:54.312810+00:00",
-  "evaluated": 538,
+  "updated": "2026-10-13T14:12:24.861142+00:00",
+  "evaluated": 540,
   "pending": 0,
-  "upcoming": 206,
-  "brier": 0.1817,
-  "brier_raw": 0.1815,
-  "start_rate": 0.55,
+  "upcoming": 204,
+  "brier": 0.1824,
+  "brier_raw": 0.1822,
+  "start_rate": 0.548,
   "by_source": {
     "model": {
-      "n": 206,
-      "mean_pred": 0.659,
-      "actual": 0.583,
-      "brier": 0.2104
+      "n": 208,
+      "mean_pred": 0.658,
+      "actual": 0.577,
+      "brier": 0.2119
     },
     "sofa_pred_start": {
       "n": 141,
@@ -74,11 +74,11 @@
   },
   "playing_status": {
     "STARTER": {
-      "n": 243,
+      "n": 244,
       "started": 183
     },
     "REGULAR": {
-      "n": 160,
+      "n": 161,
       "started": 72
     },
     "SUBSTITUTE": {
@@ -96,7 +96,7 @@
   },
   "projection": {
     "n": 380,
-    "mae": 14.65,
+    "mae": 14.64,
     "bias": 1.44,
     "groups": {
       "Forward|club": {
@@ -106,8 +106,8 @@
       },
       "Midfielder|club": {
         "n": 83,
-        "bias": -0.77,
-        "mae": 12.74
+        "bias": -0.78,
+        "mae": 12.73
       },
       "Defender|club": {
         "n": 77,

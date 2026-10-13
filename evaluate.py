@@ -65,6 +65,24 @@ OUT_SIGNALS = ("apif_out", "callup_out", "intl_duty_auto", "natl_bench_auto",
 # only gets its own start-prob calibration from TYPE_MIN_N games; before that
 # its probabilities stay unchanged.
 TYPE_MIN_N = 20
+# Hysteresis for switching a calibration on/off (Nick, 12.10.2026): the club
+# calibration flipped active/neutral from day to day on leave-one-out gains of
+# ~0.001 Brier and rebuilt half the draft each time. Now it only switches ON
+# when it beats the raw probabilities by >= CALIB_ON_GAIN, and once on it only
+# switches OFF when it is clearly worse out of sample (gain < CALIB_OFF_GAIN).
+# Same idea for the projection factors (MAE points).
+CALIB_ON_GAIN = 0.002
+CALIB_OFF_GAIN = -0.001
+PROJ_ON_GAIN = 0.05
+PROJ_OFF_GAIN = -0.02
+
+
+def _switch(prev_on, gain, on_gain, off_gain):
+    """Hysteresis: new on/off state from the previous state and the
+    out-of-sample gain (raw minus calibrated, > 0 = calibration better)."""
+    if gain is None:
+        return False
+    return gain >= off_gain if prev_on else gain >= on_gain
 # External, already news-aware sources: no shrink towards OUR model's
 # miscalibration (prior = "no change") and no playingStatus offset on top.
 EXTERNAL_SRCS = ("sorare_app", "sorare_odds", "sofa_pred_start", "sofa_pred_bench",
@@ -241,7 +259,7 @@ def game_type(r):
     return "national" if r.get("opp_type") == "NationalTeam" else "club"
 
 
-def fit_type(rows, y):
+def fit_type(rows, y, prev_on=False):
     """Start-prob calibration for one game type, switched on ONLY if it beats
     the raw probabilities out of sample (leave-one-out Brier). In-sample gains
     with a few dozen games are mostly overfitting (02.10.: in-sample 0.189 vs
@@ -260,8 +278,10 @@ def fit_type(rows, y):
             if best_loo is None or loo < best_loo:
                 best, best_loo = with_status, loo
     out = _fit_type(rows, y, bool(best))
-    out["loo"] = {"raw": raw, "calibrated": best_loo, "with_status": bool(best)}
-    out["active"] = bool(best_loo is not None and best_loo < raw)
+    gain = None if best_loo is None else raw - best_loo
+    out["loo"] = {"raw": raw, "calibrated": best_loo, "with_status": bool(best),
+                  "gain": None if gain is None else round(gain, 4), "was_active": bool(prev_on)}
+    out["active"] = _switch(prev_on, gain, CALIB_ON_GAIN, CALIB_OFF_GAIN)
     return out
 
 
@@ -420,7 +440,15 @@ def main(argv):
                  "min_n": MIN_N_GLOBAL, "active": len(fit_pairs) >= MIN_N_GLOBAL}
         g = fit_platt(fit_pairs) if fit_pairs else (0.0, 1.0)
         calib["global"] = {"a": g[0], "b": g[1]}       # report only (all types)
-        calib["by_type"] = {t: fit_type([r for r in rows if game_type(r) == t], y)
+        prev = {}
+        try:
+            with open(args.calibration, encoding="utf-8") as fh:
+                prev = json.load(fh)
+        except (OSError, ValueError):
+            pass
+        prev_types = prev.get("by_type") or {}
+        calib["by_type"] = {t: fit_type([r for r in rows if game_type(r) == t], y,
+                                        prev_on=bool((prev_types.get(t) or {}).get("active")))
                             for t in ("national", "club")}
         scale, grp = fit_proj(played)
         # same out-of-sample guard as for the start probs: the factors are only
@@ -428,8 +456,12 @@ def main(argv):
         loo_raw = _mae([(_proj(r), r["score"]) for r in played])
         loo_cal = _mae([(_proj(r) * proj_factor(*fit_proj(played[:i] + played[i + 1:]), r),
                          r["score"]) for i, r in enumerate(played)])
-        proj_on = bool(loo_raw is not None and loo_cal is not None and loo_cal < loo_raw)
-        calib["proj_loo"] = {"raw": loo_raw, "calibrated": loo_cal, "active": proj_on}
+        proj_gain = (None if loo_raw is None or loo_cal is None else loo_raw - loo_cal)
+        proj_prev = bool((prev.get("proj_loo") or {}).get("active"))
+        proj_on = _switch(proj_prev, proj_gain, PROJ_ON_GAIN, PROJ_OFF_GAIN)
+        calib["proj_loo"] = {"raw": loo_raw, "calibrated": loo_cal, "active": proj_on,
+                             "gain": None if proj_gain is None else round(proj_gain, 3),
+                             "was_active": proj_prev}
         if not proj_on:
             scale, grp = 1.0, {}
         calib["proj_scale"] = {"value": scale, "n": len(played)}
@@ -453,7 +485,8 @@ def main(argv):
                                    + f" (LOO {v['loo']['raw']} -> {v['loo']['calibrated']})"
                                    if v["active"] else
                                    (f"neutral (LOO roh {v['loo']['raw']} vs kalibriert "
-                                    f"{v['loo']['calibrated']} -> keine Verbesserung)"
+                                    f"{v['loo']['calibrated']} -> Gewinn unter Schwelle "
+                                    f"{CALIB_ON_GAIN})"
                                     if v["loo"]["calibrated"] is not None
                                     else f"neutral (ab {TYPE_MIN_N} Spielen)"))
             for t, v in calib["by_type"].items())
