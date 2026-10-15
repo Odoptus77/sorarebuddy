@@ -505,6 +505,13 @@ Bouanga/Son/Blake standen mit hoher Klub-Quote im Entwurf, obwohl abgestellt.)
   `pred_out` liegt weiter etwas zu hoch (30 % vorhergesagt, 23 % real, n=94).
   Zielwert 0,18 → 0,12 wäre in beiden Zeithälften besser, in der späten aber nur
   um 0,0007 → zu wenig Beleg, nach GW721 erneut prüfen.
+- **Laufende Spiele zählen nicht (Fix 15.10.2026):** Sorare führt ein laufendes Spiel
+  schon mit den bisherigen Minuten im Spiel-Log. Der Sync um 02:45 lief während der
+  MLS-Mittwochsspiele: Jeder MLS-Spieler verlor dadurch ~15 Prozentpunkte Startquote
+  fürs Wochenende (Karic 0,91 → 0,70, obwohl er auf dem Platz stand), der Entwurf
+  wurde quer umgebaut. `fetch_players` verwirft jetzt Spiele mit `statusTyped` ≠
+  `played`. Reiner Datenfehler, kein Modelleingriff (historische Spiele sind alle
+  beendet, Backtest unverändert).
 - **Log-Reihenfolge:** `playerGameScores` kommt **most-recent-first** (Index 0 =
   neuestes Spiel) — Recency-Gewichtung und `played_projection` nutzen genau diese
   Reihenfolge (kein Umdrehen).

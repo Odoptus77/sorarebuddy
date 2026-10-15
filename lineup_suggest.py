@@ -207,7 +207,7 @@ PLAYER_FIELDS = """
     homeTeam { __typename name ... on NationalTeam { country { code } } }
     awayTeam { __typename name ... on NationalTeam { country { code } } } }
   playerGameScores(last: %d) { score
-    anyGame { date homeTeam { __typename } awayTeam { __typename } }
+    anyGame { date statusTyped homeTeam { __typename } awayTeam { __typename } }
     detailedScore { stat statValue } }
   l5: averageScore(type: LAST_FIVE_SO5_AVERAGE_SCORE)
   l15: averageScore(type: LAST_FIFTEEN_SO5_AVERAGE_SCORE)
@@ -528,6 +528,19 @@ def fetch_cards(slug, rarities):
     return [c for c in cards if not c.get("sealed")]
 
 
+def _drop_unfinished(pd):
+    """Remove game scores of games that are still running (or not yet played).
+    Sorare already lists a live game with the minutes so far: a starter 10
+    minutes in or an unused sub then counts as a non-start. Seen 15.10.2026:
+    every MLS player in a running Wednesday game dropped ~15 points of start
+    probability for the weekend (Karic 0.91 -> 0.70 while on the pitch)."""
+    gs = pd.get("playerGameScores")
+    if gs:
+        pd["playerGameScores"] = [
+            g for g in gs
+            if ((g.get("anyGame") or {}).get("statusTyped") or "played") == "played"]
+
+
 def fetch_players(slugs):
     out, slugs, i, batch = {}, list(slugs), 0, PLAYER_BATCH
     while i < len(slugs):
@@ -542,6 +555,7 @@ def fetch_players(slugs):
             sys.exit(f"Player fetch failed: {resp.get('errors')}")
         for p in (data.get("players") or []):
             if p and p.get("slug"):
+                _drop_unfinished(p)
                 out[p["slug"]] = p
         i += len(chunk)
         print(f"  ...players {min(i, len(slugs))}/{len(slugs)}", file=sys.stderr)
