@@ -505,6 +505,16 @@ Bouanga/Son/Blake standen mit hoher Klub-Quote im Entwurf, obwohl abgestellt.)
   `pred_out` liegt weiter etwas zu hoch (30 % vorhergesagt, 23 % real, n=94).
   Zielwert 0,18 → 0,12 wäre in beiden Zeithälften besser, in der späten aber nur
   um 0,0007 → zu wenig Beleg, nach GW721 erneut prüfen.
+- **Bilanz 15.10.2026 (666 Spiele, davon 82 neu = GW721 Mittwoch + MLS):** Neue
+  Spiele Brier 0,158. `sofa_pred_start` in Europacup-Wochen (Di–Do, n=37)
+  vorhergesagt 81 %, real 78 %, also kaum schlechter als am Wochenende. Die
+  Ausfälle dort waren Rotation von Stammspielern (Van Dijk, Guirassy,
+  Schlotterbeck, Gulácsi), die keine Quelle vorher hatte. **`pred_out`-Zielwert
+  0,12 statt 0,18 geprüft und verworfen:** roh in beiden Hälften besser, mit der
+  aktiven Klub-Kalibrierung (die `pred_out` schon absenkt) aber kein Gewinn
+  (0,1732 → 0,1731, späte Hälfte schlechter). **Offen:** Ein Joker-Einsatz im
+  Europacup zählt fürs Wochenende als Nicht-Start (Van Dijk/Guirassy 95 → 81 %).
+  Für GW722 per Override gelöst, n zu klein für eine Regel.
 - **Laufende Spiele zählen nicht (Fix 15.10.2026):** Sorare führt ein laufendes Spiel
   schon mit den bisherigen Minuten im Spiel-Log. Der Sync um 02:45 lief während der
   MLS-Mittwochsspiele: Jeder MLS-Spieler verlor dadurch ~15 Prozentpunkte Startquote
