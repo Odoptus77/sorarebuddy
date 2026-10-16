@@ -36,7 +36,9 @@
     "wanner_gw721_2026-10-09": "Wanner (PSV vs Leipzig 13.10., CL): Bosz-PK 08.10.2026 (feanonline/Eindhovens Dagblad): verletzt aus der Länderspielpause zurück, 'herstart komt te vroeg'; Bosz am 02.10.: 'aantal weken' -> 0.05 auch für GW721 (vor Di-Deadline neu prüfen).",
     "bayern_gk_gw721_2026-10-13": "Kompany-PK 12.10. (bulinews 2026, sport1 2026/10, getfootballnewsgermany 2026): Urbig startet in Stavanger, Neuer Fußproblem seit Augsburg 2:2 (10.10.), Training Sonntag+Montag verpasst.",
     "celentano_gw721_2026-10-13": "Cincinnati Soccer Talk 11.10.2026 + The Post Cincy + RotoWire: Louro startete am 10.10. in Atlanta, Celentano gesund auf der Bank (erstmals seit 2022, Formkrise); offen, wer gegen New England spielt.",
-    "ucl_rotation_gw722_2026-10-14": "Van Dijk (LASK-Liverpool) und Guirassy (Bodø/Glimt-Dortmund) am 14.10. in der CL auf der Bank gestartet, Joker 28/30 Min. (liverpoolfc.com Team-News 14.10., africatopsports 14.10., Sorare-Spiel-Log). Rotation vor dem Wochenende, kein Ausfall -> Wochenend-Start wie vorher (Modell 0,95 vor dem CL-Spiel)."
+    "ucl_rotation_gw722_2026-10-14": "Van Dijk (LASK-Liverpool) und Guirassy (Bodø/Glimt-Dortmund) am 14.10. in der CL auf der Bank gestartet, Joker 28/30 Min. (liverpoolfc.com Team-News 14.10., africatopsports 14.10., Sorare-Spiel-Log). Rotation vor dem Wochenende, kein Ausfall -> Wochenend-Start wie vorher (Modell 0,95 vor dem CL-Spiel).",
+    "olise_gw722_2026-10-16": "Olise Rot (Gelb-Rot) am 13.10. in der CL bei Viking -> Sperre nur fuer CL-Spiel gegen Arsenal am 21.10. (getfootballnewsgermany.com 14.10.2026, livescore.com diese Woche mit Verweis auf Leipzig Sa 17.10.). Bundesliga vs Leipzig verfuegbar; Rot-Karten-Heuristik greift faelschlich (gleicher Klub-Stream).",
+    "elmas_gw722_2026-10-16": "Elmas Rot am 12.10. in der Serie A (Venezia), Giudice Sportivo 13.10.: 1 Spiel Sperre -> fehlt bei Milan-Atalanta 18.10. (calcioatalanta.it 13.10.2026, tuttosport.com 13.10.2026, Sorare-Log red_card). Heuristik verlor den Fall, weil er am 15.10. im Europacup spielte."
   },
   "_fixture": "football-1-2-oct-2026",
   "_researched": "2026-09-28",
@@ -92,7 +94,11 @@
     "researched": "2026-10-06"
   },
   "harry-kane": 0.92,
-  "eljif-elmas": 0.88,
+  "eljif-elmas": {
+    "p": 0.0,
+    "fixture": "football-16-20-oct-2026",
+    "researched": "2026-10-16"
+  },
   "leandro-barreiro-martins": 0.88,
   "james-wilson-2007-03-06": 0.15,
   "marc-andre-ter-stegen": {
@@ -266,5 +272,10 @@
     "p": 0.9,
     "fixture": "football-16-20-oct-2026",
     "researched": "2026-10-14"
+  },
+  "michael-olise": {
+    "p": 0.8,
+    "fixture": "football-16-20-oct-2026",
+    "researched": "2026-10-16"
   }
 }
