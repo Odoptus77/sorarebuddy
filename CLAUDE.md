@@ -515,6 +515,17 @@ Bouanga/Son/Blake standen mit hoher Klub-Quote im Entwurf, obwohl abgestellt.)
   (0,1732 → 0,1731, späte Hälfte schlechter). **Offen:** Ein Joker-Einsatz im
   Europacup zählt fürs Wochenende als Nicht-Start (Van Dijk/Guirassy 95 → 81 %).
   Für GW722 per Override gelöst, n zu klein für eine Regel.
+- **Bilanz 16.10.2026 (744 Spiele, davon 78 neu = Europa/Conference League Do
+  15.10.):** Neue Spiele Brier 0,203, deutlich schlechter als am Wochenende.
+  Europacup-Spiele (Di–Do) gesamt: `pred_start` 0,81 → 80 % gestartet (Brier
+  0,16–0,17 vs. 0,147 am Wochenende), `pred_out` 0,24–0,27 → 28–32 % (am
+  Wochenende 23 %). Die voraussichtliche Elf ist im Europacup also unschärfer
+  (Rotation: Freuler, Kamada, Schick, Pulisic, Šulc auf der Bank). Im Mittel
+  kalibriert → keine Änderung. **Rot-Karten-Heuristik ist wettbewerbsblind:**
+  Elmas (Serie-A-Rot) wurde für den Europacup auf 8 % gesetzt und spielte 90
+  Minuten; umgekehrt galt er danach für die Serie A als frei, obwohl gesperrt.
+  Olise (CL-Rot) galt für die Bundesliga als gesperrt. Fix (Sperre nur im
+  selben Wettbewerb) nach dem GW722-Lock.
 - **Laufende Spiele zählen nicht (Fix 15.10.2026):** Sorare führt ein laufendes Spiel
   schon mit den bisherigen Minuten im Spiel-Log. Der Sync um 02:45 lief während der
   MLS-Mittwochsspiele: Jeder MLS-Spieler verlor dadurch ~15 Prozentpunkte Startquote

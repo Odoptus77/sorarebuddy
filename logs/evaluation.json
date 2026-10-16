@@ -1,29 +1,29 @@
 {
-  "updated": "2026-10-15T06:53:24.359173+00:00",
-  "evaluated": 666,
+  "updated": "2026-10-16T06:53:01.317257+00:00",
+  "evaluated": 744,
   "pending": 0,
-  "upcoming": 405,
-  "brier": 0.1779,
-  "brier_raw": 0.1779,
-  "start_rate": 0.557,
+  "upcoming": 329,
+  "brier": 0.1806,
+  "brier_raw": 0.1808,
+  "start_rate": 0.552,
   "by_source": {
     "model": {
-      "n": 262,
-      "mean_pred": 0.641,
-      "actual": 0.573,
-      "brier": 0.2017
+      "n": 265,
+      "mean_pred": 0.64,
+      "actual": 0.566,
+      "brier": 0.2036
     },
     "sofa_pred_start": {
-      "n": 188,
-      "mean_pred": 0.827,
-      "actual": 0.814,
-      "brier": 0.1477
+      "n": 224,
+      "mean_pred": 0.824,
+      "actual": 0.808,
+      "brier": 0.1537
     },
     "sofa_pred_out": {
-      "n": 121,
-      "mean_pred": 0.291,
-      "actual": 0.24,
-      "brier": 0.1765
+      "n": 159,
+      "mean_pred": 0.286,
+      "actual": 0.252,
+      "brier": 0.1797
     },
     "researched": {
       "n": 65,
@@ -43,6 +43,12 @@
       "actual": 0.286,
       "brier": 0.259
     },
+    "suspension_risk": {
+      "n": 3,
+      "mean_pred": 0.078,
+      "actual": 0.333,
+      "brier": 0.2861
+    },
     "sorare_app": {
       "n": 3,
       "mean_pred": 0.2,
@@ -55,12 +61,6 @@
       "actual": 1.0,
       "brier": 0.8997
     },
-    "suspension_risk": {
-      "n": 2,
-      "mean_pred": 0.077,
-      "actual": 0.0,
-      "brier": 0.0059
-    },
     "apif_doubtful": {
       "n": 1,
       "mean_pred": 0.25,
@@ -69,55 +69,55 @@
     }
   },
   "out_signals": {
-    "n": 147,
-    "correct_out": 112
+    "n": 186,
+    "correct_out": 139
   },
   "playing_status": {
     "STARTER": {
-      "n": 304,
-      "started": 232
+      "n": 335,
+      "started": 253
     },
     "REGULAR": {
-      "n": 198,
-      "started": 91
+      "n": 215,
+      "started": 100
     },
     "SUBSTITUTE": {
-      "n": 74,
-      "started": 14
+      "n": 89,
+      "started": 18
     },
     "SUPER_SUBSTITUTE": {
-      "n": 44,
-      "started": 24
+      "n": 53,
+      "started": 30
     },
     "NOT_PLAYING": {
-      "n": 46,
+      "n": 52,
       "started": 10
     }
   },
   "projection": {
-    "n": 478,
-    "mae": 14.98,
-    "bias": 0.86,
+    "n": 532,
+    "mae": 15.05,
+    "bias": 0.69,
     "groups": {
       "Forward|club": {
-        "n": 117,
-        "bias": 0.66,
-        "mae": 13.72
+        "n": 138,
+        "bias": 0.26,
+        "mae": 13.77
       },
       "Midfielder|club": {
-        "n": 111,
-        "bias": -1.72,
-        "mae": 13.72
+        "n": 127,
+        "bias": -2.03,
+        "mae": 13.78
       },
       "Defender|club": {
-        "n": 110,
-        "bias": 2.43,
-        "mae": 17.26
+        "n": 121,
+        "bias": 2.79,
+        "mae": 17.67
       },
       "Goalkeeper|club": {
-        "n": 46,
-        "bias": 5.67,
-        "mae": 15.62
+        "n": 52,
+        "bias": 6.21,
+        "mae": 15.75
       },
       "Midfielder|national": {
         "n": 34,
