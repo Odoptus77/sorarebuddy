@@ -203,11 +203,11 @@ PLAYER_FIELDS = """
   country { code }
   activeClub { ... on Club { name country { code } domesticLeague { slug } } }
   activeInjuries { kind expectedEndDate active }
-  nextGame { date statusTyped
+  nextGame { date statusTyped competition { slug }
     homeTeam { __typename name ... on NationalTeam { country { code } } }
     awayTeam { __typename name ... on NationalTeam { country { code } } } }
   playerGameScores(last: %d) { score
-    anyGame { date statusTyped homeTeam { __typename } awayTeam { __typename } }
+    anyGame { date statusTyped competition { slug } homeTeam { __typename } awayTeam { __typename } }
     detailedScore { stat statValue } }
   l5: averageScore(type: LAST_FIVE_SO5_AVERAGE_SCORE)
   l15: averageScore(type: LAST_FIFTEEN_SO5_AVERAGE_SCORE)
@@ -254,7 +254,7 @@ def fetch_fixture_games(fx_slug):
     CURRENT (locked) GW: his first game inside the planned window is looked up
     here, so a draft for the next GW isn't missing everyone who plays in both
     (e.g. national MD 01.10. and again 04.10.)."""
-    q = ('{ so5 { so5Fixture(slug: "%s") { anyGames { date statusTyped '
+    q = ('{ so5 { so5Fixture(slug: "%s") { anyGames { date statusTyped competition { slug } '
          'homeTeam { __typename name ... on NationalTeam { country { code } } } '
          'awayTeam { __typename name ... on NationalTeam { country { code } } } } } } }'
          % fx_slug)
@@ -714,14 +714,26 @@ def national_bench_signal(pd, we):
     return bool(mins_seen) and max(mins_seen) == 0
 
 
-def suspension_signal(pd, opp_type):
-    """True if the player's MOST RECENT game had a red card AND that game is the
-    same competition stream (club vs national) as his upcoming game -> almost
-    certainly banned for the next game of that stream. Uses the dated game log
-    (red_card stat covers straight reds and second yellows). A researched
-    override still wins (e.g. a rescinded red)."""
+def suspension_signal(pd, opp_type, competition=None):
+    """True if the player's last game IN THE SAME COMPETITION as his upcoming
+    game had a red card -> almost certainly banned for that game. Uses the dated
+    game log (red_card stat covers straight reds and second yellows). A
+    researched override still wins (e.g. a rescinded red).
+
+    Since 16.10.2026 per competition (bans only apply there): Elmas' Serie-A red
+    was counted against his Conference League game (8 %, he played 90'), then
+    forgotten for the next Serie-A game, where he was banned; Olise's CL red
+    would have benched him in the Bundesliga. Without a known competition the
+    old rule applies: most recent game, same stream (club vs national)."""
     games = pd.get("playerGameScores") or []
     if not games:
+        return False
+    if competition:
+        for g in games:                  # most-recent-first
+            if ((g.get("anyGame") or {}).get("competition") or {}).get("slug") != competition:
+                continue
+            return any(s.get("stat") == "red_card" and (s.get("statValue") or 0) >= 1
+                       for s in (g.get("detailedScore") or []))
         return False
     last = games[0]                     # most-recent-first -> index 0 is newest
     red = 0
@@ -894,6 +906,7 @@ def eligible_entry(card, pd, ws, we, fx_games=None):
     country = (club.get("country") or {}).get("code")
     return {"slug": card["slug"], "player": card["anyPlayer"]["displayName"],
             "player_slug": card["anyPlayer"]["slug"], "season": card.get("seasonYear"),
+            "competition": (ng.get("competition") or {}).get("slug"),
             # Slot by the CARD's position (what Sorare enforces), not the
             # player's real-life position -- they can differ (e.g. a midfielder
             # on a Forward card). Fall back to the player position if absent.
@@ -1463,7 +1476,8 @@ def main(argv):
                 e["apif"] = f"{inj['type']}: {inj['reason']}"
             sig = sofa_signal(e, sofa_index) if sofa_index else None
             apif_out = bool(inj and inj["type"] == "Missing Fixture")
-            red_card = suspension_signal(players.get(e["player_slug"]) or {}, e.get("opp_type"))
+            red_card = suspension_signal(players.get(e["player_slug"]) or {}, e.get("opp_type"),
+                                         e.get("competition"))
             # Precedence: (1) a declared call-up is an authoritative absence from
             # the club game; (2) a researched override wins over everything else
             # (Nick may have CONFIRMED the player does start his club game); (3)

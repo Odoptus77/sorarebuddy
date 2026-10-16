@@ -347,6 +347,12 @@ Bouanga/Son/Blake standen mit hoher Klub-Quote im Entwurf, obwohl abgestellt.)
   (×0,10, `start_src: suspension_risk`, stderr „Sperren-Verdacht … prüfen").
   Fängt die Sperren, die der Verletzungs-Feed übersieht. Gelb-Sperren (Schwellen
   je Liga) sind so **nicht** abgedeckt → dafür der API-Football-Feed (s. u.).
+  **Seit 16.10.2026 je Wettbewerb:** geprüft wird das letzte Spiel im **selben
+  Wettbewerb** wie das kommende (`competition.slug` aus `nextGame` und Spiel-Log),
+  nicht mehr nur das letzte Spiel überhaupt. Anlass: Elmas' Serie-A-Rot wurde
+  gegen sein Conference-League-Spiel gezählt (8 %, er spielte 90 Minuten) und
+  danach für die Serie A vergessen, wo er gesperrt war; Olises CL-Rot hätte ihn
+  in der Bundesliga gesperrt. Ohne bekannten Wettbewerb gilt die alte Regel.
 - **Sorare-eigene Signale** (`... on Player` in `PLAYER_FIELDS`):
   - **Sorare-% = `nextClassicFixturePlayingStatusOdds.starterOddsBasisPoints`**
     (/10000). Liefert seit **14.09.2026 `null`** ([sorare/api #693](https://github.com/sorare/api/issues/693),
@@ -525,7 +531,7 @@ Bouanga/Son/Blake standen mit hoher Klub-Quote im Entwurf, obwohl abgestellt.)
   Elmas (Serie-A-Rot) wurde für den Europacup auf 8 % gesetzt und spielte 90
   Minuten; umgekehrt galt er danach für die Serie A als frei, obwohl gesperrt.
   Olise (CL-Rot) galt für die Bundesliga als gesperrt. Fix (Sperre nur im
-  selben Wettbewerb) nach dem GW722-Lock.
+  selben Wettbewerb) am 16.10. nach dem GW722-Lock umgesetzt (s. Sperren-Erkennung).
 - **Laufende Spiele zählen nicht (Fix 15.10.2026):** Sorare führt ein laufendes Spiel
   schon mit den bisherigen Minuten im Spiel-Log. Der Sync um 02:45 lief während der
   MLS-Mittwochsspiele: Jeder MLS-Spieler verlor dadurch ~15 Prozentpunkte Startquote
