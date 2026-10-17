@@ -532,6 +532,12 @@ Bouanga/Son/Blake standen mit hoher Klub-Quote im Entwurf, obwohl abgestellt.)
   Minuten; umgekehrt galt er danach für die Serie A als frei, obwohl gesperrt.
   Olise (CL-Rot) galt für die Bundesliga als gesperrt. Fix (Sperre nur im
   selben Wettbewerb) am 16.10. nach dem GW722-Lock umgesetzt (s. Sperren-Erkennung).
+- **Bilanz 17.10.2026 (786 Spiele, davon 42 neu = Freitag GW722):** Neue Spiele
+  Brier 0,115. Erste Wochenend-Messung der `pred_start`-Gewichte vom 11.10.:
+  vorhergesagt 80 %, 91 % gestartet (n=23, Brier 0,084); `pred_out` 24 % → 24 %.
+  Fehlgriffe: Trippier (74 %, nicht im Kader), Van der Brempt, Götze, Chaïbi
+  (je ~25 %, gestartet). Keine Änderung (n zu klein, eher zu vorsichtig als zu
+  sicher).
 - **Laufende Spiele zählen nicht (Fix 15.10.2026):** Sorare führt ein laufendes Spiel
   schon mit den bisherigen Minuten im Spiel-Log. Der Sync um 02:45 lief während der
   MLS-Mittwochsspiele: Jeder MLS-Spieler verlor dadurch ~15 Prozentpunkte Startquote
