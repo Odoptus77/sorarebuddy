@@ -538,6 +538,15 @@ Bouanga/Son/Blake standen mit hoher Klub-Quote im Entwurf, obwohl abgestellt.)
   Fehlgriffe: Trippier (74 %, nicht im Kader), Van der Brempt, Götze, Chaïbi
   (je ~25 %, gestartet). Keine Änderung (n zu klein, eher zu vorsichtig als zu
   sicher).
+- **Bilanz 18.10.2026 (942 Spiele, davon 156 neu = Samstag GW722):** Neue Spiele
+  Brier 0,141. `pred_start` 80 % → 91 % gestartet (n=46), Modell allein 55 % →
+  55 %. `pred_start`-Zielwert 0,80 gegen 0,85/0,88/0,90 geprüft (n=293): 0,80
+  bleibt am besten (0,1356 vs. 0,1364+), am Wochenende wie unter der Woche →
+  keine Änderung. **Startsignal aus `gameStarted` statt Minuten geprüft und
+  verworfen** (Anlass: Kane 59 Min. als Starter → Wochenquote 89 → 79 %):
+  Backtest über 350 Spieler / 3823 Spiele, Brier 0,1840 (Minuten) gegen 0,1858
+  (`gameStarted` = 1,0), in beiden Hälften schlechter. Früh ausgewechselte
+  Starter fehlen offenbar öfter beim nächsten Spiel; die Minuten-Regel bleibt.
 - **Laufende Spiele zählen nicht (Fix 15.10.2026):** Sorare führt ein laufendes Spiel
   schon mit den bisherigen Minuten im Spiel-Log. Der Sync um 02:45 lief während der
   MLS-Mittwochsspiele: Jeder MLS-Spieler verlor dadurch ~15 Prozentpunkte Startquote
