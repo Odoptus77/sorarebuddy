@@ -547,6 +547,12 @@ Bouanga/Son/Blake standen mit hoher Klub-Quote im Entwurf, obwohl abgestellt.)
   Backtest über 350 Spieler / 3823 Spiele, Brier 0,1840 (Minuten) gegen 0,1858
   (`gameStarted` = 1,0), in beiden Hälften schlechter. Früh ausgewechselte
   Starter fehlen offenbar öfter beim nächsten Spiel; die Minuten-Regel bleibt.
+- **Bilanz 19.10.2026 (1064 Spiele, davon 122 neu = Sonntag GW722 + MLS):** Neue
+  Spiele Brier 0,163. `pred_start` 79 % → 84 % (n=51), `pred_out` 26 % → 33 %
+  (n=43, höher als sonst). Fehlgriffe gehäuft in der Eredivisie (Groningen:
+  Tsygankov, Arokodare nicht in der Startelf, Janse startete) und bei Sturm
+  Graz–GAK (Hödl 90 % → Bank, Helać 12 % → Start). Keine Änderung: alle Quellen
+  über die gesamte Historie kalibriert, Tagesschwankung.
 - **Laufende Spiele zählen nicht (Fix 15.10.2026):** Sorare führt ein laufendes Spiel
   schon mit den bisherigen Minuten im Spiel-Log. Der Sync um 02:45 lief während der
   MLS-Mittwochsspiele: Jeder MLS-Spieler verlor dadurch ~15 Prozentpunkte Startquote
