@@ -319,6 +319,27 @@ Bouanga/Son/Blake standen mit hoher Klub-Quote im Entwurf, obwohl abgestellt.)
   SofaScore-Signal (Dmitrović 93 % Modell → spielte nicht; Espanyol war als
   Espanyol B aufgelöst), Fehlsignale sind wegen des Anstoß-Abgleichs (±3 h)
   nicht aufgetreten.
+- **Namens-Token-Abgleich (seit 20.10.2026, Anlass GW723-Deadline-Check):** Die
+  Popularitätsregel hatte eine neue Lücke: Die Einzelwort-Suchen („Madrid",
+  „United", „Club") holten berühmte Namensvettern in den Pool, die dann auf
+  Popularität gewannen. Beim finalen Check fiel auf: Athletic Club → Atlético
+  Madrid, Atlético → Real Madrid (Unai Simón, Laporte, Grimaldo, Baena ohne
+  SofaScore-Signal). Ein Neuaufbau über alle 176 bekannten Teamnamen fand
+  **20 falsche Zuordnungen**, u. a. Manchester United → Man City, Newcastle/Leeds/
+  DC United/Incheon → Man United, Chicago Fire → Chicago Bulls, LAFC → Lakers,
+  FC Dallas → Mavericks, Pohang → Pittsburgh Steelers, Sporting KC → Sporting CP,
+  Paris FC → PSG, Monaco → Bayern, Sparta/Excelsior → Feyenoord. `--audit` hatte
+  das nicht markiert. Wegen des Anstoß-Abgleichs gab es keine Fehlsignale, aber
+  diese Teams hatten **kein** Signal. Jetzt gilt:
+  - Treffer unter 1000 Followern fliegen raus, sobald es größere gibt.
+  - Nur die Treffer mit der besten Namens-Token-Überschneidung bleiben (Jaccard,
+    tolerant für „Olympiakos"/„Olympiacos" und „Çorum"/„Çorumspor").
+  - Danach entscheidet die Popularität.
+  - „2" zählt als Reserve-Kennung („OGC Nice 2").
+
+  Ergebnis des Neuaufbaus: 11 Korrekturen gegenüber dem (schon von Hand
+  bereinigten) Cache, keine Verschlechterung. GW724-Pool: 135 Teams, 107 mit XI.
+  Kein Backtest möglich (kein XI-Archiv), es ist ein reiner Datenfix.
 - **Beim Deadline-Check:** die stderr-Zeile „SofaScore sieht nicht in der Startelf
   (prüfen, auch Namensabgleich)" durchgehen — v. a. Spieler mit Sorare-Status
   STARTER (erscheinen zusätzlich unter „Sorare-Status widerspricht Startquote").

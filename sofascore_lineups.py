@@ -28,8 +28,9 @@ CLI:
 
 Team resolution (since 10.10.2026): all search hits for the name variants are
 pooled, women's sides and reserve/youth teams are dropped (unless the Sorare
-name itself is a reserve team) and the most popular remaining team wins; an
-exact name match only wins when it is at least a third as popular.
+name itself is a reserve team), only the hits sharing the most distinctive
+name tokens stay (since 20.10.2026), and the most popular remaining team wins;
+an exact name match only wins when it is at least a third as popular.
 """
 import json
 import os
@@ -162,7 +163,7 @@ def _save_team_cache(c):
 
 # reserve / youth sides ("Espanyol B", "Leeds United U21", "Chicago Fire FC II",
 # "YRKV Mechelen Reserve", "Juventus Next Gen U23")
-_RESERVE = re.compile(r"(?:^|[\s.])(?:U\d{2}|B|II|III|Reserves?|Next Gen|Youth|"
+_RESERVE = re.compile(r"(?:^|[\s.])(?:U\d{2}|B|2|II|III|Reserves?|Next Gen|Youth|"
                       r"Amateure|Jong|Academy|Sub-?\d{2})(?=$|[\s.])", re.I)
 
 
@@ -170,7 +171,24 @@ def _is_reserve(name):
     return bool(_RESERVE.search(name or ""))
 
 
-def _pick(pool, keys, want_reserve):
+def _tokens(name):
+    """Distinctive name tokens ("Athletic Club" -> {"athletic"})."""
+    return {t for t in (_norm(w) for w in re.split(r"[\s\-/]+", name or ""))
+            if len(t) >= 3 and t not in _STOP}
+
+
+def _tok_eq(a, b):
+    """Token match tolerant of transliteration ("olympiakos"/"olympiacos")
+    and suffixes ("corum"/"corumspor")."""
+    if a == b:
+        return True
+    if min(len(a), len(b)) >= 5 and (a.startswith(b) or b.startswith(a)):
+        return True
+    return (len(a) == len(b) >= 6
+            and sum(x != y for x, y in zip(a, b)) <= 1)
+
+
+def _pick(pool, keys, want_reserve, want_tokens=None):
     """Most popular men's team (SofaScore userCount) among the search hits.
 
     Audit 10.10.2026: exact-name matching picked doppelgängers with a handful of
@@ -194,6 +212,26 @@ def _pick(pool, keys, want_reserve):
     clubs = [e for e in cands if not e.get("national")]
     if clubs and max(users(e) for e in clubs) >= 1000:
         cands = clubs
+    # Audit 20.10.2026: single-token fallback searches ("Madrid", "United",
+    # "Rotterdam") pooled famous namesakes that then won on popularity
+    # ("Athletic Club" -> Atlético, "Atlético de Madrid" -> Real Madrid,
+    # "Manchester United FC" -> Man City, "Chicago Fire FC" -> Chicago Bulls).
+    # Keep only the hits with the best name-token overlap (Jaccard, so
+    # "Excelsior Rotterdam" prefers "Excelsior" over "Sparta Rotterdam");
+    # popularity then decides among those ("Arsenal FC" from Guinea-Bissau
+    # vs Arsenal).
+    # Namesakes with a handful of followers ("Besiktas Jimnastik Kulubu" with
+    # 156 users, "OGC Nice 2") must not win on the token match below.
+    if max(users(e) for e in cands) >= 1000:
+        cands = [e for e in cands if users(e) >= 1000]
+    if want_tokens:
+        def sim(e):
+            have = _tokens(e.get("name")) | _tokens(e.get("shortName"))
+            inter = sum(1 for w in want_tokens if any(_tok_eq(w, h) for h in have))
+            return inter / (len(want_tokens) + len(have) - inter) if inter else 0.0
+        best = max(sim(e) for e in cands)
+        if best:
+            cands = [e for e in cands if sim(e) >= best - 1e-9]
     top = max(cands, key=users)
     exact = [e for e in cands if is_exact(e)]
     if exact:
@@ -224,7 +262,7 @@ def search_team(name, cache=None):
         except Exception as e:
             print(f"  search '{q}' failed: {type(e).__name__}", file=sys.stderr)
         time.sleep(PACE)
-    best = _pick(pool, keys, want_reserve)
+    best = _pick(pool, keys, want_reserve, _tokens(name) | _tokens(_ALIASES.get(key)))
     tid = best.get("id") if best else None
     if tid:                                  # misses are retried next run
         cache[key] = tid
