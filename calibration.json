@@ -1,11 +1,11 @@
 {
-  "_updated": "2026-10-19T06:53:42.630361+00:00",
-  "n": 1064,
+  "_updated": "2026-10-20T06:53:28.418897+00:00",
+  "n": 1073,
   "min_n": 30,
   "active": true,
   "global": {
-    "a": -0.1645,
-    "b": 0.9483
+    "a": -0.1637,
+    "b": 0.9507
   },
   "by_type": {
     "national": {
@@ -58,32 +58,32 @@
       }
     },
     "club": {
-      "n": 909,
+      "n": 918,
       "min_n": 20,
       "active": true,
       "global": {
-        "a": -0.1766,
-        "b": 1.0153
+        "a": -0.1755,
+        "b": 1.0177
       },
       "sources": {
         "apif_doubtful": {
-          "a": -0.1898,
-          "b": 1.0298,
+          "a": -0.1886,
+          "b": 1.0321,
           "n": 1
         },
         "model": {
-          "a": -0.4406,
-          "b": 1.054,
+          "a": -0.4405,
+          "b": 1.0544,
           "n": 286
         },
         "intl_duty_auto": {
-          "a": -0.0655,
-          "b": 0.6894,
+          "a": -0.0643,
+          "b": 0.6916,
           "n": 2
         },
         "suspension_risk": {
-          "a": -0.1311,
-          "b": 0.9075,
+          "a": -0.13,
+          "b": 0.9098,
           "n": 3
         },
         "sorare_app": {
@@ -92,41 +92,62 @@
           "n": 1
         },
         "sofa_pred_out": {
-          "a": -0.0326,
-          "b": 1.1774,
-          "n": 259
+          "a": -0.0139,
+          "b": 1.1994,
+          "n": 264
         },
         "sofa_pred_start": {
-          "a": 0.1657,
-          "b": 0.8826,
-          "n": 344
+          "a": 0.1566,
+          "b": 0.8876,
+          "n": 348
         },
         "researched": {
-          "a": -0.1349,
-          "b": 1.0509,
+          "a": -0.1339,
+          "b": 1.0529,
           "n": 13
         }
       },
-      "status": {},
+      "status": {
+        "SUBSTITUTE": {
+          "d": -0.1791,
+          "n": 33
+        },
+        "REGULAR": {
+          "d": -0.0802,
+          "n": 89
+        },
+        "STARTER": {
+          "d": 0.0594,
+          "n": 138
+        },
+        "NOT_PLAYING": {
+          "d": 0.0428,
+          "n": 25
+        },
+        "SUPER_SUBSTITUTE": {
+          "d": 0.1149,
+          "n": 20
+        }
+      },
       "loo": {
-        "raw": 0.1668,
-        "calibrated": 0.1642,
-        "with_status": false,
+        "raw": 0.1667,
+        "calibrated": 0.1641,
+        "with_status": true,
         "gain": 0.0026,
         "was_active": true
       }
     }
   },
   "proj_loo": {
-    "raw": 14.946,
-    "calibrated": 14.682,
+    "raw": 14.881,
+    "calibrated": 14.635,
     "active": true,
-    "gain": 0.264,
+    "gain": 0.246,
     "was_active": true
   },
   "proj_scale": {
     "value": 0.967,
-    "n": 778
+    "n": 785
   },
   "proj_scale_groups": {
     "Defender|national": {
@@ -146,22 +167,22 @@
       "n": 27
     },
     "Defender|club": {
-      "value": 0.944,
-      "n": 188
+      "value": 0.943,
+      "n": 189
     },
     "Forward|club": {
-      "value": 0.965,
-      "n": 205
+      "value": 0.967,
+      "n": 210
     },
     "Goalkeeper|club": {
       "value": 0.936,
-      "n": 85
+      "n": 86
     },
     "Midfielder|club": {
       "value": 0.999,
       "n": 206
     }
   },
-  "brier_raw": 0.1707,
-  "brier_calibrated_in_sample": 0.1657
+  "brier_raw": 0.1706,
+  "brier_calibrated_in_sample": 0.1651
 }

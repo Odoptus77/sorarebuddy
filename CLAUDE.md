@@ -553,6 +553,11 @@ Bouanga/Son/Blake standen mit hoher Klub-Quote im Entwurf, obwohl abgestellt.)
   Tsygankov, Arokodare nicht in der Startelf, Janse startete) und bei Sturm
   Graz–GAK (Hödl 90 % → Bank, Helać 12 % → Start). Keine Änderung: alle Quellen
   über die gesamte Historie kalibriert, Tagesschwankung.
+- **Bilanz 20.10.2026 (1073 Spiele, davon 9 neu = Montag GW722):** Neue Spiele
+  Brier 0,158. Fehlgriffe: David Martínez (Sorare SUPER_SUBSTITUTE, `pred_start`
+  72 %) nicht gestartet; Kristensen (46 %) und Marmoush (42 %) trotz `pred_out`
+  in der Startelf. n zu klein → keine Änderung. Gesamt `pred_start` 81 % → 83 %
+  (n=348), `pred_out` 28 % → 27 % (n=264), beide kalibriert.
 - **Laufende Spiele zählen nicht (Fix 15.10.2026):** Sorare führt ein laufendes Spiel
   schon mit den bisherigen Minuten im Spiel-Log. Der Sync um 02:45 lief während der
   MLS-Mittwochsspiele: Jeder MLS-Spieler verlor dadurch ~15 Prozentpunkte Startquote
