@@ -579,6 +579,16 @@ Bouanga/Son/Blake standen mit hoher Klub-Quote im Entwurf, obwohl abgestellt.)
   72 %) nicht gestartet; Kristensen (46 %) und Marmoush (42 %) trotz `pred_out`
   in der Startelf. n zu klein → keine Änderung. Gesamt `pred_start` 81 % → 83 %
   (n=348), `pred_out` 28 % → 27 % (n=264), beide kalibriert.
+- **Bilanz 21.10.2026 (1104 Spiele, davon 31 neu = Dienstag GW723, Europacup):**
+  Neue Spiele Brier 0,149. `pred_start` 84 % → 88 % (n=17), `pred_out`
+  32 % → 30 % (n=10). Fehlgriffe: Wirtz und Obispo (je 90 %, `pred_start`) auf
+  der Bank (Rotation, keine Quelle hatte es); Krejčí, Gulácsi (Sorare STARTER,
+  `pred_out` 31–39 %) und Peprah Oppong (15 %) gestartet. **Geprüft und
+  verworfen:** `playingStatus`-Offset auch für die SofaScore-Quellen (bisher
+  ausgenommen). Auffällig sind `pred_out`+SUBSTITUTE (23 % vorhergesagt, 12 %
+  real, n=80) und `pred_out`+SUPER_SUBSTITUTE (28 % → 43 %, n=30). Im
+  Leave-one-out über 949 Klubspiele aber kein Gewinn (0,1636 → 0,1634–0,1635),
+  in der frühen Hälfte schlechter → nicht übernommen.
 - **Laufende Spiele zählen nicht (Fix 15.10.2026):** Sorare führt ein laufendes Spiel
   schon mit den bisherigen Minuten im Spiel-Log. Der Sync um 02:45 lief während der
   MLS-Mittwochsspiele: Jeder MLS-Spieler verlor dadurch ~15 Prozentpunkte Startquote
