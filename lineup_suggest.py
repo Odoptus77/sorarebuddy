@@ -549,8 +549,8 @@ def fetch_players(slugs):
         resp = graphql("{ players(slugs: [" + slug_list + "]) {" + PLAYER_FIELDS + "} }")
         data = resp.get("data")
         if not data:
-            if batch > 4:
-                batch = max(4, batch // 2)
+            if batch > 1:              # without APIKEY the complexity cap is 500
+                batch = max(1, batch // 2)
                 continue
             sys.exit(f"Player fetch failed: {resp.get('errors')}")
         for p in (data.get("players") or []):
