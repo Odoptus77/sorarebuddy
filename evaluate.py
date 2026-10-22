@@ -139,14 +139,26 @@ def _proj(r):
 
 
 def fetch_outcomes(slugs):
-    out, slugs = {}, sorted(slugs)
-    for i in range(0, len(slugs), BATCH):
-        chunk = slugs[i:i + BATCH]
+    """Game logs per player. A failed batch must never pass silently: an empty
+    result reads as 'player was not involved' and would score every logged
+    prediction as a non-start (22.10.2026: without the APIKEY header the
+    complexity cap is 500, every batch failed, Brier jumped to 0.41 and the
+    calibration was refit on garbage). Shrink the batch down to 1, then abort."""
+    out, slugs, i, batch = {}, sorted(slugs), 0, BATCH
+    while i < len(slugs):
+        chunk = slugs[i:i + batch]
         resp = graphql(OUTCOME_QUERY % ", ".join(f'"{s}"' for s in chunk))
-        for p in ((resp.get("data") or {}).get("players") or []):
+        data = resp.get("data")
+        if not data or (resp.get("errors") and batch > 1):
+            if batch > 1:
+                batch = max(1, batch // 2)
+                continue
+            sys.exit(f"Outcome fetch failed, nothing written: {resp.get('errors')}")
+        for p in (data.get("players") or []):
             if p and p.get("slug"):
                 out[p["slug"]] = p.get("playerGameScores") or []
                 POSITIONS[p["slug"]] = (p.get("anyPositions") or [None])[0]
+        i += len(chunk)
         time.sleep(PACE)
     return out
 

@@ -589,6 +589,19 @@ Bouanga/Son/Blake standen mit hoher Klub-Quote im Entwurf, obwohl abgestellt.)
   real, n=80) und `pred_out`+SUPER_SUBSTITUTE (28 % → 43 %, n=30). Im
   Leave-one-out über 949 Klubspiele aber kein Gewinn (0,1636 → 0,1634–0,1635),
   in der frühen Hälfte schlechter → nicht übernommen.
+- **Bilanz 22.10.2026 (1156 Spiele, davon 52 neu = Mittwoch GW723 + MLS):**
+  Neue Spiele Brier 0,169. `pred_start` 82 % → 84 % (n=25), `pred_out` 35 % →
+  47 % (n=17, zu niedrig, aber kleine Zahl). Fehlgriffe: Kimmich (94 %, Todesfall
+  in der Familie, erst am Spieltag bekannt), Lisandro Martínez (79 %, nicht im
+  Kader). **Bayern-Torwart erneut falsch:** SofaScore hatte Urbig (78 %), Neuer
+  (31 %) stand im Tor. Keine Modelländerung (n zu klein).
+  **Prozess-Fehler behoben:** Ohne `APIKEY`-Header (Container-Neustart, Key-
+  Injektion fehlte) lehnt Sorare jede Abfrage über Komplexität 500 ab.
+  `evaluate.py` hat die Fehler verschluckt und jedes Spiel als Nicht-Start
+  gewertet (Brier 0,41, Kalibrierung auf Müll neu gefittet). Die Dateien habe ich
+  verworfen, nichts davon ist committet. `fetch_outcomes` verkleinert die Batches
+  jetzt bis auf 1 und bricht ab, statt leere Daten zu schreiben.
+  `lineup_suggest.py` geht seit 21.10. ebenfalls bis Batchgröße 1 herunter.
 - **Laufende Spiele zählen nicht (Fix 15.10.2026):** Sorare führt ein laufendes Spiel
   schon mit den bisherigen Minuten im Spiel-Log. Der Sync um 02:45 lief während der
   MLS-Mittwochsspiele: Jeder MLS-Spieler verlor dadurch ~15 Prozentpunkte Startquote

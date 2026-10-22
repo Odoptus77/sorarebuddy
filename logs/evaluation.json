@@ -1,29 +1,29 @@
 {
-  "updated": "2026-10-21T06:53:24.143189+00:00",
-  "evaluated": 1104,
+  "updated": "2026-10-22T06:54:35.741197+00:00",
+  "evaluated": 1156,
   "pending": 0,
-  "upcoming": 490,
-  "brier": 0.1694,
-  "brier_raw": 0.1701,
-  "start_rate": 0.567,
+  "upcoming": 439,
+  "brier": 0.1699,
+  "brier_raw": 0.1707,
+  "start_rate": 0.569,
   "by_source": {
     "sofa_pred_start": {
-      "n": 365,
+      "n": 390,
       "mean_pred": 0.815,
       "actual": 0.836,
       "brier": 0.1379
     },
     "model": {
-      "n": 364,
-      "mean_pred": 0.62,
-      "actual": 0.558,
-      "brier": 0.1878
+      "n": 373,
+      "mean_pred": 0.616,
+      "actual": 0.552,
+      "brier": 0.1886
     },
     "sofa_pred_out": {
-      "n": 274,
-      "mean_pred": 0.281,
-      "actual": 0.274,
-      "brier": 0.1855
+      "n": 291,
+      "mean_pred": 0.285,
+      "actual": 0.285,
+      "brier": 0.1881
     },
     "researched": {
       "n": 69,
@@ -44,10 +44,10 @@
       "brier": 0.259
     },
     "suspension_risk": {
-      "n": 4,
-      "mean_pred": 0.085,
-      "actual": 0.25,
-      "brier": 0.2175
+      "n": 5,
+      "mean_pred": 0.088,
+      "actual": 0.2,
+      "brier": 0.1759
     },
     "sorare_app": {
       "n": 3,
@@ -69,55 +69,55 @@
     }
   },
   "out_signals": {
-    "n": 302,
-    "correct_out": 220
+    "n": 320,
+    "correct_out": 230
   },
   "playing_status": {
     "STARTER": {
-      "n": 497,
-      "started": 390
+      "n": 516,
+      "started": 404
     },
     "REGULAR": {
-      "n": 304,
-      "started": 151
+      "n": 327,
+      "started": 168
     },
     "SUBSTITUTE": {
-      "n": 133,
+      "n": 137,
       "started": 24
     },
     "SUPER_SUBSTITUTE": {
-      "n": 78,
-      "started": 43
+      "n": 82,
+      "started": 44
     },
     "NOT_PLAYING": {
-      "n": 92,
+      "n": 94,
       "started": 18
     }
   },
   "projection": {
-    "n": 808,
-    "mae": 14.86,
-    "bias": 1.12,
+    "n": 849,
+    "mae": 14.79,
+    "bias": 1.24,
     "groups": {
       "Forward|club": {
-        "n": 215,
-        "bias": 1.76,
-        "mae": 14.15
+        "n": 231,
+        "bias": 2.17,
+        "mae": 13.87
       },
       "Midfielder|club": {
-        "n": 211,
-        "bias": -0.25,
-        "mae": 13.4
+        "n": 223,
+        "bias": -0.04,
+        "mae": 13.48
       },
       "Defender|club": {
-        "n": 199,
-        "bias": 2.95,
-        "mae": 16.47
+        "n": 208,
+        "bias": 3.11,
+        "mae": 16.65
       },
       "Goalkeeper|club": {
-        "n": 89,
-        "bias": 3.71,
-        "mae": 16.47
+        "n": 93,
+        "bias": 3.5,
+        "mae": 16.32
       },
       "Midfielder|national": {
         "n": 34,
