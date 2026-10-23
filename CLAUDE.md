@@ -602,6 +602,15 @@ Bouanga/Son/Blake standen mit hoher Klub-Quote im Entwurf, obwohl abgestellt.)
   verworfen, nichts davon ist committet. `fetch_outcomes` verkleinert die Batches
   jetzt bis auf 1 und bricht ab, statt leere Daten zu schreiben.
   `lineup_suggest.py` geht seit 21.10. ebenfalls bis Batchgröße 1 herunter.
+- **Bilanz 23.10.2026 (1233 Spiele, davon 77 neu = Donnerstag GW723, Europa/
+  Conference League):** Neue Spiele Brier 0,176. `pred_start` 81 % → 71 %
+  (n=42, Brier 0,20): Rotation in Hoffenheim, Benfica, Leverkusen, Atalanta
+  (Abner, Dahl, Flekken nicht eingesetzt; Maza, Sudakov, Hložek als Joker).
+  `pred_out` 29 % → 26 %. **Geprüft, nicht geändert:** `pred_start` nach Wochentag
+  über die ganze Historie: Di 82 % → 90 % (n=39), Mi 83 % → 76 % (n=42), Do 81 % →
+  76 % (n=86), Wochenende 81 % → 85 % (n=265). Unter der Woche zusammen nur
+  ~3 Punkte zu hoch, Di und Mi widersprechen sich. Ein Donnerstag-Abschlag von
+  0,05 brächte gesamt etwa 0,0002 Brier. Zu wenig für ein neues Feature.
 - **Laufende Spiele zählen nicht (Fix 15.10.2026):** Sorare führt ein laufendes Spiel
   schon mit den bisherigen Minuten im Spiel-Log. Der Sync um 02:45 lief während der
   MLS-Mittwochsspiele: Jeder MLS-Spieler verlor dadurch ~15 Prozentpunkte Startquote
