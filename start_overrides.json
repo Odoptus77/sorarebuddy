@@ -38,7 +38,8 @@
     "celentano_gw721_2026-10-13": "Cincinnati Soccer Talk 11.10.2026 + The Post Cincy + RotoWire: Louro startete am 10.10. in Atlanta, Celentano gesund auf der Bank (erstmals seit 2022, Formkrise); offen, wer gegen New England spielt.",
     "ucl_rotation_gw722_2026-10-14": "Van Dijk (LASK-Liverpool) und Guirassy (Bodø/Glimt-Dortmund) am 14.10. in der CL auf der Bank gestartet, Joker 28/30 Min. (liverpoolfc.com Team-News 14.10., africatopsports 14.10., Sorare-Spiel-Log). Rotation vor dem Wochenende, kein Ausfall -> Wochenend-Start wie vorher (Modell 0,95 vor dem CL-Spiel).",
     "olise_gw722_2026-10-16": "Olise Rot (Gelb-Rot) am 13.10. in der CL bei Viking -> Sperre nur fuer CL-Spiel gegen Arsenal am 21.10. (getfootballnewsgermany.com 14.10.2026, livescore.com diese Woche mit Verweis auf Leipzig Sa 17.10.). Bundesliga vs Leipzig verfuegbar; Rot-Karten-Heuristik greift faelschlich (gleicher Klub-Stream).",
-    "elmas_gw722_2026-10-16": "Elmas Rot am 12.10. in der Serie A (Venezia), Giudice Sportivo 13.10.: 1 Spiel Sperre -> fehlt bei Milan-Atalanta 18.10. (calcioatalanta.it 13.10.2026, tuttosport.com 13.10.2026, Sorare-Log red_card). Heuristik verlor den Fall, weil er am 15.10. im Europacup spielte."
+    "elmas_gw722_2026-10-16": "Elmas Rot am 12.10. in der Serie A (Venezia), Giudice Sportivo 13.10.: 1 Spiel Sperre -> fehlt bei Milan-Atalanta 18.10. (calcioatalanta.it 13.10.2026, tuttosport.com 13.10.2026, Sorare-Log red_card). Heuristik verlor den Fall, weil er am 15.10. im Europacup spielte.",
+    "michael-olise": "GW724: CL-Sperre gilt nur für die CL (Arsenal, 21.10.). Sorare-Spiel-Log: 17.10. Bundesliga 90' Start. Keine Verletzungsmeldung. Modell 0,67 nur wegen des gesperrten CL-Spiels."
   },
   "_fixture": "football-1-2-oct-2026",
   "_researched": "2026-09-28",
@@ -274,8 +275,8 @@
     "researched": "2026-10-14"
   },
   "michael-olise": {
-    "p": 0.8,
-    "fixture": "football-16-20-oct-2026",
-    "researched": "2026-10-16"
+    "p": 0.85,
+    "fixture": "football-23-27-oct-2026",
+    "researched": "2026-10-23"
   }
 }
