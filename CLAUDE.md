@@ -611,6 +611,12 @@ Bouanga/Son/Blake standen mit hoher Klub-Quote im Entwurf, obwohl abgestellt.)
   76 % (n=86), Wochenende 81 % → 85 % (n=265). Unter der Woche zusammen nur
   ~3 Punkte zu hoch, Di und Mi widersprechen sich. Ein Donnerstag-Abschlag von
   0,05 brächte gesamt etwa 0,0002 Brier. Zu wenig für ein neues Feature.
+- **Bilanz 24.10.2026 (1267 Spiele, davon 34 neu = Freitag GW724):** Erste
+  Spiele ohne SofaScore (seit 21.10. blockt SofaScore den Container mit HTTP 403,
+  auch nach Container-Neustart). Nur Modell: Brier 0,142, vorhergesagt 48 %,
+  gestartet 59 %. Fehlgriffe vor allem bei Vitória Guimarães–Santa Clara
+  (Tavares 18 %, Vieites 28 %, Dominguez 42 % gestartet). Tavares stand vor der
+  Sperre in SofaScores voraussichtlicher XI. Keine Änderung (n=34).
 - **Laufende Spiele zählen nicht (Fix 15.10.2026):** Sorare führt ein laufendes Spiel
   schon mit den bisherigen Minuten im Spiel-Log. Der Sync um 02:45 lief während der
   MLS-Mittwochsspiele: Jeder MLS-Spieler verlor dadurch ~15 Prozentpunkte Startquote
