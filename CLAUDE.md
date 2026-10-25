@@ -617,6 +617,13 @@ Bouanga/Son/Blake standen mit hoher Klub-Quote im Entwurf, obwohl abgestellt.)
   gestartet 59 %. Fehlgriffe vor allem bei Vitória Guimarães–Santa Clara
   (Tavares 18 %, Vieites 28 %, Dominguez 42 % gestartet). Tavares stand vor der
   Sperre in SofaScores voraussichtlicher XI. Keine Änderung (n=34).
+- **Bilanz 25.10.2026 (1437 Spiele, davon 170 neu = Samstag GW724 + MLS, nur
+  Modell):** Brier 0,151, vorhergesagt 59 %, gestartet 67 %. Ohne SofaScore ist
+  das Modell bei Sorare-STARTERN zu vorsichtig: 78 % vorhergesagt, 92 % gestartet
+  (n=92); Quoten ≥ 85 % → 95 % gestartet (n=41). Die Kalibrierung lernt das schon
+  selbst: Status-Offsets STARTER +0,19, SUBSTITUTE −0,35 (Klub-LOO 0,164 → 0,161).
+  Keine Handänderung. Fehlgriffe: Messi (91 %, Joker 34'), Trapp und Karaman
+  (91/74 %, nicht im Kader), Collins und Theate (17/24 %, 90' gestartet).
 - **Laufende Spiele zählen nicht (Fix 15.10.2026):** Sorare führt ein laufendes Spiel
   schon mit den bisherigen Minuten im Spiel-Log. Der Sync um 02:45 lief während der
   MLS-Mittwochsspiele: Jeder MLS-Spieler verlor dadurch ~15 Prozentpunkte Startquote
