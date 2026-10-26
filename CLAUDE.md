@@ -624,6 +624,15 @@ Bouanga/Son/Blake standen mit hoher Klub-Quote im Entwurf, obwohl abgestellt.)
   selbst: Status-Offsets STARTER +0,19, SUBSTITUTE −0,35 (Klub-LOO 0,164 → 0,161).
   Keine Handänderung. Fehlgriffe: Messi (91 %, Joker 34'), Trapp und Karaman
   (91/74 %, nicht im Kader), Collins und Theate (17/24 %, 90' gestartet).
+- **Bilanz 26.10.2026 (1584 Spiele, davon 147 neu = Sonntag GW724 + MLS, nur
+  Modell):** Brier 0,183 (schlechtester Tag seit SofaScore-Ausfall). Fehlgriffe
+  mit Kader-Ausfällen ohne Vorwarnung: Lautaro Blanco und Martínez Quarta (je
+  93 %, beide nicht im Kader, beide im GW724-Entwurf All Star #1), Elvedi (91 %,
+  nicht im Kader). Newcastle-Abwehr komplett anders als erwartet: Schär (6 %) und
+  Burn (12 %) 90' gestartet, Thiaw (86 %) 1'. Ohne voraussichtliche Elf sind
+  solche Ausfälle nicht zu sehen. Die Kalibrierung verstärkt die Status-Offsets
+  weiter (STARTER +0,26, REGULAR −0,25; Klub-LOO 0,165 → 0,162). Keine
+  Handänderung.
 - **Laufende Spiele zählen nicht (Fix 15.10.2026):** Sorare führt ein laufendes Spiel
   schon mit den bisherigen Minuten im Spiel-Log. Der Sync um 02:45 lief während der
   MLS-Mittwochsspiele: Jeder MLS-Spieler verlor dadurch ~15 Prozentpunkte Startquote
