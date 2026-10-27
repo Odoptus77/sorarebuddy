@@ -1,6 +1,6 @@
 {
   "_comment": "Researched START probabilities (--start-override). Jeder Wert ist an EINE GW gebunden (_fixture bzw. 'fixture' je Eintrag) und verfällt danach automatisch. 'researched' = Recherchedatum; hat der Spieler danach erneut gespielt, meldet lineup_suggest den Override als veraltet (neu prüfen). GRUNDREGEL #0: nur datumsgeprüfte Werte.",
-  "_updated": "2026-10-09",
+  "_updated": "2026-10-27",
   "_sources": {
     "gw717_md1_2026-09-26": "Nations League MD1 am 26.09.2026 (Gruppe 3 = ESP/CRO/ENG/CZE; ESP 3-2 ENG). Sorare-Spiel-Log (mins_played, last games) je Spieler abgefragt am 28.09.2026 -> wer MD1 startete, ist der stärkste MD2-Indikator.",
     "spain_2026-09-28": "ESP vs CRO 29.09. (yahoo/ESPN preview, 27.09.): Unai Simón 90' MD1 -> #1 (0.90); Laporte 90' MD1 -> gesetzt (0.90); Baena nur 35' (Joker) -> Rotation (0.40, unbestätigt); Grimaldo 0' MD1 (Cucurella LB) -> Ersatz (0.30, unbestätigt).",
@@ -39,7 +39,9 @@
     "ucl_rotation_gw722_2026-10-14": "Van Dijk (LASK-Liverpool) und Guirassy (Bodø/Glimt-Dortmund) am 14.10. in der CL auf der Bank gestartet, Joker 28/30 Min. (liverpoolfc.com Team-News 14.10., africatopsports 14.10., Sorare-Spiel-Log). Rotation vor dem Wochenende, kein Ausfall -> Wochenend-Start wie vorher (Modell 0,95 vor dem CL-Spiel).",
     "olise_gw722_2026-10-16": "Olise Rot (Gelb-Rot) am 13.10. in der CL bei Viking -> Sperre nur fuer CL-Spiel gegen Arsenal am 21.10. (getfootballnewsgermany.com 14.10.2026, livescore.com diese Woche mit Verweis auf Leipzig Sa 17.10.). Bundesliga vs Leipzig verfuegbar; Rot-Karten-Heuristik greift faelschlich (gleicher Klub-Stream).",
     "elmas_gw722_2026-10-16": "Elmas Rot am 12.10. in der Serie A (Venezia), Giudice Sportivo 13.10.: 1 Spiel Sperre -> fehlt bei Milan-Atalanta 18.10. (calcioatalanta.it 13.10.2026, tuttosport.com 13.10.2026, Sorare-Log red_card). Heuristik verlor den Fall, weil er am 15.10. im Europacup spielte.",
-    "michael-olise": "GW724: CL-Sperre gilt nur für die CL (Arsenal, 21.10.). Sorare-Spiel-Log: 17.10. Bundesliga 90' Start. Keine Verletzungsmeldung. Modell 0,67 nur wegen des gesperrten CL-Spiels."
+    "michael-olise": "GW724: CL-Sperre gilt nur für die CL (Arsenal, 21.10.). Sorare-Spiel-Log: 17.10. Bundesliga 90' Start. Keine Verletzungsmeldung. Modell 0,67 nur wegen des gesperrten CL-Spiels.",
+    "freese_gw725_2026-10-27": "Freese verließ am 24.10.2026 bei Orlando (2-2) in Min. 28 verletzt den Platz (linke Schulter/Arm), Romero kam. Quellen: RotoWire 24.10.2026, NYCFC-Spielbericht (nächstes Spiel 28.10.), Sorare-Log 28' Start. Keine Diagnose/kein Update bis 27.10. gefunden -> 0.35 (unbestätigt, Verfügbarkeit offen).",
+    "sassuolo_gw725_2026-10-27": "Sassuolo-Lazio 27.10. 18:30: Sky Sport (27.10.2026 13:23) Turati im Tor, RV Cinquegrano; SOS Fanta (27.10., 11:30) Turati vor Muric, Cinquegrano vor Van der Brempt; Tuttofantacalcio (27.10.2026 13:10) Turati 51/49, Van der Brempt 55/45. Sorare-Log: Muric 24.10. 0' (Bank). -> Muric 0.30, Van der Brempt 0.45."
   },
   "_fixture": "football-1-2-oct-2026",
   "_researched": "2026-09-28",
@@ -167,8 +169,9 @@
     "researched": "2026-09-29"
   },
   "arijanet-muric": {
-    "p": 0.85,
-    "researched": "2026-09-29"
+    "p": 0.3,
+    "fixture": "football-27-30-oct-2026",
+    "researched": "2026-10-27"
   },
   "alexander-hartmann-bah": {
     "p": 0.15,
@@ -278,5 +281,15 @@
     "p": 0.85,
     "fixture": "football-23-27-oct-2026",
     "researched": "2026-10-23"
+  },
+  "freese-matthew": {
+    "p": 0.35,
+    "fixture": "football-27-30-oct-2026",
+    "researched": "2026-10-27"
+  },
+  "ignace-van-der-brempt": {
+    "p": 0.45,
+    "fixture": "football-27-30-oct-2026",
+    "researched": "2026-10-27"
   }
 }
