@@ -633,6 +633,9 @@ Bouanga/Son/Blake standen mit hoher Klub-Quote im Entwurf, obwohl abgestellt.)
   solche Ausfälle nicht zu sehen. Die Kalibrierung verstärkt die Status-Offsets
   weiter (STARTER +0,26, REGULAR −0,25; Klub-LOO 0,165 → 0,162). Keine
   Handänderung.
+- **Bilanz 27.10.2026 (1603 Spiele, davon 19 neu = Montag GW724):** Brier 0,195.
+  Morton, Abner und Bidstrup (je ~60 %) bei PSG nicht im Kader, Samuel Soares
+  (22 %, Sorare NOT_PLAYING) stand 90' im Benfica-Tor. n=19 → keine Änderung.
 - **Laufende Spiele zählen nicht (Fix 15.10.2026):** Sorare führt ein laufendes Spiel
   schon mit den bisherigen Minuten im Spiel-Log. Der Sync um 02:45 lief während der
   MLS-Mittwochsspiele: Jeder MLS-Spieler verlor dadurch ~15 Prozentpunkte Startquote
