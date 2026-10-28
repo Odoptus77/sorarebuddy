@@ -636,6 +636,11 @@ Bouanga/Son/Blake standen mit hoher Klub-Quote im Entwurf, obwohl abgestellt.)
 - **Bilanz 27.10.2026 (1603 Spiele, davon 19 neu = Montag GW724):** Brier 0,195.
   Morton, Abner und Bidstrup (je ~60 %) bei PSG nicht im Kader, Samuel Soares
   (22 %, Sorare NOT_PLAYING) stand 90' im Benfica-Tor. n=19 → keine Änderung.
+- **Bilanz 28.10.2026 (1606 Spiele, davon 3 neu = Dienstag GW725):** Alle drei
+  nicht gestartet. Die Recherche beim finalen Check lag richtig: Murić (Modell 53 %
+  → recherchiert 30 %, Turati im Tor) und Van der Brempt (61 % → 45 %,
+  Cinquegrano) saßen auf der Bank, Omoruyi (22 %) ebenfalls. Klub-Kalibrierung
+  weiter aktiv (LOO 0,1656 → 0,1622). n=3 → keine Änderung.
 - **Laufende Spiele zählen nicht (Fix 15.10.2026):** Sorare führt ein laufendes Spiel
   schon mit den bisherigen Minuten im Spiel-Log. Der Sync um 02:45 lief während der
   MLS-Mittwochsspiele: Jeder MLS-Spieler verlor dadurch ~15 Prozentpunkte Startquote
