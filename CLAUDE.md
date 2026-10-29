@@ -641,6 +641,26 @@ Bouanga/Son/Blake standen mit hoher Klub-Quote im Entwurf, obwohl abgestellt.)
   → recherchiert 30 %, Turati im Tor) und Van der Brempt (61 % → 45 %,
   Cinquegrano) saßen auf der Bank, Omoruyi (22 %) ebenfalls. Klub-Kalibrierung
   weiter aktiv (LOO 0,1656 → 0,1622). n=3 → keine Änderung.
+- **Bilanz 29.10.2026 (1659 Spiele, davon 53 neu = Mittwoch GW725, v. a. MLS, nur
+  Modell):** Brier 0,205, vorhergesagt 65 %, gestartet 57 %. Fehlgriffe:
+  - Nashville hatte am 24.10. den Supporters' Shield sicher und rotierte gegen
+    Philadelphia (SixOneFive, 28.10.): Surridge und Mukhtar (je 94–96 %) nur Joker,
+    Corcoran (93 %) nicht im Kader.
+  - Damiani (94 %) fehlte wegen Gelbsperre (PhillySoccerPage, 28.10.). Gelbsperren
+    deckt nur API-Football ab, und der Free-Plan sieht das Spiel erst einen Tag
+    vorher.
+  - Freese: recherchiert 36 % nach der Schulterverletzung vom 24.10. (keine
+    Diagnose), Modell 71 %. Er spielte 90 Minuten, die Recherche war zu vorsichtig.
+  - Baribo (80 %) nicht im Kader.
+
+  **Muster:** MLS unter der Woche starten Spieler mit ≥ 80 % nur zu 83 % (n=35),
+  am Wochenende zu 94 % (n=36); im Mittel kalibriert (62 % vs. 60 %).
+  **Nicht geändert:** Für einen MLS-Wochentagsabschlag ist n zu klein, und bis zum
+  Saisonende (Decision Day 07.11.) gibt es keine MLS-Wochentagsrunde mehr.
+  **Prozess-Lehre:** Beim Deadline-Check gegen Saisonende Teams mit fixem
+  Tabellenplatz (Titel/Shield sicher oder ausgeschieden) auf Rotation prüfen, die
+  Gelbsperren-Liste der Liga abfragen, und bei Verletzung ohne Diagnose nicht
+  unter ~50 % gehen, solange kein zweiter Beleg für einen Ausfall vorliegt.
 - **Laufende Spiele zählen nicht (Fix 15.10.2026):** Sorare führt ein laufendes Spiel
   schon mit den bisherigen Minuten im Spiel-Log. Der Sync um 02:45 lief während der
   MLS-Mittwochsspiele: Jeder MLS-Spieler verlor dadurch ~15 Prozentpunkte Startquote
