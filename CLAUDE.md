@@ -445,8 +445,9 @@ Bouanga/Son/Blake standen mit hoher Klub-Quote im Entwurf, obwohl abgestellt.)
   Länderspiele schalten einen Tag später ein (04.10. statt 03.10. mit Gewinn 0,0003).
   `lineup_suggest.py` wendet nur die aktiven Teile an. Gelernt wird aus der **Rohquote**
   (`start_prob_raw` im Log), damit sich der Kreislauf nicht selbst verstärkt.
-  `logs/evaluation.json` und `calibration.json` werden **committet** (nötig im
-  nächsten Container). Tägliche Routine „Sorare Treffer-Bilanz" fährt das + meldet.
+  `logs/evaluation.json`, `logs/outcomes.json` (ermittelte Ergebnisse, seit
+  30.10.2026) und `calibration.json` werden **committet** (nötig im nächsten
+  Container). Tägliche Routine „Sorare Treffer-Bilanz" fährt das + meldet.
   **Projektions-Faktoren je Position × Spieltyp** (`proj_scale_groups`, z. B.
   `Defender|national`, ab 8 Spielen je Gruppe, zur globalen Skala geschrumpft):
   GW715 zeigte, dass Verteidiger in Länderspielen deutlich unter ihrer Klub-Form
@@ -661,6 +662,23 @@ Bouanga/Son/Blake standen mit hoher Klub-Quote im Entwurf, obwohl abgestellt.)
   Tabellenplatz (Titel/Shield sicher oder ausgeschieden) auf Rotation prüfen, die
   Gelbsperren-Liste der Liga abfragen, und bei Verletzung ohne Diagnose nicht
   unter ~50 % gehen, solange kein zweiter Beleg für einen Ausfall vorliegt.
+- **Bilanz 30.10.2026 (1660 Spiele, 1 neu = Elmas, Do 29.10.) und Datenfix in
+  `evaluate.py`:** Elmas' Länderspiel vom 29.09. (90 Minuten) wurde plötzlich als
+  „nicht im Kader“ gewertet. Ursache: `evaluate.py` holte je Spieler nur die
+  letzten 8 Spiele und bewertete jeden Tag alle Vorhersagen neu. Fällt ein Spiel
+  aus diesem Fenster, sieht es aus wie „nicht beteiligt“. Betroffen waren bisher
+  5 Einträge, 2 davon falsch (Elmas 29.09., Aitor Fraga 04.10., der laut Log
+  startete). Das Problem wäre mit jeder Woche größer geworden. **Fix:**
+  - Reicht das Fenster nicht bis zum Anstoß zurück, gilt das Ergebnis als
+    „unbekannt“, und der Spieler wird mit 40 Spielen neu abgefragt (`LAST_DEEP`).
+  - Einmal ermittelte Ergebnisse stehen in **`logs/outcomes.json`** (wird
+    committet, inkl. Position) und werden nie neu bewertet.
+  - Was trotzdem unklar bleibt, zählt nicht mit (Bericht: „nicht ermittelbar“).
+
+  Ergebnis: Brier 0,1700 → 0,1701, `intl_duty_auto` jetzt 2 von 2 gestartet
+  (vorher 1 von 2), Länderspiel-LOO wieder 0,1939 → 0,1916 (mit dem Fehler
+  0,1988 → 0,1955). Ein zweiter Lauf nur aus dem Cache liefert dieselben Zahlen.
+  Reiner Datenfix, keine Modelländerung.
 - **Laufende Spiele zählen nicht (Fix 15.10.2026):** Sorare führt ein laufendes Spiel
   schon mit den bisherigen Minuten im Spiel-Log. Der Sync um 02:45 lief während der
   MLS-Mittwochsspiele: Jeder MLS-Spieler verlor dadurch ~15 Prozentpunkte Startquote
@@ -786,6 +804,7 @@ Zahlen melden, sondern das Modell **aktiv verbessern**:
   meine Startquoten werden sichtbar; Nick hat das akzeptiert). Grund: Der
   Container ist flüchtig, ohne Commit ginge das Log für die Kalibrierung verloren.
   Nach jedem echten `lineup_suggest.py`-Lauf das Log mit committen + pushen.
-  Ebenso `logs/evaluation.json` + `calibration.json` nach jedem `evaluate.py`-Lauf.
+  Ebenso `logs/evaluation.json`, `logs/outcomes.json` + `calibration.json` nach
+  jedem `evaluate.py`-Lauf.
 - Neue Recherche-/Scouting-Tools als eigenständige Stdlib-Skripte im gleichen
   Stil ergänzen (Docstring mit Usage, `graphql`/`load_env` aus `sorare_client`).

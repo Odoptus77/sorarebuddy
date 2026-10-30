@@ -29,6 +29,9 @@ The raw (pre-calibration) probability is what gets learned from, so the loop
 does not feed on its own corrections.
 
 Only the LAST prediction logged before kickoff counts per player & game.
+Outcomes, once known, are kept in logs/outcomes.json and never re-scored: the
+game log only reaches back LAST games, older games would otherwise turn into
+"not involved".
 
 Usage:
     python3 evaluate.py                 # report + logs/evaluation.json + calibration.json
@@ -47,8 +50,11 @@ from sorare_client import graphql
 
 LOG = os.path.join("logs", "predictions.jsonl")
 EVAL_OUT = os.path.join("logs", "evaluation.json")
+OUTCOMES = os.path.join("logs", "outcomes.json")
 CALIB_OUT = "calibration.json"
 BATCH = 8
+LAST = 8                                # games per player in the normal fetch
+LAST_DEEP = 40                          # refetch when a kickoff is older than that
 PACE = 0.25
 MATCH_TOL = dt.timedelta(hours=12)      # log kickoff vs Sorare game date
 FINISHED_AFTER = dt.timedelta(hours=3)  # kickoff + 3 h -> game is over
@@ -90,10 +96,10 @@ EXTERNAL_SRCS = ("sorare_app", "sorare_odds", "sofa_pred_start", "sofa_pred_benc
 NO_FIT_SRCS = ("callup_out",)
 
 OUTCOME_QUERY = """
-{ players(slugs: [%s]) {
+{ players(slugs: [%(slugs)s]) {
     slug
     anyPositions
-    playerGameScores(last: 8) {
+    playerGameScores(last: %(last)d) {
       score
       anyGame { date }
       anyPlayerGameStats { ... on PlayerGameStats { gameStarted minsPlayed onGameSheet } }
@@ -129,7 +135,7 @@ POSITIONS = {}
 
 
 def proj_group(r):
-    pos = r.get("pos") or POSITIONS.get(r["player_slug"]) or "?"
+    pos = r.get("pos") or r.get("position") or POSITIONS.get(r["player_slug"]) or "?"
     return f"{pos}|{'national' if r.get('opp_type') == 'NationalTeam' else 'club'}"
 
 
@@ -138,16 +144,17 @@ def _proj(r):
     return r.get("proj_raw") if r.get("proj_raw") is not None else r.get("proj")
 
 
-def fetch_outcomes(slugs):
+def fetch_outcomes(slugs, last=LAST, batch=BATCH):
     """Game logs per player. A failed batch must never pass silently: an empty
     result reads as 'player was not involved' and would score every logged
     prediction as a non-start (22.10.2026: without the APIKEY header the
     complexity cap is 500, every batch failed, Brier jumped to 0.41 and the
     calibration was refit on garbage). Shrink the batch down to 1, then abort."""
-    out, slugs, i, batch = {}, sorted(slugs), 0, BATCH
+    out, slugs, i = {}, sorted(slugs), 0
     while i < len(slugs):
         chunk = slugs[i:i + batch]
-        resp = graphql(OUTCOME_QUERY % ", ".join(f'"{s}"' for s in chunk))
+        resp = graphql(OUTCOME_QUERY % {"slugs": ", ".join(f'"{s}"' for s in chunk),
+                                        "last": last})
         data = resp.get("data")
         if not data or (resp.get("errors") and batch > 1):
             if batch > 1:
@@ -163,8 +170,11 @@ def fetch_outcomes(slugs):
     return out
 
 
-def match_outcome(games, kickoff, now):
-    """(started, played, mins, score) for the game at `kickoff`, 'pending' or None."""
+def match_outcome(games, kickoff, now, last=LAST):
+    """(started, played, mins, score) for the game at `kickoff`, 'pending', or
+    'unknown' when the fetched log (`last` games) does not reach back that far.
+    29.10.2026: Elmas' national game of 29.09 fell out of his last 8 games and
+    was re-scored as "not in squad" although he played 90 minutes."""
     ko = _ts(kickoff)
     for g in games:
         gd = _ts((g.get("anyGame") or {}).get("date"))
@@ -175,6 +185,10 @@ def match_outcome(games, kickoff, now):
             started = bool(started) if started is not None else mins >= 60
             return {"started": started, "played": mins > 0, "mins": mins,
                     "score": g.get("score"), "in_squad": st.get("onGameSheet")}
+    dates = [_ts((g.get("anyGame") or {}).get("date")) for g in games]
+    dates = [d for d in dates if d]
+    if len(games) >= last and dates and min(dates) > ko - MATCH_TOL:
+        return "unknown"
     if ko + NO_ENTRY_AFTER <= now:       # no entry at all -> wasn't involved
         return {"started": False, "played": False, "mins": 0, "score": 0.0,
                 "in_squad": False}
@@ -358,20 +372,39 @@ def main(argv):
     if not os.path.exists(args.log):
         sys.exit(f"Kein Log unter {args.log} -- erst lineup_suggest.py laufen lassen.")
     preds, upcoming = final_predictions(args.log, now)
-    outcomes = fetch_outcomes({k[0] for k in preds}) if preds else {}
+    cache = {}
+    if os.path.exists(OUTCOMES):
+        with open(OUTCOMES, encoding="utf-8") as fh:
+            cache = json.load(fh)
+    todo = {k for k in preds if f"{k[0]}|{k[1]}" not in cache}
+    outcomes = fetch_outcomes({k[0] for k in todo}) if todo else {}
+    found = {k: match_outcome(outcomes.get(k[0], []), k[1], now) for k in todo}
+    deep = {k[0] for k, o in found.items() if o == "unknown"}
+    if deep:
+        outcomes = fetch_outcomes(deep, last=LAST_DEEP, batch=1)
+        for k, o in found.items():
+            if o == "unknown":
+                found[k] = match_outcome(outcomes.get(k[0], []), k[1], now, LAST_DEEP)
+    for k, o in found.items():
+        if o not in ("pending", "unknown"):
+            cache[f"{k[0]}|{k[1]}"] = {**o, "position": POSITIONS.get(k[0])}
 
-    rows, pending = [], 0
+    rows, pending, unknown = [], 0, 0
     for (slug, ko), r in preds.items():
-        o = match_outcome(outcomes.get(slug, []), ko, now)
+        o = cache.get(f"{slug}|{ko}") or found.get((slug, ko))
         if o == "pending":
             pending += 1
+            continue
+        if o == "unknown":
+            unknown += 1
             continue
         raw = r.get("start_prob_raw", r.get("start_prob"))
         rows.append({**r, "p_raw": raw, "p": r.get("start_prob"), **o})
 
     print("================ TREFFER-BILANZ ================")
     print(f"Stand {now:%Y-%m-%d %H:%M} UTC | ausgewertete Spiele: {len(rows)} | "
-          f"Ergebnis noch nicht da: {pending} | Spiele noch nicht gespielt: {upcoming}")
+          f"Ergebnis noch nicht da: {pending} | Spiele noch nicht gespielt: {upcoming}"
+          + (f" | nicht ermittelbar (Spiel-Log zu kurz): {unknown}" if unknown else ""))
     if not rows:
         print("Noch keine abgeschlossenen Spiele mit Vorhersage im Log.")
         return 0
@@ -512,6 +545,9 @@ def main(argv):
                  if calib["proj_scale_groups"] else ""))
 
     os.makedirs(os.path.dirname(args.out) or ".", exist_ok=True)
+    with open(OUTCOMES, "w", encoding="utf-8") as fh:
+        fh.write("{\n" + ",\n".join(f"{json.dumps(k)}: {json.dumps(v)}"
+                                     for k, v in sorted(cache.items())) + "\n}\n")
     with open(args.out, "w", encoding="utf-8") as fh:
         json.dump({"updated": now.isoformat(), "evaluated": len(rows), "pending": pending,
                    "upcoming": upcoming,
