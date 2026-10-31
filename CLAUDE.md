@@ -679,6 +679,12 @@ Bouanga/Son/Blake standen mit hoher Klub-Quote im Entwurf, obwohl abgestellt.)
   (vorher 1 von 2), Länderspiel-LOO wieder 0,1939 → 0,1916 (mit dem Fehler
   0,1988 → 0,1955). Ein zweiter Lauf nur aus dem Cache liefert dieselben Zahlen.
   Reiner Datenfix, keine Modelländerung.
+- **Bilanz 31.10.2026 (1695 Spiele, davon 35 neu = Freitag GW726, nur Modell):**
+  Brier 0,173, vorhergesagt 50 %, gestartet 57 %. Fehlgriffe: Issa Doumbia (92 %,
+  Sporting) nur Joker (28'), Camara (14 %) gestartet. Mittelbereich (40–52 %)
+  fast durchweg gestartet (Gabriel, Boudaoui, Luis Guilherme, Krattenmacher,
+  Fortuño). Die Klub-Kalibrierung bleibt aktiv (LOO 0,1677 → 0,1644) und deckt
+  das mit ab. n=35 → keine Änderung.
 - **Laufende Spiele zählen nicht (Fix 15.10.2026):** Sorare führt ein laufendes Spiel
   schon mit den bisherigen Minuten im Spiel-Log. Der Sync um 02:45 lief während der
   MLS-Mittwochsspiele: Jeder MLS-Spieler verlor dadurch ~15 Prozentpunkte Startquote
