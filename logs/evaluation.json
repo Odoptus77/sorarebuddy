@@ -1,17 +1,17 @@
 {
-  "updated": "2026-10-31T07:53:45.326340+00:00",
-  "evaluated": 1695,
+  "updated": "2026-11-01T07:53:16.980489+00:00",
+  "evaluated": 1860,
   "pending": 0,
-  "upcoming": 492,
-  "brier": 0.1701,
-  "brier_raw": 0.1701,
-  "start_rate": 0.576,
+  "upcoming": 327,
+  "brier": 0.1674,
+  "brier_raw": 0.1678,
+  "start_rate": 0.578,
   "by_source": {
     "model": {
-      "n": 827,
-      "mean_pred": 0.587,
-      "actual": 0.583,
-      "brier": 0.1782
+      "n": 991,
+      "mean_pred": 0.584,
+      "actual": 0.586,
+      "brier": 0.1719
     },
     "sofa_pred_start": {
       "n": 432,
@@ -44,10 +44,10 @@
       "brier": 0.259
     },
     "suspension_risk": {
-      "n": 6,
-      "mean_pred": 0.088,
-      "actual": 0.167,
-      "brier": 0.1479
+      "n": 7,
+      "mean_pred": 0.082,
+      "actual": 0.143,
+      "brier": 0.1271
     },
     "sorare_app": {
       "n": 3,
@@ -69,55 +69,55 @@
     }
   },
   "out_signals": {
-    "n": 359,
-    "correct_out": 259
+    "n": 360,
+    "correct_out": 260
   },
   "playing_status": {
     "STARTER": {
-      "n": 773,
-      "started": 622
+      "n": 853,
+      "started": 690
     },
     "REGULAR": {
-      "n": 439,
-      "started": 223
+      "n": 480,
+      "started": 244
     },
     "SUBSTITUTE": {
-      "n": 213,
-      "started": 39
+      "n": 232,
+      "started": 41
     },
     "SUPER_SUBSTITUTE": {
-      "n": 129,
-      "started": 70
+      "n": 137,
+      "started": 77
     },
     "NOT_PLAYING": {
-      "n": 141,
-      "started": 22
+      "n": 158,
+      "started": 23
     }
   },
   "projection": {
-    "n": 1257,
-    "mae": 14.7,
-    "bias": 0.44,
+    "n": 1382,
+    "mae": 14.76,
+    "bias": 0.2,
     "groups": {
       "Forward|club": {
-        "n": 359,
-        "bias": 2.02,
-        "mae": 13.9
+        "n": 397,
+        "bias": 1.67,
+        "mae": 14.03
       },
       "Midfielder|club": {
-        "n": 348,
-        "bias": 0.38,
-        "mae": 13.34
+        "n": 386,
+        "bias": 0.66,
+        "mae": 13.27
       },
       "Defender|club": {
-        "n": 313,
-        "bias": 1.76,
+        "n": 349,
+        "bias": 1.32,
         "mae": 16.71
       },
       "Goalkeeper|club": {
-        "n": 143,
-        "bias": 1.11,
-        "mae": 16.05
+        "n": 156,
+        "bias": 0.66,
+        "mae": 16.37
       },
       "Midfielder|national": {
         "n": 34,
@@ -167,6 +167,14 @@
       "played": true
     },
     {
+      "player": "robert-taylor",
+      "kickoff": "2026-10-31T21:00:00Z",
+      "pred": 0.955,
+      "src": "model",
+      "started": false,
+      "played": true
+    },
+    {
       "player": "matej-kovar",
       "kickoff": "2026-09-29T18:45:00Z",
       "pred": 0.05,
@@ -197,14 +205,6 @@
       "src": "model",
       "started": false,
       "played": false
-    },
-    {
-      "player": "timo-becker",
-      "kickoff": "2026-10-11T15:30:00Z",
-      "pred": 0.948,
-      "src": "sofa_pred_start",
-      "started": false,
-      "played": true
     }
   ]
 }

@@ -685,6 +685,16 @@ Bouanga/Son/Blake standen mit hoher Klub-Quote im Entwurf, obwohl abgestellt.)
   fast durchweg gestartet (Gabriel, Boudaoui, Luis Guilherme, Krattenmacher,
   Fortuño). Die Klub-Kalibrierung bleibt aktiv (LOO 0,1677 → 0,1644) und deckt
   das mit ab. n=35 → keine Änderung.
+- **Bilanz 01.11.2026 (1860 Spiele, davon 165 neu = Samstag GW726 + MLS, nur
+  Modell):** Brier 0,139 (bester Tag seit dem SofaScore-Ausfall), Quoten ≥ 80 % →
+  92 % gestartet (n=51). Mittelbereich 35–65 % weiter zu niedrig: vorhergesagt
+  52 %, gestartet 67 % (n=42). Fehlgriffe: Lacroix, Jean-Jacques, Wilson,
+  Kalajdžić (63–88 %) nicht im Kader; Kim Min-jae (18 %), Elvedi (26 %), Karaman
+  (24 %) 90' gestartet. **Geprüft, nicht geändert:** Ein Platt-Fit nur auf den
+  letzten 7 Tagen (Test ab 24.10. bzw. 28.10.) schlägt die geloggten,
+  kalibrierten Quoten nicht (0,1587 gegen 0,1569 ab 28.10.). Die aktive
+  Kalibrierung mit Status-Offsets ist also schon die beste Variante; eine
+  eigene Korrektur nur für den Mittelbereich wäre Kurvenanpassung.
 - **Laufende Spiele zählen nicht (Fix 15.10.2026):** Sorare führt ein laufendes Spiel
   schon mit den bisherigen Minuten im Spiel-Log. Der Sync um 02:45 lief während der
   MLS-Mittwochsspiele: Jeder MLS-Spieler verlor dadurch ~15 Prozentpunkte Startquote
