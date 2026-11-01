@@ -1,6 +1,6 @@
 {
   "_comment": "Researched START probabilities (--start-override). Jeder Wert ist an EINE GW gebunden (_fixture bzw. 'fixture' je Eintrag) und verfällt danach automatisch. 'researched' = Recherchedatum; hat der Spieler danach erneut gespielt, meldet lineup_suggest den Override als veraltet (neu prüfen). GRUNDREGEL #0: nur datumsgeprüfte Werte.",
-  "_updated": "2026-10-27",
+  "_updated": "2026-11-01",
   "_sources": {
     "gw717_md1_2026-09-26": "Nations League MD1 am 26.09.2026 (Gruppe 3 = ESP/CRO/ENG/CZE; ESP 3-2 ENG). Sorare-Spiel-Log (mins_played, last games) je Spieler abgefragt am 28.09.2026 -> wer MD1 startete, ist der stärkste MD2-Indikator.",
     "spain_2026-09-28": "ESP vs CRO 29.09. (yahoo/ESPN preview, 27.09.): Unai Simón 90' MD1 -> #1 (0.90); Laporte 90' MD1 -> gesetzt (0.90); Baena nur 35' (Joker) -> Rotation (0.40, unbestätigt); Grimaldo 0' MD1 (Cucurella LB) -> Ersatz (0.30, unbestätigt).",
@@ -41,7 +41,8 @@
     "elmas_gw722_2026-10-16": "Elmas Rot am 12.10. in der Serie A (Venezia), Giudice Sportivo 13.10.: 1 Spiel Sperre -> fehlt bei Milan-Atalanta 18.10. (calcioatalanta.it 13.10.2026, tuttosport.com 13.10.2026, Sorare-Log red_card). Heuristik verlor den Fall, weil er am 15.10. im Europacup spielte.",
     "michael-olise": "GW724: CL-Sperre gilt nur für die CL (Arsenal, 21.10.). Sorare-Spiel-Log: 17.10. Bundesliga 90' Start. Keine Verletzungsmeldung. Modell 0,67 nur wegen des gesperrten CL-Spiels.",
     "freese_gw725_2026-10-27": "Freese verließ am 24.10.2026 bei Orlando (2-2) in Min. 28 verletzt den Platz (linke Schulter/Arm), Romero kam. Quellen: RotoWire 24.10.2026, NYCFC-Spielbericht (nächstes Spiel 28.10.), Sorare-Log 28' Start. Keine Diagnose/kein Update bis 27.10. gefunden -> 0.35 (unbestätigt, Verfügbarkeit offen).",
-    "sassuolo_gw725_2026-10-27": "Sassuolo-Lazio 27.10. 18:30: Sky Sport (27.10.2026 13:23) Turati im Tor, RV Cinquegrano; SOS Fanta (27.10., 11:30) Turati vor Muric, Cinquegrano vor Van der Brempt; Tuttofantacalcio (27.10.2026 13:10) Turati 51/49, Van der Brempt 55/45. Sorare-Log: Muric 24.10. 0' (Bank). -> Muric 0.30, Van der Brempt 0.45."
+    "sassuolo_gw725_2026-10-27": "Sassuolo-Lazio 27.10. 18:30: Sky Sport (27.10.2026 13:23) Turati im Tor, RV Cinquegrano; SOS Fanta (27.10., 11:30) Turati vor Muric, Cinquegrano vor Van der Brempt; Tuttofantacalcio (27.10.2026 13:10) Turati 51/49, Van der Brempt 55/45. Sorare-Log: Muric 24.10. 0' (Bank). -> Muric 0.30, Van der Brempt 0.45.",
+    "franculino_gw727_2026-11-01": "Franculino Djú (Trabzonspor): Oberschenkelverletzung links (Blutung + Ödem in Muskel/Sehne laut Vereinsmitteilung, Fanatik 30.10.2026; Ödem/Zerrung laut 61saat 29.10.2026 und Sondakika 29.10.2026). Sorare-Log: 01.11. gegen Gaziantep nicht im Kader. Für Freiburg (Conference League) 'Rückkehr angestrebt', nicht bestätigt, keine Ausfalldauer genannt -> 0.25."
   },
   "_fixture": "football-1-2-oct-2026",
   "_researched": "2026-09-28",
@@ -291,5 +292,10 @@
     "p": 0.45,
     "fixture": "football-27-30-oct-2026",
     "researched": "2026-10-27"
+  },
+  "franculino-gluda-dju": {
+    "p": 0.25,
+    "fixture": "football-3-6-nov-2026",
+    "researched": "2026-11-01"
   }
 }
