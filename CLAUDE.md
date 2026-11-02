@@ -695,6 +695,17 @@ Bouanga/Son/Blake standen mit hoher Klub-Quote im Entwurf, obwohl abgestellt.)
   kalibrierten Quoten nicht (0,1587 gegen 0,1569 ab 28.10.). Die aktive
   Kalibrierung mit Status-Offsets ist also schon die beste Variante; eine
   eigene Korrektur nur für den Mittelbereich wäre Kurvenanpassung.
+- **Bilanz 02.11.2026 (2008 Spiele, davon 148 neu = Sonntag GW726 + MLS, nur
+  Modell):** Brier 0,121, vorhergesagt 61 %, gestartet 61 %; Quoten ≥ 80 % → 92 %
+  (n=60). Fehlgriffe: Burgess (96 %, Trainingsverletzung am 31.10.) und
+  Franculino (90 %, Oberschenkel, Meldungen ab 29.10.) nicht im Kader. Bei
+  Franculino war die Meldung vor dem GW726-Lock da, ich hatte sie beim finalen
+  Check nicht gesucht. Kim Jin-su (94 %) nicht im Kader, Trapp (4 %) und Malić
+  (9 %, Rot-Verdacht) 90' gestartet. `suspension_risk` gesamt 6 von 8 richtig
+  (vorhergesagt 8 %, real 25 %). Bei n=8 bleibt der Faktor ×0,10.
+  **Prozess-Lehre:** Beim finalen Check für jeden aufgestellten Spieler mit
+  hoher Quote auch eine Verletzungssuche der letzten 3 Tage machen, nicht nur
+  für die bekannten Wackelkandidaten.
 - **Laufende Spiele zählen nicht (Fix 15.10.2026):** Sorare führt ein laufendes Spiel
   schon mit den bisherigen Minuten im Spiel-Log. Der Sync um 02:45 lief während der
   MLS-Mittwochsspiele: Jeder MLS-Spieler verlor dadurch ~15 Prozentpunkte Startquote
