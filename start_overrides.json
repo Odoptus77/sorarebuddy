@@ -46,7 +46,9 @@
     "burgess_gw727_2026-11-01": "Christian Burgess (KAA Gent): Knöchelverletzung im Training am 31.10. (Voetbalkrant 31.10.2026 + 01.11.2026, Sporza Liveticker Lommel-Gent 01.11.2026). Sorare-Log: 01.11. nicht im Kader, Status STARTER -> REGULAR. Untersuchung am Mo 02.11., Diagnose offen -> 0.30, beim Deadline-Check am 03.11. neu bewerten. UPDATE 02.11.: Trainer De Mil schließt Ausfall bis nach der Winterpause nicht aus (Voetbalkrant 02.11.2026; Voetbalprimeur nach der 0:2-Niederlage in Lommel: 'mindestens bis zur Winterpause befürchtet') -> 0.02.",
     "olise_gw727_2026-11-03": "Olise: am 31.10. gegen Dortmund mit Knieschmerzen (rechts) ausgewechselt (84'). Sorare führt seit 01.11. eine Verletzung bis 08.11. Trainierte am 02.11. (fcbinside 02.11.2026), Bayern will vorsichtig sein, Entscheidung 'Tag für Tag' (beIN 02.11.2026); laut Sky im Aufgebot für Atlético. Startelf offen -> 0.60, beim finalen Check neu bewerten.",
     "jonas-urbig": "Sky 03.11.2026 09:48 + FCBinside 03.11.2026: Neuer nach Fußproblem im Training/Kader, voraussichtlich im Tor; Urbig nur Alternative. Yahoo/Bulinews 02.11. ebenso.",
-    "daniil-khudyakov": "Laola1 24.10.2026: schwere Verletzung, Sturm verpflichtet Stejskal bis Saisonende, Helac Nr. 1; Spiel-Log: 0 Min. in den letzten 3 Spielen."
+    "daniil-khudyakov": "Laola1 24.10.2026: schwere Verletzung, Sturm verpflichtet Stejskal bis Saisonende, Helac Nr. 1; Spiel-Log: 0 Min. in den letzten 3 Spielen. Für GW728 fortgeschrieben (Ersatz-TW bis Saisonende verpflichtet).",
+    "franculino-gluda-dju": " Für GW728 fortgeschrieben (Recherche 01.11.), vor Deadline neu prüfen.",
+    "christian-burgess": " Für GW728 fortgeschrieben (Recherche 02.11.), vor Deadline neu prüfen."
   },
   "_fixture": "football-1-2-oct-2026",
   "_researched": "2026-09-28",
@@ -299,17 +301,17 @@
   },
   "franculino-gluda-dju": {
     "p": 0.25,
-    "fixture": "football-3-6-nov-2026",
+    "fixture": "football-6-10-nov-2026",
     "researched": "2026-11-01"
   },
   "christian-burgess": {
     "p": 0.02,
-    "fixture": "football-3-6-nov-2026",
+    "fixture": "football-6-10-nov-2026",
     "researched": "2026-11-02"
   },
   "daniil-khudyakov": {
     "p": 0.0,
-    "fixture": "football-3-6-nov-2026",
+    "fixture": "football-6-10-nov-2026",
     "researched": "2026-11-03"
   }
 }
