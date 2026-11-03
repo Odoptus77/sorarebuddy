@@ -44,7 +44,9 @@
     "sassuolo_gw725_2026-10-27": "Sassuolo-Lazio 27.10. 18:30: Sky Sport (27.10.2026 13:23) Turati im Tor, RV Cinquegrano; SOS Fanta (27.10., 11:30) Turati vor Muric, Cinquegrano vor Van der Brempt; Tuttofantacalcio (27.10.2026 13:10) Turati 51/49, Van der Brempt 55/45. Sorare-Log: Muric 24.10. 0' (Bank). -> Muric 0.30, Van der Brempt 0.45.",
     "franculino_gw727_2026-11-01": "Franculino Djú (Trabzonspor): Oberschenkelverletzung links (Blutung + Ödem in Muskel/Sehne laut Vereinsmitteilung, Fanatik 30.10.2026; Ödem/Zerrung laut 61saat 29.10.2026 und Sondakika 29.10.2026). Sorare-Log: 01.11. gegen Gaziantep nicht im Kader. Für Freiburg (Conference League) 'Rückkehr angestrebt', nicht bestätigt, keine Ausfalldauer genannt -> 0.25.",
     "burgess_gw727_2026-11-01": "Christian Burgess (KAA Gent): Knöchelverletzung im Training am 31.10. (Voetbalkrant 31.10.2026 + 01.11.2026, Sporza Liveticker Lommel-Gent 01.11.2026). Sorare-Log: 01.11. nicht im Kader, Status STARTER -> REGULAR. Untersuchung am Mo 02.11., Diagnose offen -> 0.30, beim Deadline-Check am 03.11. neu bewerten. UPDATE 02.11.: Trainer De Mil schließt Ausfall bis nach der Winterpause nicht aus (Voetbalkrant 02.11.2026; Voetbalprimeur nach der 0:2-Niederlage in Lommel: 'mindestens bis zur Winterpause befürchtet') -> 0.02.",
-    "olise_gw727_2026-11-03": "Olise: am 31.10. gegen Dortmund mit Knieschmerzen (rechts) ausgewechselt (84'). Sorare führt seit 01.11. eine Verletzung bis 08.11. Trainierte am 02.11. (fcbinside 02.11.2026), Bayern will vorsichtig sein, Entscheidung 'Tag für Tag' (beIN 02.11.2026); laut Sky im Aufgebot für Atlético. Startelf offen -> 0.60, beim finalen Check neu bewerten."
+    "olise_gw727_2026-11-03": "Olise: am 31.10. gegen Dortmund mit Knieschmerzen (rechts) ausgewechselt (84'). Sorare führt seit 01.11. eine Verletzung bis 08.11. Trainierte am 02.11. (fcbinside 02.11.2026), Bayern will vorsichtig sein, Entscheidung 'Tag für Tag' (beIN 02.11.2026); laut Sky im Aufgebot für Atlético. Startelf offen -> 0.60, beim finalen Check neu bewerten.",
+    "jonas-urbig": "Sky 03.11.2026 09:48 + FCBinside 03.11.2026: Neuer nach Fußproblem im Training/Kader, voraussichtlich im Tor; Urbig nur Alternative. Yahoo/Bulinews 02.11. ebenso.",
+    "daniil-khudyakov": "Laola1 24.10.2026: schwere Verletzung, Sturm verpflichtet Stejskal bis Saisonende, Helac Nr. 1; Spiel-Log: 0 Min. in den letzten 3 Spielen."
   },
   "_fixture": "football-1-2-oct-2026",
   "_researched": "2026-09-28",
@@ -210,9 +212,9 @@
     "researched": "2026-09-29"
   },
   "jonas-urbig": {
-    "p": 0.9,
-    "fixture": "football-13-16-oct-2026",
-    "researched": "2026-10-13"
+    "p": 0.15,
+    "fixture": "football-3-6-nov-2026",
+    "researched": "2026-11-03"
   },
   "joachim-andersen": {
     "p": 0.88,
@@ -304,5 +306,10 @@
     "p": 0.02,
     "fixture": "football-3-6-nov-2026",
     "researched": "2026-11-02"
+  },
+  "daniil-khudyakov": {
+    "p": 0.0,
+    "fixture": "football-3-6-nov-2026",
+    "researched": "2026-11-03"
   }
 }
