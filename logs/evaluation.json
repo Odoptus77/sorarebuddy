@@ -1,17 +1,17 @@
 {
-  "updated": "2026-11-02T08:01:19.160797+00:00",
-  "evaluated": 2008,
+  "updated": "2026-11-03T07:53:05.049074+00:00",
+  "evaluated": 2036,
   "pending": 0,
-  "upcoming": 179,
-  "brier": 0.164,
-  "brier_raw": 0.1652,
-  "start_rate": 0.581,
+  "upcoming": 151,
+  "brier": 0.1642,
+  "brier_raw": 0.1659,
+  "start_rate": 0.579,
   "by_source": {
     "model": {
-      "n": 1138,
-      "mean_pred": 0.588,
-      "actual": 0.59,
-      "brier": 0.1647
+      "n": 1166,
+      "mean_pred": 0.585,
+      "actual": 0.586,
+      "brier": 0.1651
     },
     "sofa_pred_start": {
       "n": 432,
@@ -74,50 +74,50 @@
   },
   "playing_status": {
     "STARTER": {
-      "n": 933,
-      "started": 760
+      "n": 939,
+      "started": 766
     },
     "REGULAR": {
-      "n": 508,
-      "started": 263
+      "n": 519,
+      "started": 265
     },
     "SUBSTITUTE": {
-      "n": 254,
+      "n": 257,
       "started": 42
     },
     "SUPER_SUBSTITUTE": {
-      "n": 143,
-      "started": 78
+      "n": 148,
+      "started": 82
     },
     "NOT_PLAYING": {
-      "n": 170,
+      "n": 173,
       "started": 23
     }
   },
   "projection": {
-    "n": 1499,
-    "mae": 14.55,
-    "bias": 0.41,
+    "n": 1521,
+    "mae": 14.5,
+    "bias": 0.4,
     "groups": {
       "Forward|club": {
-        "n": 431,
-        "bias": 1.57,
-        "mae": 13.87
+        "n": 438,
+        "bias": 1.62,
+        "mae": 13.77
       },
       "Midfielder|club": {
-        "n": 419,
-        "bias": 0.91,
-        "mae": 13.31
+        "n": 427,
+        "bias": 0.98,
+        "mae": 13.27
       },
       "Defender|club": {
-        "n": 382,
-        "bias": 2.03,
-        "mae": 16.49
+        "n": 387,
+        "bias": 1.99,
+        "mae": 16.4
       },
       "Goalkeeper|club": {
-        "n": 173,
-        "bias": 0.87,
-        "mae": 15.54
+        "n": 175,
+        "bias": 0.59,
+        "mae": 15.64
       },
       "Midfielder|national": {
         "n": 34,

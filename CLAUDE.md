@@ -706,6 +706,18 @@ Bouanga/Son/Blake standen mit hoher Klub-Quote im Entwurf, obwohl abgestellt.)
   **Prozess-Lehre:** Beim finalen Check für jeden aufgestellten Spieler mit
   hoher Quote auch eine Verletzungssuche der letzten 3 Tage machen, nicht nur
   für die bekannten Wackelkandidaten.
+- **Bilanz 03.11.2026 (2036 Spiele, davon 28 neu = Montag GW726, nur Modell):**
+  Brier 0,178, vorhergesagt 46 %, gestartet 43 %. Zwei Muster wiederholen sich
+  (beide schon am 26./27.10. gesehen):
+  - Newcastle-Abwehr: Schär (27 %) und Burn (36 %) erneut 90 Minuten von Beginn
+    an, Thiaw (66 %) wieder auf der Bank.
+  - Benfica-Tor: Samuel Soares (31 %) erneut 90 Minuten, Trubin (32 %) auf der
+    Bank.
+
+  Das Modell zieht solche Stammplatzwechsel nur langsam nach, weil die
+  Recency-Gewichtung die älteren Einsätze noch mitzählt. n=28 → keine Änderung.
+  Beim Deadline-Check aber bei Newcastle und beim Benfica-Torwart der letzten
+  2–3 Partien folgen, nicht der Modellquote.
 - **Laufende Spiele zählen nicht (Fix 15.10.2026):** Sorare führt ein laufendes Spiel
   schon mit den bisherigen Minuten im Spiel-Log. Der Sync um 02:45 lief während der
   MLS-Mittwochsspiele: Jeder MLS-Spieler verlor dadurch ~15 Prozentpunkte Startquote
