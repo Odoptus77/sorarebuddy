@@ -718,6 +718,21 @@ Bouanga/Son/Blake standen mit hoher Klub-Quote im Entwurf, obwohl abgestellt.)
   Recency-Gewichtung die älteren Einsätze noch mitzählt. n=28 → keine Änderung.
   Beim Deadline-Check aber bei Newcastle und beim Benfica-Torwart der letzten
   2–3 Partien folgen, nicht der Modellquote.
+- **Bilanz 04.11.2026 (2071 Spiele, davon 35 neu = Dienstag GW727, Europacup):**
+  Brier 0,182, vorhergesagt 58 %, gestartet 57 %. Die zwei recherchierten Quoten
+  lagen richtig: Urbig 14 % (Neuer stand im Tor) und Olise 63 % (90 Minuten). Neuer
+  selbst hatte nur die Modellquote (27 %, NOT_PLAYING) und startete. Die übrigen
+  Fehlgriffe kamen vor allem von Sporting:
+  - Rui Borges war am 02.11. entlassen worden, Interimstrainer Tiago Fernandes
+    stellte gegen Shakhtar fast die ganze Elf um (O Jogo, 03.11.).
+  - Torwart Rui Silva (15 %, NOT_PLAYING) spielte 90 Minuten, Fresneda (89 %)
+    kam nur als Joker (7'), Luis Guilherme (60 %) gar nicht.
+
+  Kim Min-jae (61 %) saß zugunsten von Tah (45 %) auf der Bank. n=35 → keine
+  Änderung. **Prozess-Lehre:** Nach einem Trainerwechsel (auch Interimstrainer)
+  gelten die Klubquoten fürs erste Spiel als unsicher. Beim Deadline-Check die
+  datierte voraussichtliche Elf des neuen Trainers suchen, vor allem für Torwart
+  und Außenverteidiger.
 - **Laufende Spiele zählen nicht (Fix 15.10.2026):** Sorare führt ein laufendes Spiel
   schon mit den bisherigen Minuten im Spiel-Log. Der Sync um 02:45 lief während der
   MLS-Mittwochsspiele: Jeder MLS-Spieler verlor dadurch ~15 Prozentpunkte Startquote
