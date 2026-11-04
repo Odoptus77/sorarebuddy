@@ -48,7 +48,8 @@
     "jonas-urbig": "03.11.2026: Neuer stand gegen Atlético in der Startelf, Urbig auf der Bank (FCBinside-Liveticker 03.11. + Fussballdaten 03.11.). Neuer nach Fußverletzung zurück → für GW728 (Mainz) Bank erwartet.",
     "daniil-khudyakov": "Laola1 24.10.2026: schwere Verletzung, Sturm verpflichtet Stejskal bis Saisonende, Helac Nr. 1; Spiel-Log: 0 Min. in den letzten 3 Spielen. Für GW728 fortgeschrieben (Ersatz-TW bis Saisonende verpflichtet).",
     "franculino-gluda-dju": " Für GW728 fortgeschrieben (Recherche 01.11.), vor Deadline neu prüfen.",
-    "christian-burgess": " Für GW728 fortgeschrieben (Recherche 02.11.), vor Deadline neu prüfen."
+    "christian-burgess": " Für GW728 fortgeschrieben (Recherche 02.11.), vor Deadline neu prüfen.",
+    "florian-wirtz": "04.11.2026: gegen Fenerbahçe geschont (Bank, Einwechslung ~66'), nicht verletzt (Livescore/Yahoo 04.11. + fussballnationalmannschaft.net 04.11.). Rotation vor dem Wochenende → Start gegen Palace wahrscheinlich (Präzedenz GW722 Van Dijk/Guirassy)."
   },
   "_fixture": "football-1-2-oct-2026",
   "_researched": "2026-09-28",
@@ -201,8 +202,9 @@
     "researched": "2026-09-29"
   },
   "florian-wirtz": {
-    "p": 0.8,
-    "researched": "2026-09-29"
+    "p": 0.85,
+    "fixture": "football-6-10-nov-2026",
+    "researched": "2026-11-04"
   },
   "jonathan-burkardt": {
     "p": 0.35,
