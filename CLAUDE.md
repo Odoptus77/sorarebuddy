@@ -733,6 +733,16 @@ Bouanga/Son/Blake standen mit hoher Klub-Quote im Entwurf, obwohl abgestellt.)
   gelten die Klubquoten fürs erste Spiel als unsicher. Beim Deadline-Check die
   datierte voraussichtliche Elf des neuen Trainers suchen, vor allem für Torwart
   und Außenverteidiger.
+- **Bilanz 05.11.2026 (2110 Spiele, davon 39 neu = Mittwoch GW727, Europacup):**
+  Brier 0,156, vorhergesagt 66 %, gestartet 69 %. Fehlgriffe sind erneut
+  Europacup-Rotation bei Stammspielern: Wirtz (92 %, geschont, 24' als Joker),
+  Freuler (86 %), Havertz (80 %) und Bruno Guimarães (78 %) ohne Einsatz. Umgekehrt
+  starteten Szoboszlai (22 %, nach Oberschenkelverletzung zurück), Rüdiger (29 %)
+  und Peprah Oppong (40 %). Kein Modelleingriff: Rotation vor dem Wochenende ist
+  ohne voraussichtliche Elf nicht vorherzusagen, und n=39 ist zu klein. Für die
+  **Wochenendquote** gilt die Lehre vom 15.10.: Wer im Europacup nur geschont
+  wurde, bekommt fürs Wochenende einen Override statt der abgesenkten Modellquote
+  (GW728: Wirtz 85 %, Quellen 04.11.).
 - **Laufende Spiele zählen nicht (Fix 15.10.2026):** Sorare führt ein laufendes Spiel
   schon mit den bisherigen Minuten im Spiel-Log. Der Sync um 02:45 lief während der
   MLS-Mittwochsspiele: Jeder MLS-Spieler verlor dadurch ~15 Prozentpunkte Startquote
