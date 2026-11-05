@@ -47,8 +47,8 @@
     "olise_gw727_2026-11-03": "Olise: am 31.10. gegen Dortmund mit Knieschmerzen (rechts) ausgewechselt (84'). Sorare führt seit 01.11. eine Verletzung bis 08.11. Trainierte am 02.11. (fcbinside 02.11.2026), Bayern will vorsichtig sein, Entscheidung 'Tag für Tag' (beIN 02.11.2026); laut Sky im Aufgebot für Atlético. Startelf offen -> 0.60, beim finalen Check neu bewerten.",
     "jonas-urbig": "03.11.2026: Neuer stand gegen Atlético in der Startelf, Urbig auf der Bank (FCBinside-Liveticker 03.11. + Fussballdaten 03.11.). Neuer nach Fußverletzung zurück → für GW728 (Mainz) Bank erwartet.",
     "daniil-khudyakov": "Laola1 24.10.2026: schwere Verletzung, Sturm verpflichtet Stejskal bis Saisonende, Helac Nr. 1; Spiel-Log: 0 Min. in den letzten 3 Spielen. Für GW728 fortgeschrieben (Ersatz-TW bis Saisonende verpflichtet).",
-    "franculino-gluda-dju": " Für GW728 fortgeschrieben (Recherche 01.11.), vor Deadline neu prüfen.",
-    "christian-burgess": " Für GW728 fortgeschrieben (Recherche 02.11.), vor Deadline neu prüfen.",
+    "franculino-gluda-dju": " Für GW728 fortgeschrieben (Recherche 01.11.), vor Deadline neu prüfen. 05.11.: Spiel-Log bestätigt erneut 0 Min. (01.11. und 05.11. nicht eingesetzt).",
+    "christian-burgess": " Für GW728 fortgeschrieben (Recherche 02.11.), vor Deadline neu prüfen. 05.11.: Spiel-Log bestätigt erneut 0 Min. (01.11. und 05.11. nicht eingesetzt).",
     "florian-wirtz": "04.11.2026: gegen Fenerbahçe geschont (Bank, Einwechslung ~66'), nicht verletzt (Livescore/Yahoo 04.11. + fussballnationalmannschaft.net 04.11.). Rotation vor dem Wochenende → Start gegen Palace wahrscheinlich (Präzedenz GW722 Van Dijk/Guirassy)."
   },
   "_fixture": "football-1-2-oct-2026",
@@ -304,12 +304,12 @@
   "franculino-gluda-dju": {
     "p": 0.25,
     "fixture": "football-6-10-nov-2026",
-    "researched": "2026-11-01"
+    "researched": "2026-11-05"
   },
   "christian-burgess": {
     "p": 0.02,
     "fixture": "football-6-10-nov-2026",
-    "researched": "2026-11-02"
+    "researched": "2026-11-05"
   },
   "daniil-khudyakov": {
     "p": 0.0,
