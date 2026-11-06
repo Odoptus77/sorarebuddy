@@ -49,7 +49,9 @@
     "daniil-khudyakov": "Laola1 24.10.2026: schwere Verletzung, Sturm verpflichtet Stejskal bis Saisonende, Helac Nr. 1; Spiel-Log: 0 Min. in den letzten 3 Spielen. Für GW728 fortgeschrieben (Ersatz-TW bis Saisonende verpflichtet).",
     "franculino-gluda-dju": " Für GW728 fortgeschrieben (Recherche 01.11.), vor Deadline neu prüfen. 05.11.: Spiel-Log bestätigt erneut 0 Min. (01.11. und 05.11. nicht eingesetzt).",
     "christian-burgess": " Für GW728 fortgeschrieben (Recherche 02.11.), vor Deadline neu prüfen. 05.11.: Spiel-Log bestätigt erneut 0 Min. (01.11. und 05.11. nicht eingesetzt).",
-    "florian-wirtz": "04.11.2026: gegen Fenerbahçe geschont (Bank, Einwechslung ~66'), nicht verletzt (Livescore/Yahoo 04.11. + fussballnationalmannschaft.net 04.11.). Rotation vor dem Wochenende → Start gegen Palace wahrscheinlich (Präzedenz GW722 Van Dijk/Guirassy)."
+    "florian-wirtz": "04.11.2026: gegen Fenerbahçe geschont (Bank, Einwechslung ~66'), nicht verletzt (Livescore/Yahoo 04.11. + fussballnationalmannschaft.net 04.11.). Rotation vor dem Wochenende → Start gegen Palace wahrscheinlich (Präzedenz GW722 Van Dijk/Guirassy).",
+    "evangelos-pavlidis": "05.11.2026: im EL-Spiel gegen Lech nur Bank (bestätigte Aufstellung: Abola-Liveblog 05.11. + Oddschecker 05.11.), keine Verletzung gemeldet → Rotation vor dem Wochenende; Liga-Start gegen Estrela wahrscheinlich (Lehre 15.10./05.11.).",
+    "alexander-hartmann-bah": "05.11.2026: im EL-Spiel gegen Lech nur Bank (bestätigte Aufstellung: Abola-Liveblog 05.11. + Oddschecker 05.11.), keine Verletzung gemeldet → Rotation vor dem Wochenende; Liga-Start gegen Estrela wahrscheinlich (Lehre 15.10./05.11.)."
   },
   "_fixture": "football-1-2-oct-2026",
   "_researched": "2026-09-28",
@@ -182,16 +184,18 @@
     "researched": "2026-10-27"
   },
   "alexander-hartmann-bah": {
-    "p": 0.15,
-    "researched": "2026-09-29"
+    "p": 0.8,
+    "fixture": "football-6-10-nov-2026",
+    "researched": "2026-11-05"
   },
   "victor-mow-froholdt": {
     "p": 0.45,
     "researched": "2026-09-29"
   },
   "evangelos-pavlidis": {
-    "p": 0.9,
-    "researched": "2026-09-29"
+    "p": 0.8,
+    "fixture": "football-6-10-nov-2026",
+    "researched": "2026-11-05"
   },
   "david-raum": {
     "p": 0.75,
