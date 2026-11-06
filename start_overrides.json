@@ -51,7 +51,11 @@
     "christian-burgess": " Für GW728 fortgeschrieben (Recherche 02.11.), vor Deadline neu prüfen. 05.11.: Spiel-Log bestätigt erneut 0 Min. (01.11. und 05.11. nicht eingesetzt).",
     "florian-wirtz": "04.11.2026: gegen Fenerbahçe geschont (Bank, Einwechslung ~66'), nicht verletzt (Livescore/Yahoo 04.11. + fussballnationalmannschaft.net 04.11.). Rotation vor dem Wochenende → Start gegen Palace wahrscheinlich (Präzedenz GW722 Van Dijk/Guirassy).",
     "evangelos-pavlidis": "05.11.2026: im EL-Spiel gegen Lech nur Bank (bestätigte Aufstellung: Abola-Liveblog 05.11. + Oddschecker 05.11.), keine Verletzung gemeldet → Rotation vor dem Wochenende; Liga-Start gegen Estrela wahrscheinlich (Lehre 15.10./05.11.).",
-    "alexander-hartmann-bah": "05.11.2026: im EL-Spiel gegen Lech nur Bank (bestätigte Aufstellung: Abola-Liveblog 05.11. + Oddschecker 05.11.), keine Verletzung gemeldet → Rotation vor dem Wochenende; Liga-Start gegen Estrela wahrscheinlich (Lehre 15.10./05.11.)."
+    "alexander-hartmann-bah": "05.11.2026: im EL-Spiel gegen Lech nur Bank (bestätigte Aufstellung: Abola-Liveblog 05.11. + Oddschecker 05.11.), keine Verletzung gemeldet → Rotation vor dem Wochenende; Liga-Start gegen Estrela wahrscheinlich (Lehre 15.10./05.11.).",
+    "anatolii-trubin": "Spiel-Log: Samuel Soares 90' in den Ligaspielen 26.10. und 02.11., Trubin nur im EL-Spiel 05.11. (90'); Muster Trubin=EL, Soares=Liga (Glorioso 1904, undatiert). Lehre 03.11.: dem Benfica-Torwart der letzten 2–3 Ligaspiele folgen.",
+    "samuel-jumpe-soares": "Spiel-Log: 90' in den Ligaspielen 26.10. und 02.11.; im EL-Spiel 05.11. Bank, Trubin im Tor. Liga-Torwart → Start gegen Estrela wahrscheinlich.",
+    "hany-mukhtar": "Sports Mole 06.11.2026 (Vorschau Cincinnati–Nashville): voraussichtliche Elf ohne Mukhtar, Rotation (Lovitz, Tagseth, Muyl, Madrigal) möglich; Nashville spielt aber um den Punkterekord. Rotation 28.10. (SixOneFive) als Präzedenz. Nur eine Quelle → moderat.",
+    "matthew-james-corcoran": "Sports Mole 06.11.2026: nicht in der voraussichtlichen Elf; Spiel-Log 67', 0', 67'. Nur eine Quelle → moderat."
   },
   "_fixture": "football-1-2-oct-2026",
   "_researched": "2026-09-28",
@@ -159,8 +163,9 @@
     "researched": "2026-09-21"
   },
   "samuel-jumpe-soares": {
-    "p": 0.08,
-    "researched": "2026-09-21"
+    "p": 0.7,
+    "fixture": "football-6-10-nov-2026",
+    "researched": "2026-11-06"
   },
   "konrad-laimer": {
     "p": 0.02,
@@ -317,6 +322,21 @@
   },
   "daniil-khudyakov": {
     "p": 0.0,
+    "fixture": "football-6-10-nov-2026",
+    "researched": "2026-11-06"
+  },
+  "anatolii-trubin": {
+    "p": 0.2,
+    "fixture": "football-6-10-nov-2026",
+    "researched": "2026-11-06"
+  },
+  "hany-mukhtar": {
+    "p": 0.65,
+    "fixture": "football-6-10-nov-2026",
+    "researched": "2026-11-06"
+  },
+  "matthew-james-corcoran": {
+    "p": 0.5,
     "fixture": "football-6-10-nov-2026",
     "researched": "2026-11-06"
   }
