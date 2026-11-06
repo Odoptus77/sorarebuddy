@@ -743,6 +743,20 @@ Bouanga/Son/Blake standen mit hoher Klub-Quote im Entwurf, obwohl abgestellt.)
   **Wochenendquote** gilt die Lehre vom 15.10.: Wer im Europacup nur geschont
   wurde, bekommt fürs Wochenende einen Override statt der abgesenkten Modellquote
   (GW728: Wirtz 85 %, Quellen 04.11.).
+- **Bilanz 06.11.2026 (2188 Spiele, davon 78 neu = Donnerstag GW727, Europa/
+  Conference League):** Brier 0,183, vorhergesagt 52 %, gestartet 54 %. Benfica
+  rotierte gegen Lech fast komplett: Pavlidis (82 %), Bah (85 %), Dahl (69 %) und
+  Aursnes (86 %) nicht in der Startelf, dafür Trubin (26 %), Sudakov (32 %) und
+  Manuel Silva (14 %). Dazu Hložek (81 %), Hödl (86 %) und Wilson (76 %) ohne
+  Startelfeinsatz. **Geprüft, nicht übernommen:** Abschlag für reine Modellquoten
+  in Klubspielen Di–Do (n=276). Quoten ≥ 80 % starten dort nur zu 82 % (vorhergesagt
+  90 %, n=95), am Wochenende zu 93 % (vorhergesagt 89 %, n=277). Ein Shrink
+  `0,9·p + 0,1·0,55` verbessert den Brier in beiden Zeithälften (0,1920 → 0,1917
+  und 0,1751 → 0,1731, gesamt 0,1836 → 0,1824), in der frühen Hälfte aber kaum.
+  Bewusst nicht umgesetzt: Gewinn klein, Deadline am selben Tag, und die nächste
+  Midweek-GW liegt in der Länderspielpause. Nach der Pause mit mehr Europacup-Daten
+  erneut prüfen. Fürs Wochenende gelten Overrides für die geschonten Spieler
+  (Pavlidis, Bah 80 %, Quellen 05.11.).
 - **Laufende Spiele zählen nicht (Fix 15.10.2026):** Sorare führt ein laufendes Spiel
   schon mit den bisherigen Minuten im Spiel-Log. Der Sync um 02:45 lief während der
   MLS-Mittwochsspiele: Jeder MLS-Spieler verlor dadurch ~15 Prozentpunkte Startquote
