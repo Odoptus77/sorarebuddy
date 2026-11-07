@@ -757,6 +757,8 @@ Bouanga/Son/Blake standen mit hoher Klub-Quote im Entwurf, obwohl abgestellt.)
   Midweek-GW liegt in der Länderspielpause. Nach der Pause mit mehr Europacup-Daten
   erneut prüfen. Fürs Wochenende gelten Overrides für die geschonten Spieler
   (Pavlidis, Bah 80 %, Quellen 05.11.).
+- **Bilanz 07.11.2026 (2202 Spiele, davon 14 neu = Freitag GW728):** Brier 0,049,
+  vorhergesagt 70 %, gestartet 71 %, kein Fehlgriff. n=14 → keine Änderung.
 - **Laufende Spiele zählen nicht (Fix 15.10.2026):** Sorare führt ein laufendes Spiel
   schon mit den bisherigen Minuten im Spiel-Log. Der Sync um 02:45 lief während der
   MLS-Mittwochsspiele: Jeder MLS-Spieler verlor dadurch ~15 Prozentpunkte Startquote
