@@ -759,6 +759,23 @@ Bouanga/Son/Blake standen mit hoher Klub-Quote im Entwurf, obwohl abgestellt.)
   (Pavlidis, Bah 80 %, Quellen 05.11.).
 - **Bilanz 07.11.2026 (2202 Spiele, davon 14 neu = Freitag GW728):** Brier 0,049,
   vorhergesagt 70 %, gestartet 71 %, kein Fehlgriff. n=14 → keine Änderung.
+- **Bilanz 08.11.2026 (2386 Spiele, davon 183 neu = Samstag GW728 + MLS Decision
+  Day, nur Modell):** Brier 0,150, vorhergesagt 59 %, gestartet 58 %. Auffällig
+  viele Stammspieler nur als Joker oder gar nicht, darunter Nicks Karten:
+  - Nusa (96 %, 25'), Ndoye (95 %, PL-HS-Kapitän, 25'), Ebnoutalib (86 %, 26',
+    Burkardt startete; die Vorschauen waren geteilt), Demirović (86 %, 7'),
+    Eze (72 %, 21'), R. Taylor (89 %, 28').
+  - Nashville rotierte trotz Punkterekord teilweise: Palacios (93 %) 0', dagegen
+    starteten Mukhtar (recherchiert 69 %) und Corcoran (recherchiert 42 %).
+  - Ohne Einsatz: Tate Johnson (96 %), Hagglund (81 %), Lloris (95 %), A. Long
+    (67 %), Guirassy (87 %), Vermeeren (93 %).
+
+  **Muster, nicht umgesetzt:** Am letzten Klub-Spieltag vor der Länderspielpause
+  starteten Quoten ≥ 80 % nur zu 84 % (n=67, vorhergesagt 90 %), an den drei
+  Wochenenden davor zu 92–95 %. Vor der Oktober-Pause gibt es nur n=2, also kein
+  zweiter Beleg. Vor der nächsten Pause (März) erneut prüfen; bis dahin beim
+  Deadline-Check vor einer Pause Nationalspieler mit hoher Quote auf
+  Schonung prüfen.
 - **Laufende Spiele zählen nicht (Fix 15.10.2026):** Sorare führt ein laufendes Spiel
   schon mit den bisherigen Minuten im Spiel-Log. Der Sync um 02:45 lief während der
   MLS-Mittwochsspiele: Jeder MLS-Spieler verlor dadurch ~15 Prozentpunkte Startquote

@@ -1,17 +1,17 @@
 {
-  "updated": "2026-11-07T07:53:43.447822+00:00",
-  "evaluated": 2202,
-  "pending": 1,
-  "upcoming": 366,
-  "brier": 0.1643,
-  "brier_raw": 0.1659,
+  "updated": "2026-11-08T07:53:25.540691+00:00",
+  "evaluated": 2386,
+  "pending": 0,
+  "upcoming": 195,
+  "brier": 0.1633,
+  "brier_raw": 0.1653,
   "start_rate": 0.58,
   "by_source": {
     "model": {
-      "n": 1326,
-      "mean_pred": 0.586,
-      "actual": 0.589,
-      "brier": 0.1657
+      "n": 1506,
+      "mean_pred": 0.588,
+      "actual": 0.588,
+      "brier": 0.1642
     },
     "sofa_pred_start": {
       "n": 432,
@@ -26,10 +26,10 @@
       "brier": 0.1839
     },
     "researched": {
-      "n": 78,
-      "mean_pred": 0.459,
-      "actual": 0.474,
-      "brier": 0.1445
+      "n": 81,
+      "mean_pred": 0.457,
+      "actual": 0.481,
+      "brier": 0.1446
     },
     "natl_bench_soft": {
       "n": 15,
@@ -38,10 +38,10 @@
       "brier": 0.1044
     },
     "suspension_risk": {
-      "n": 9,
-      "mean_pred": 0.084,
-      "actual": 0.222,
-      "brier": 0.1928
+      "n": 10,
+      "mean_pred": 0.079,
+      "actual": 0.2,
+      "brier": 0.1736
     },
     "natl_bench_auto": {
       "n": 7,
@@ -69,55 +69,55 @@
     }
   },
   "out_signals": {
-    "n": 362,
-    "correct_out": 261
+    "n": 363,
+    "correct_out": 262
   },
   "playing_status": {
     "STARTER": {
-      "n": 1026,
-      "started": 838
+      "n": 1116,
+      "started": 913
     },
     "REGULAR": {
-      "n": 548,
-      "started": 278
+      "n": 586,
+      "started": 300
     },
     "SUBSTITUTE": {
-      "n": 285,
-      "started": 48
+      "n": 312,
+      "started": 52
     },
     "SUPER_SUBSTITUTE": {
-      "n": 159,
-      "started": 88
+      "n": 171,
+      "started": 94
     },
     "NOT_PLAYING": {
-      "n": 184,
+      "n": 201,
       "started": 25
     }
   },
   "projection": {
-    "n": 1640,
-    "mae": 14.49,
-    "bias": 0.41,
+    "n": 1781,
+    "mae": 14.36,
+    "bias": 0.29,
     "groups": {
       "Forward|club": {
-        "n": 471,
-        "bias": 1.47,
-        "mae": 13.85
+        "n": 515,
+        "bias": 1.58,
+        "mae": 13.67
       },
       "Midfielder|club": {
-        "n": 464,
-        "bias": 0.93,
-        "mae": 13.29
+        "n": 504,
+        "bias": 0.96,
+        "mae": 13.34
       },
       "Defender|club": {
-        "n": 420,
-        "bias": 2.33,
-        "mae": 16.33
+        "n": 460,
+        "bias": 1.99,
+        "mae": 16.03
       },
       "Goalkeeper|club": {
-        "n": 191,
-        "bias": 0.75,
-        "mae": 15.58
+        "n": 208,
+        "bias": 0.37,
+        "mae": 15.52
       },
       "Midfielder|national": {
         "n": 34,
@@ -142,6 +142,22 @@
     }
   },
   "misses": [
+    {
+      "player": "tate-johnson",
+      "kickoff": "2026-11-07T21:00:00Z",
+      "pred": 0.964,
+      "src": "model",
+      "started": false,
+      "played": false
+    },
+    {
+      "player": "antonio-eromonsele-nordby-nusa",
+      "kickoff": "2026-11-07T14:30:00Z",
+      "pred": 0.964,
+      "src": "model",
+      "started": false,
+      "played": true
+    },
     {
       "player": "sam-surridge",
       "kickoff": "2026-10-29T00:30:00Z",
@@ -186,22 +202,6 @@
       "player": "robert-taylor",
       "kickoff": "2026-10-31T21:00:00Z",
       "pred": 0.955,
-      "src": "model",
-      "started": false,
-      "played": true
-    },
-    {
-      "player": "matej-kovar",
-      "kickoff": "2026-09-29T18:45:00Z",
-      "pred": 0.05,
-      "src": "researched",
-      "started": true,
-      "played": true
-    },
-    {
-      "player": "antonio-eromonsele-nordby-nusa",
-      "kickoff": "2026-10-01T18:45:00Z",
-      "pred": 0.948,
       "src": "model",
       "started": false,
       "played": true
