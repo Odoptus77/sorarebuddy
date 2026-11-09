@@ -776,6 +776,24 @@ Bouanga/Son/Blake standen mit hoher Klub-Quote im Entwurf, obwohl abgestellt.)
   zweiter Beleg. Vor der nächsten Pause (März) erneut prüfen; bis dahin beim
   Deadline-Check vor einer Pause Nationalspieler mit hoher Quote auf
   Schonung prüfen.
+- **Bilanz 09.11.2026 (2550 Spiele, davon 159 neu = Sonntag GW728) und Datenfix
+  in `evaluate.py`:** Brier 0,137, vorhergesagt 57 %, gestartet 59 %. Alle acht
+  recherchierten Quoten lagen richtig: Wirtz 89 % (90'), Pavlidis und Bah je 78 %
+  (90'/84'), Samuel Soares 66 % (90', Trubin 18 % auf der Bank), Burgess,
+  Franculino und Khudyakov 0–17 % (nicht im Kader). `researched` gesamt jetzt
+  Brier 0,135 (n=89), bestes eigenes Signal. Fehlgriffe: Kristensen (95 %, 45'),
+  Becker (90 %, 0'), Bischoff (93 %, 21'), Perišić (89 %, 0'), Aursnes (75 %, 0').
+  **Datenfehler behoben:** Estoril–Marítimo (08.11.) wurde verlegt, `evaluate.py`
+  wertete alle Marítimo-Spieler als „nicht im Kader“ (Butzke, Romain Correia,
+  Paulo Henrique, Rodrigo Andrade, Vieites, je 63–88 %). `OUTCOME_QUERY` liest
+  jetzt `statusTyped`; ein Spiel mit Status ≠ `played` gilt als „ausgefallen/
+  verlegt“ (`void`, wird nicht gewertet, Bericht zählt es separat), `playing` als
+  „pending“. Nachprüfung aller 347 gecachten „nicht im Kader“-Einträge: 16 waren
+  in Wahrheit verlegte bzw. abgebrochene Spiele, darunter **Laporte 10.10.**
+  (Spiel `suspended`, in der Bilanz 11.10. als Kaderausfall gezählt) und
+  **Wilson 31.10.** (verlegt, Bilanz 01.11.). Ergebnis: Brier gesamt 0,1626 →
+  0,1617, Klub-LOO 0,1632 → 0,1580 vorher, jetzt 0,1620 → 0,1569. Ein zweiter
+  Lauf liefert dieselben Zahlen. Reiner Datenfix, keine Modelländerung.
 - **Laufende Spiele zählen nicht (Fix 15.10.2026):** Sorare führt ein laufendes Spiel
   schon mit den bisherigen Minuten im Spiel-Log. Der Sync um 02:45 lief während der
   MLS-Mittwochsspiele: Jeder MLS-Spieler verlor dadurch ~15 Prozentpunkte Startquote

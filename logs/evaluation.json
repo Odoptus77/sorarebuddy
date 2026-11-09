@@ -1,23 +1,23 @@
 {
-  "updated": "2026-11-08T07:53:25.540691+00:00",
-  "evaluated": 2386,
+  "updated": "2026-11-09T07:57:34.478240+00:00",
+  "evaluated": 2550,
   "pending": 0,
-  "upcoming": 195,
-  "brier": 0.1633,
-  "brier_raw": 0.1653,
-  "start_rate": 0.58,
+  "upcoming": 20,
+  "brier": 0.1617,
+  "brier_raw": 0.1639,
+  "start_rate": 0.582,
   "by_source": {
     "model": {
-      "n": 1506,
-      "mean_pred": 0.588,
-      "actual": 0.588,
-      "brier": 0.1642
+      "n": 1661,
+      "mean_pred": 0.589,
+      "actual": 0.591,
+      "brier": 0.1627
     },
     "sofa_pred_start": {
-      "n": 432,
+      "n": 431,
       "mean_pred": 0.815,
-      "actual": 0.824,
-      "brier": 0.1441
+      "actual": 0.826,
+      "brier": 0.1428
     },
     "sofa_pred_out": {
       "n": 329,
@@ -26,10 +26,10 @@
       "brier": 0.1839
     },
     "researched": {
-      "n": 81,
-      "mean_pred": 0.457,
-      "actual": 0.481,
-      "brier": 0.1446
+      "n": 89,
+      "mean_pred": 0.455,
+      "actual": 0.483,
+      "brier": 0.1349
     },
     "natl_bench_soft": {
       "n": 15,
@@ -38,10 +38,10 @@
       "brier": 0.1044
     },
     "suspension_risk": {
-      "n": 10,
+      "n": 12,
       "mean_pred": 0.079,
-      "actual": 0.2,
-      "brier": 0.1736
+      "actual": 0.167,
+      "brier": 0.1458
     },
     "natl_bench_auto": {
       "n": 7,
@@ -69,55 +69,55 @@
     }
   },
   "out_signals": {
-    "n": 363,
-    "correct_out": 262
+    "n": 365,
+    "correct_out": 264
   },
   "playing_status": {
     "STARTER": {
-      "n": 1116,
-      "started": 913
+      "n": 1187,
+      "started": 974
     },
     "REGULAR": {
-      "n": 586,
-      "started": 300
+      "n": 630,
+      "started": 326
     },
     "SUBSTITUTE": {
-      "n": 312,
-      "started": 52
+      "n": 334,
+      "started": 56
     },
     "SUPER_SUBSTITUTE": {
-      "n": 171,
-      "started": 94
+      "n": 184,
+      "started": 102
     },
     "NOT_PLAYING": {
-      "n": 201,
+      "n": 215,
       "started": 25
     }
   },
   "projection": {
-    "n": 1781,
-    "mae": 14.36,
-    "bias": 0.29,
+    "n": 1904,
+    "mae": 14.45,
+    "bias": 0.28,
     "groups": {
-      "Forward|club": {
-        "n": 515,
-        "bias": 1.58,
-        "mae": 13.67
-      },
       "Midfielder|club": {
-        "n": 504,
-        "bias": 0.96,
-        "mae": 13.34
+        "n": 548,
+        "bias": 0.95,
+        "mae": 13.31
+      },
+      "Forward|club": {
+        "n": 544,
+        "bias": 1.25,
+        "mae": 13.76
       },
       "Defender|club": {
-        "n": 460,
-        "bias": 1.99,
-        "mae": 16.03
+        "n": 493,
+        "bias": 2.2,
+        "mae": 16.28
       },
       "Goalkeeper|club": {
-        "n": 208,
-        "bias": 0.37,
-        "mae": 15.52
+        "n": 225,
+        "bias": 0.93,
+        "mae": 15.79
       },
       "Midfielder|national": {
         "n": 34,
@@ -145,6 +145,14 @@
     {
       "player": "tate-johnson",
       "kickoff": "2026-11-07T21:00:00Z",
+      "pred": 0.964,
+      "src": "model",
+      "started": false,
+      "played": false
+    },
+    {
+      "player": "patryk-klimala",
+      "kickoff": "2026-11-08T05:00:00Z",
       "pred": 0.964,
       "src": "model",
       "started": false,
@@ -197,14 +205,6 @@
       "src": "model",
       "started": false,
       "played": false
-    },
-    {
-      "player": "robert-taylor",
-      "kickoff": "2026-10-31T21:00:00Z",
-      "pred": 0.955,
-      "src": "model",
-      "started": false,
-      "played": true
     }
   ]
 }

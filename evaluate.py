@@ -101,7 +101,7 @@ OUTCOME_QUERY = """
     anyPositions
     playerGameScores(last: %(last)d) {
       score
-      anyGame { date }
+      anyGame { date statusTyped }
       anyPlayerGameStats { ... on PlayerGameStats { gameStarted minsPlayed onGameSheet } }
     }
 } }
@@ -170,6 +170,9 @@ def fetch_outcomes(slugs, last=LAST, batch=BATCH):
     return out
 
 
+VOID_OK_STATUS = ("played",)   # anything else (postponed, cancelled, ...) -> void
+
+
 def match_outcome(games, kickoff, now, last=LAST):
     """(started, played, mins, score) for the game at `kickoff`, 'pending', or
     'unknown' when the fetched log (`last` games) does not reach back that far.
@@ -179,6 +182,14 @@ def match_outcome(games, kickoff, now, last=LAST):
     for g in games:
         gd = _ts((g.get("anyGame") or {}).get("date"))
         if gd and abs(gd - ko) <= MATCH_TOL:
+            status = (g.get("anyGame") or {}).get("statusTyped")
+            if status == "playing":
+                return "pending"
+            if status and status not in VOID_OK_STATUS:
+                # 09.11.2026: Estoril-Marítimo (08.11.) was postponed and all five
+                # Marítimo players were scored as "not in squad". A game that never
+                # took place says nothing about the start prediction.
+                return {"void": True, "status": status}
             st = g.get("anyPlayerGameStats") or {}
             mins = st.get("minsPlayed") or 0
             started = st.get("gameStarted")
@@ -389,7 +400,7 @@ def main(argv):
         if o not in ("pending", "unknown"):
             cache[f"{k[0]}|{k[1]}"] = {**o, "position": POSITIONS.get(k[0])}
 
-    rows, pending, unknown = [], 0, 0
+    rows, pending, unknown, void = [], 0, 0, 0
     for (slug, ko), r in preds.items():
         o = cache.get(f"{slug}|{ko}") or found.get((slug, ko))
         if o == "pending":
@@ -398,13 +409,17 @@ def main(argv):
         if o == "unknown":
             unknown += 1
             continue
+        if o.get("void"):
+            void += 1
+            continue
         raw = r.get("start_prob_raw", r.get("start_prob"))
         rows.append({**r, "p_raw": raw, "p": r.get("start_prob"), **o})
 
     print("================ TREFFER-BILANZ ================")
     print(f"Stand {now:%Y-%m-%d %H:%M} UTC | ausgewertete Spiele: {len(rows)} | "
           f"Ergebnis noch nicht da: {pending} | Spiele noch nicht gespielt: {upcoming}"
-          + (f" | nicht ermittelbar (Spiel-Log zu kurz): {unknown}" if unknown else ""))
+          + (f" | nicht ermittelbar (Spiel-Log zu kurz): {unknown}" if unknown else "")
+          + (f" | ausgefallen/verlegt (nicht gewertet): {void}" if void else ""))
     if not rows:
         print("Noch keine abgeschlossenen Spiele mit Vorhersage im Log.")
         return 0
