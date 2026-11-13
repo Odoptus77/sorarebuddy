@@ -1,6 +1,6 @@
 {
   "_comment": "Researched START probabilities (--start-override). Jeder Wert ist an EINE GW gebunden (_fixture bzw. 'fixture' je Eintrag) und verfällt danach automatisch. 'researched' = Recherchedatum; hat der Spieler danach erneut gespielt, meldet lineup_suggest den Override als veraltet (neu prüfen). GRUNDREGEL #0: nur datumsgeprüfte Werte.",
-  "_updated": "2026-11-01",
+  "_updated": "2026-11-13",
   "_sources": {
     "gw717_md1_2026-09-26": "Nations League MD1 am 26.09.2026 (Gruppe 3 = ESP/CRO/ENG/CZE; ESP 3-2 ENG). Sorare-Spiel-Log (mins_played, last games) je Spieler abgefragt am 28.09.2026 -> wer MD1 startete, ist der stärkste MD2-Indikator.",
     "spain_2026-09-28": "ESP vs CRO 29.09. (yahoo/ESPN preview, 27.09.): Unai Simón 90' MD1 -> #1 (0.90); Laporte 90' MD1 -> gesetzt (0.90); Baena nur 35' (Joker) -> Rotation (0.40, unbestätigt); Grimaldo 0' MD1 (Cucurella LB) -> Ersatz (0.30, unbestätigt).",
@@ -49,8 +49,8 @@
     "daniil-khudyakov": "Laola1 24.10.2026: schwere Verletzung, Sturm verpflichtet Stejskal bis Saisonende, Helac Nr. 1; Spiel-Log: 0 Min. in den letzten 3 Spielen. Für GW728 fortgeschrieben (Ersatz-TW bis Saisonende verpflichtet). 06.11.: Spiel-Log bestätigt (05.11. erneut nicht eingesetzt).",
     "franculino-gluda-dju": " Für GW728 fortgeschrieben (Recherche 01.11.), vor Deadline neu prüfen. 05.11.: Spiel-Log bestätigt erneut 0 Min. (01.11. und 05.11. nicht eingesetzt).",
     "christian-burgess": " Für GW728 fortgeschrieben (Recherche 02.11.), vor Deadline neu prüfen. 05.11.: Spiel-Log bestätigt erneut 0 Min. (01.11. und 05.11. nicht eingesetzt).",
-    "florian-wirtz": "04.11.2026: gegen Fenerbahçe geschont (Bank, Einwechslung ~66'), nicht verletzt (Livescore/Yahoo 04.11. + fussballnationalmannschaft.net 04.11.). Rotation vor dem Wochenende → Start gegen Palace wahrscheinlich (Präzedenz GW722 Van Dijk/Guirassy).",
-    "evangelos-pavlidis": "05.11.2026: im EL-Spiel gegen Lech nur Bank (bestätigte Aufstellung: Abola-Liveblog 05.11. + Oddschecker 05.11.), keine Verletzung gemeldet → Rotation vor dem Wochenende; Liga-Start gegen Estrela wahrscheinlich (Lehre 15.10./05.11.).",
+    "florian-wirtz": "GER-SRB 13.11.: in beiden Elfen (Sports Mole 11.11.: 'could start'; RotoWire 11.11.2026).",
+    "evangelos-pavlidis": "NED-GRE 13.11.: in allen 4 Vorschauen in der Elf (Sports Mole 11.11., RotoWire 13.11., Goal 13.11., Khelnow 11.11.2026).",
     "alexander-hartmann-bah": "05.11.2026: im EL-Spiel gegen Lech nur Bank (bestätigte Aufstellung: Abola-Liveblog 05.11. + Oddschecker 05.11.), keine Verletzung gemeldet → Rotation vor dem Wochenende; Liga-Start gegen Estrela wahrscheinlich (Lehre 15.10./05.11.).",
     "anatolii-trubin": "Spiel-Log: Samuel Soares 90' in den Ligaspielen 26.10. und 02.11., Trubin nur im EL-Spiel 05.11. (90'); Muster Trubin=EL, Soares=Liga (Glorioso 1904, undatiert). Lehre 03.11.: dem Benfica-Torwart der letzten 2–3 Ligaspiele folgen.",
     "samuel-jumpe-soares": "Spiel-Log: 90' in den Ligaspielen 26.10. und 02.11.; im EL-Spiel 05.11. Bank, Trubin im Tor. Liga-Torwart → Start gegen Estrela wahrscheinlich.",
@@ -71,7 +71,17 @@
     "adam-hlozek": "Projizierte Elf 09.11.2026 mit Naderi im Sturm; Hložek nicht verletzt.",
     "issa-doumbia": "Italien-Kader 06.11.2026 (Pazzi di Fanta/Calcio e Finanza) führt Doumbia im Mittelfeld; Startplatz ungewiss (Barella, Tonali, Fagioli, Frattesi). +10.11.: Gazzetta (via Napoli Magazine) Barella, Tonali, Doumbia; europei.net und lazionews ohne Doumbia → 1 von 3.",
     "guillaume-restes": "Frankreich: Maignan Nr. 1; Restes nur Ersatz (Okt.-Vorschauen). +10.11.: zwei Vorschauen mit Maignan im Tor.",
-    "arthur-theate": "RatingBet 12.11.-Vorschau: Belgien-XI ohne Theate (Ngoy, Mechele innen)."
+    "arthur-theate": "RatingBet 12.11.-Vorschau: Belgien-XI ohne Theate (Ngoy, Mechele innen).",
+    "niclas-fullkrug": "GER-SRB 13.11.: Sports Mole 11.11.2026 (2 Artikel) + RotoWire 11.11.2026: Havertz vorn, Füllkrug laut RotoWire nur Alternative.",
+    "joshua-kimmich": "GER-SRB 13.11.: Sports Mole 11.11. + RotoWire 11.11.2026: in beiden Elfen.",
+    "nico-schlotterbeck": "GER-SRB 13.11.: Sports Mole 11.11. + RotoWire 11.11.2026: in beiden Elfen, nach Bänderverletzung wieder im Kader.",
+    "jonathan-tah": "GER-SRB 13.11.: Sports Mole 11.11. + RotoWire 11.11.2026: in beiden Elfen.",
+    "marc-andre-ter-stegen": "GER-SRB 13.11.: Sports Mole 11.11.: als Nr. 1 bestätigt; RotoWire 11.11.: projizierter TW, Urbig Alternative.",
+    "alexander-nubel": "GER-SRB 13.11.: ter Stegen Nr. 1 (Sports Mole + RotoWire 11.11.2026), Urbig Alternative.",
+    "lutsharel-geertruida": "NED-GRE 13.11.: in keiner von 4 Vorschauen (Sports Mole 11.11., RotoWire 13.11., Goal 13.11., Khelnow 11.11.2026); RV Dumfries/J. Timber.",
+    "nico-elvedi": "SLO-SUI 13.11.: Sports Mole 11./12.11. + Khelnow 11.11.2026: in beiden Elfen.",
+    "breel-donald-embolo": "SLO-SUI 13.11.: Amdouni als Stürmer in Sports Mole 11./12.11. + Khelnow 11.11.2026, Embolo in keiner Vorschau erwähnt.",
+    "eljif-elmas": "SCO-MKD 13.11.: Starting11 (Nov.-Vorschau) mit Elmas; Kapitän/Stammspieler, Okt.-Vorschauen ebenso. Nur eine aktuelle Quelle."
   },
   "_fixture": "football-1-2-oct-2026",
   "_researched": "2026-09-28",
@@ -102,7 +112,11 @@
   },
   "remo-freuler": 0.92,
   "djibril-sow": 0.35,
-  "nico-elvedi": 0.9,
+  "nico-elvedi": {
+    "p": 0.85,
+    "fixture": "football-13-17-nov-2026",
+    "researched": "2026-11-13"
+  },
   "dan-ndoye": 0.85,
   "pavel-sulc": {
     "p": 0.88,
@@ -133,36 +147,36 @@
     "researched": "2026-11-10"
   },
   "eljif-elmas": {
-    "p": 0.0,
-    "fixture": "football-16-20-oct-2026",
-    "researched": "2026-10-16"
+    "p": 0.82,
+    "fixture": "football-13-17-nov-2026",
+    "researched": "2026-11-13"
   },
   "leandro-barreiro-martins": 0.88,
   "james-wilson-2007-03-06": 0.15,
   "marc-andre-ter-stegen": {
-    "p": 0.0,
-    "fixture": "football-2-6-oct-2026",
-    "researched": "2026-09-29"
+    "p": 0.9,
+    "fixture": "football-13-17-nov-2026",
+    "researched": "2026-11-13"
   },
   "alexander-nubel": {
-    "p": 0.0,
-    "fixture": "football-2-6-oct-2026",
-    "researched": "2026-09-29"
+    "p": 0.03,
+    "fixture": "football-13-17-nov-2026",
+    "researched": "2026-11-13"
   },
   "nico-schlotterbeck": {
-    "p": 0.0,
-    "fixture": "football-2-6-oct-2026",
-    "researched": "2026-10-02"
+    "p": 0.85,
+    "fixture": "football-13-17-nov-2026",
+    "researched": "2026-11-13"
   },
   "jonathan-tah": {
-    "p": 0.0,
-    "fixture": "football-2-6-oct-2026",
-    "researched": "2026-09-29"
+    "p": 0.85,
+    "fixture": "football-13-17-nov-2026",
+    "researched": "2026-11-13"
   },
   "joshua-kimmich": {
-    "p": 0.0,
-    "fixture": "football-2-6-oct-2026",
-    "researched": "2026-09-29"
+    "p": 0.88,
+    "fixture": "football-13-17-nov-2026",
+    "researched": "2026-11-13"
   },
   "jamal-musiala": {
     "p": 0.0,
@@ -219,9 +233,9 @@
     "researched": "2026-09-29"
   },
   "evangelos-pavlidis": {
-    "p": 0.8,
-    "fixture": "football-6-10-nov-2026",
-    "researched": "2026-11-05"
+    "p": 0.85,
+    "fixture": "football-13-17-nov-2026",
+    "researched": "2026-11-13"
   },
   "david-raum": {
     "p": 0.75,
@@ -232,9 +246,9 @@
     "researched": "2026-09-29"
   },
   "florian-wirtz": {
-    "p": 0.85,
-    "fixture": "football-6-10-nov-2026",
-    "researched": "2026-11-04"
+    "p": 0.8,
+    "fixture": "football-13-17-nov-2026",
+    "researched": "2026-11-13"
   },
   "jonathan-burkardt": {
     "p": 0.35,
@@ -282,9 +296,9 @@
     "researched": "2026-10-09"
   },
   "lutsharel-geertruida": {
-    "p": 0.35,
-    "fixture": "football-9-13-oct-2026",
-    "researched": "2026-10-09"
+    "p": 0.2,
+    "fixture": "football-13-17-nov-2026",
+    "researched": "2026-11-13"
   },
   "sergino-dest": {
     "p": 0.5,
@@ -390,5 +404,15 @@
     "p": 0.25,
     "fixture": "football-12-13-nov-2026",
     "researched": "2026-11-10"
+  },
+  "niclas-fullkrug": {
+    "p": 0.2,
+    "fixture": "football-13-17-nov-2026",
+    "researched": "2026-11-13"
+  },
+  "breel-donald-embolo": {
+    "p": 0.25,
+    "fixture": "football-13-17-nov-2026",
+    "researched": "2026-11-13"
   }
 }
