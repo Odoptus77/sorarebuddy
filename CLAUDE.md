@@ -808,7 +808,8 @@ Bouanga/Son/Blake standen mit hoher Klub-Quote im Entwurf, obwohl abgestellt.)
   Tag. **Prozess-Lehre:** Ohne klaren Beleg für die Bank (Trainer-Aussage,
   Spiel-Log) bei Recherche-Quoten nicht unter ~0,45 gehen. Das gilt auch für
   Torhüter, bei denen sich die Vorschauen nur auf einen Wechsel einigen. Krejčí
-  sah in der 72. Minute Rot und fehlt damit für Kroatien gegen Tschechien (GW730).
+  sah in der 72. Minute Rot (Spiel-Log) und ist für Kroatien gegen Tschechien
+  (GW730) sehr wahrscheinlich gesperrt.
 - **Laufende Spiele zählen nicht (Fix 15.10.2026):** Sorare führt ein laufendes Spiel
   schon mit den bisherigen Minuten im Spiel-Log. Der Sync um 02:45 lief während der
   MLS-Mittwochsspiele: Jeder MLS-Spieler verlor dadurch ~15 Prozentpunkte Startquote
