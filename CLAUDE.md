@@ -794,6 +794,21 @@ Bouanga/Son/Blake standen mit hoher Klub-Quote im Entwurf, obwohl abgestellt.)
   **Wilson 31.10.** (verlegt, Bilanz 01.11.). Ergebnis: Brier gesamt 0,1626 →
   0,1617, Klub-LOO 0,1632 → 0,1580 vorher, jetzt 0,1620 → 0,1569. Ein zweiter
   Lauf liefert dieselben Zahlen. Reiner Datenfix, keine Modelländerung.
+- **Bilanz 13.11.2026 (2567 Spiele, davon 17 neu = GW729 Länderspiele vom
+  12.11., alle mit recherchierter Quote):** Brier 0,187, vorhergesagt 42 %,
+  gestartet 53 %. Die klaren Fälle lagen richtig: Kane, Olise, Pickford, Krejčí
+  gestartet; Perišić, Jakić, Restes, Eze, Grimaldo, Theate nicht. Daneben lag der
+  Mittelbereich (25–50 %): 5 von 9 gestartet, darunter Baena (42 %, 95 Punkte),
+  Porro (30 %), Hložek (34 %) und zwei Torhüter, bei denen die Vorschauen einen
+  anderen erwarteten (Unai Simón 42 % statt Raya, Kovář 30 % statt Horníček).
+  Laporte (65 %) stand nicht im Kader. Über alle recherchierten Quoten (n=106)
+  liegt der Bereich 0,15–0,6 im Schnitt rund 13 Punkte zu niedrig (0,15–0,35:
+  24 % → 35 %, 0,35–0,6: 43 % → 59 %, je n=17). Die Ränder stimmen (< 0,15 und
+  ≥ 0,8). **Nicht geändert:** n=34 im betroffenen Bereich, Deadline am selben
+  Tag. **Prozess-Lehre:** Ohne klaren Beleg für die Bank (Trainer-Aussage,
+  Spiel-Log) bei Recherche-Quoten nicht unter ~0,45 gehen. Das gilt auch für
+  Torhüter, bei denen sich die Vorschauen nur auf einen Wechsel einigen. Krejčí
+  sah in der 72. Minute Rot und fehlt damit für Kroatien gegen Tschechien (GW730).
 - **Laufende Spiele zählen nicht (Fix 15.10.2026):** Sorare führt ein laufendes Spiel
   schon mit den bisherigen Minuten im Spiel-Log. Der Sync um 02:45 lief während der
   MLS-Mittwochsspiele: Jeder MLS-Spieler verlor dadurch ~15 Prozentpunkte Startquote
