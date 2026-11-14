@@ -810,6 +810,15 @@ Bouanga/Son/Blake standen mit hoher Klub-Quote im Entwurf, obwohl abgestellt.)
   Torhüter, bei denen sich die Vorschauen nur auf einen Wechsel einigen. Krejčí
   sah in der 72. Minute Rot (Spiel-Log) und ist für Kroatien gegen Tschechien
   (GW730) sehr wahrscheinlich gesperrt.
+- **Bilanz 14.11.2026 (2593 Spiele, davon 23 neu = GW730 Freitag, Länderspiele
+  13.11.):** Brier 0,159, vorhergesagt 57 %, gestartet 52 %. Die 13 recherchierten
+  Quoten lagen 11-mal richtig. Gestartet wie erwartet: Kimmich (86 Punkte), Wirtz,
+  Tah, Elvedi, Pavlidis, Ndoye, ter Stegen, Elmas. Nicht gestartet wie erwartet:
+  Geertruida, Nübel, Füllkrug (Joker 16'). Daneben: Schlotterbeck (79 %, in beiden
+  Vorschauen, 0'; Thiaw startete) und Embolo (32 %, 59'). Embolo stand in keiner
+  Vorschau, war aber auch nicht als Bank genannt. Das bestätigt die Lehre vom
+  13.11.: Ohne ausdrücklichen Bank-Beleg nicht unter ~0,45 gehen. Keine
+  Modelländerung (n klein).
 - **Laufende Spiele zählen nicht (Fix 15.10.2026):** Sorare führt ein laufendes Spiel
   schon mit den bisherigen Minuten im Spiel-Log. Der Sync um 02:45 lief während der
   MLS-Mittwochsspiele: Jeder MLS-Spieler verlor dadurch ~15 Prozentpunkte Startquote
