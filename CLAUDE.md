@@ -819,6 +819,20 @@ Bouanga/Son/Blake standen mit hoher Klub-Quote im Entwurf, obwohl abgestellt.)
   Vorschau, war aber auch nicht als Bank genannt. Das bestätigt die Lehre vom
   13.11.: Ohne ausdrücklichen Bank-Beleg nicht unter ~0,45 gehen. Keine
   Modelländerung (n klein).
+- **Bilanz 15.11.2026 (2625 Spiele, davon 31 neu = GW730 Samstag, Länderspiele
+  14.11.):** Brier 0,242, so schlecht wie bloßes Raten. Die 23 reinen
+  Modellquoten lagen bei 0,267, die 8 recherchierten bei 0,171. Fehlgriffe nur
+  aus dem Modell: Bolla (75 %, Joker 20'), Malić (70 %, Joker), Vanat (68 %, nicht
+  im Kader), Bidstrup und Osula. Gallese (84 %, Klub) stand nicht im Kader.
+  Recherche daneben: Kristensen (75 %, Scores24-Elf, 0'), dafür Bah (40 %, 90').
+  **Muster über alle Länderspiele:** Das Modell allein hat Brier 0,241 (n=107,
+  vorhergesagt 65 %, gestartet 55 %; ≥ 0,8 → 76 %), recherchierte Quoten 0,160
+  (n=94). Ohne Recherche ist eine Länderspielquote praktisch wertlos. Die
+  Länderspiel-Kalibrierung zieht sie schon zur Mitte (b 0,71 → 0,67, LOO 0,2056 →
+  0,1972). **Prozess-Lehre:** Vor einer Länderspiel-Deadline jeden eingeplanten
+  Spieler recherchieren, nicht nur die Wackelkandidaten. Wo es keine Vorschau
+  gibt, mindestens das Spiel-Log des letzten Länderspiels und den Kader prüfen.
+  Keine Modelländerung (die Kalibrierung lernt es selbst).
 - **Laufende Spiele zählen nicht (Fix 15.10.2026):** Sorare führt ein laufendes Spiel
   schon mit den bisherigen Minuten im Spiel-Log. Der Sync um 02:45 lief während der
   MLS-Mittwochsspiele: Jeder MLS-Spieler verlor dadurch ~15 Prozentpunkte Startquote

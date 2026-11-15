@@ -1,40 +1,40 @@
 {
-  "_updated": "2026-11-14T07:53:03.368094+00:00",
-  "n": 2593,
+  "_updated": "2026-11-15T07:53:25.946480+00:00",
+  "n": 2625,
   "min_n": 30,
   "active": true,
   "global": {
-    "a": -0.2031,
-    "b": 1.0518
+    "a": -0.2047,
+    "b": 1.0386
   },
   "by_type": {
     "national": {
-      "n": 197,
+      "n": 226,
       "min_n": 20,
       "active": true,
       "global": {
-        "a": -0.0973,
-        "b": 0.7257
+        "a": -0.1154,
+        "b": 0.6746
       },
       "sources": {
         "researched": {
-          "a": 0.065,
-          "b": 0.7759,
-          "n": 86
+          "a": 0.043,
+          "b": 0.7699,
+          "n": 94
         },
         "model": {
-          "a": -0.2573,
-          "b": 0.6438,
-          "n": 86
+          "a": -0.2264,
+          "b": 0.5318,
+          "n": 107
         },
         "natl_bench_auto": {
-          "a": -0.0389,
-          "b": 0.5581,
+          "a": -0.0619,
+          "b": 0.522,
           "n": 7
         },
         "natl_bench_soft": {
-          "a": -0.2024,
-          "b": 0.8913,
+          "a": -0.2246,
+          "b": 0.8453,
           "n": 15
         },
         "sorare_app": {
@@ -43,47 +43,47 @@
           "n": 2
         },
         "suspension_risk": {
-          "a": -0.1045,
-          "b": 0.7444,
+          "a": -0.1233,
+          "b": 0.6952,
           "n": 1
         }
       },
       "status": {},
       "loo": {
-        "raw": 0.1937,
-        "calibrated": 0.1885,
+        "raw": 0.2056,
+        "calibrated": 0.1972,
         "with_status": false,
-        "gain": 0.0052,
+        "gain": 0.0084,
         "was_active": true
       }
     },
     "club": {
-      "n": 2396,
+      "n": 2399,
       "min_n": 20,
       "active": true,
       "global": {
-        "a": -0.216,
-        "b": 1.0957
+        "a": -0.2182,
+        "b": 1.0948
       },
       "sources": {
         "apif_doubtful": {
-          "a": -0.2279,
-          "b": 1.1088,
+          "a": -0.2301,
+          "b": 1.1079,
           "n": 1
         },
         "model": {
-          "a": -0.3269,
-          "b": 1.16,
-          "n": 1588
+          "a": -0.3299,
+          "b": 1.1585,
+          "n": 1591
         },
         "intl_duty_auto": {
-          "a": -0.1021,
-          "b": 0.7617,
+          "a": -0.1043,
+          "b": 0.7608,
           "n": 2
         },
         "suspension_risk": {
-          "a": -0.1419,
-          "b": 0.917,
+          "a": -0.1441,
+          "b": 0.9161,
           "n": 11
         },
         "sorare_app": {
@@ -102,87 +102,87 @@
           "n": 431
         },
         "researched": {
-          "a": -0.0908,
-          "b": 1.2443,
+          "a": -0.0925,
+          "b": 1.2436,
           "n": 33
         }
       },
       "status": {
         "SUBSTITUTE": {
-          "d": -0.4049,
-          "n": 221
+          "d": -0.4075,
+          "n": 222
         },
         "REGULAR": {
-          "d": -0.136,
+          "d": -0.133,
           "n": 375
         },
         "STARTER": {
-          "d": 0.2163,
-          "n": 783
+          "d": 0.2134,
+          "n": 785
         },
         "NOT_PLAYING": {
-          "d": -0.2863,
+          "d": -0.2857,
           "n": 139
         },
         "SUPER_SUBSTITUTE": {
-          "d": 0.4858,
+          "d": 0.4875,
           "n": 117
         }
       },
       "loo": {
-        "raw": 0.1622,
-        "calibrated": 0.1571,
+        "raw": 0.1623,
+        "calibrated": 0.1573,
         "with_status": true,
-        "gain": 0.0051,
+        "gain": 0.005,
         "was_active": true
       }
     }
   },
   "proj_loo": {
-    "raw": 14.565,
-    "calibrated": 14.345,
+    "raw": 14.582,
+    "calibrated": 14.373,
     "active": true,
-    "gain": 0.22,
+    "gain": 0.209,
     "was_active": true
   },
   "proj_scale": {
     "value": 0.973,
-    "n": 1929
+    "n": 1951
   },
   "proj_scale_groups": {
     "Defender|national": {
-      "value": 0.996,
-      "n": 30
+      "value": 0.979,
+      "n": 37
     },
     "Goalkeeper|national": {
-      "value": 0.971,
-      "n": 13
+      "value": 0.956,
+      "n": 15
     },
     "Midfielder|national": {
-      "value": 0.969,
-      "n": 42
+      "value": 0.986,
+      "n": 48
     },
     "Forward|national": {
-      "value": 0.945,
-      "n": 34
+      "value": 0.959,
+      "n": 39
     },
     "Defender|club": {
       "value": 0.959,
       "n": 493
     },
     "Forward|club": {
-      "value": 0.975,
-      "n": 544
+      "value": 0.976,
+      "n": 545
     },
     "Goalkeeper|club": {
       "value": 0.98,
-      "n": 225
+      "n": 226
     },
     "Midfielder|club": {
       "value": 0.981,
       "n": 548
     }
   },
-  "brier_raw": 0.1646,
-  "brier_calibrated_in_sample": 0.1581
+  "brier_raw": 0.166,
+  "brier_calibrated_in_sample": 0.1592
 }
