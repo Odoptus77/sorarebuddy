@@ -833,6 +833,17 @@ Bouanga/Son/Blake standen mit hoher Klub-Quote im Entwurf, obwohl abgestellt.)
   Spieler recherchieren, nicht nur die Wackelkandidaten. Wo es keine Vorschau
   gibt, mindestens das Spiel-Log des letzten Länderspiels und den Kader prüfen.
   Keine Modelländerung (die Kalibrierung lernt es selbst).
+- **Bilanz 16.11.2026 (2646 Spiele, davon 21 neu = GW730 Sonntag, Länderspiele
+  15.11.):** Brier 0,232. Die recherchierten Quoten lagen richtig (Brier 0,098):
+  Kane, Olise und Unai Simón (55 %, 90') starteten. Die reinen Modellquoten lagen
+  bei 0,308: Pickford und Kovář (je 77 %, Torwart-Alarm stand) spielten nicht,
+  Doumbia (63 %) und Burn (62 %) starteten nicht. **Bank-Detektor zweimal
+  falsch:** Perišić und Laporte (24–25 %) starteten beide 90'. Bei beiden waren
+  die 0 Minuten am 12.11. keine Bank. Perišić war gesperrt (Gelb-Rot), Laporte
+  stand nicht im Kader. **Idee, nicht umgesetzt:** Der Detektor sollte nur
+  Länderspiele zählen, in denen der Spieler im Kader stand und nicht gesperrt war.
+  n=2, gesamt liegt `natl_bench_soft` noch im Rahmen (26 % vorhergesagt, 19 %
+  gestartet, n=21). Nach der Pause mit den Kaderdaten (`onGameSheet`) prüfen.
 - **Laufende Spiele zählen nicht (Fix 15.10.2026):** Sorare führt ein laufendes Spiel
   schon mit den bisherigen Minuten im Spiel-Log. Der Sync um 02:45 lief während der
   MLS-Mittwochsspiele: Jeder MLS-Spieler verlor dadurch ~15 Prozentpunkte Startquote
