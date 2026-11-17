@@ -1,6 +1,6 @@
 {
   "_comment": "Researched START probabilities (--start-override). Jeder Wert ist an EINE GW gebunden (_fixture bzw. 'fixture' je Eintrag) und verfällt danach automatisch. 'researched' = Recherchedatum; hat der Spieler danach erneut gespielt, meldet lineup_suggest den Override als veraltet (neu prüfen). GRUNDREGEL #0: nur datumsgeprüfte Werte.",
-  "_updated": "2026-11-13",
+  "_updated": "2026-11-17",
   "_sources": {
     "gw717_md1_2026-09-26": "Nations League MD1 am 26.09.2026 (Gruppe 3 = ESP/CRO/ENG/CZE; ESP 3-2 ENG). Sorare-Spiel-Log (mins_played, last games) je Spieler abgefragt am 28.09.2026 -> wer MD1 startete, ist der stärkste MD2-Indikator.",
     "spain_2026-09-28": "ESP vs CRO 29.09. (yahoo/ESPN preview, 27.09.): Unai Simón 90' MD1 -> #1 (0.90); Laporte 90' MD1 -> gesetzt (0.90); Baena nur 35' (Joker) -> Rotation (0.40, unbestätigt); Grimaldo 0' MD1 (Cucurella LB) -> Ersatz (0.30, unbestätigt).",
@@ -51,8 +51,8 @@
     "christian-burgess": " Für GW728 fortgeschrieben (Recherche 02.11.), vor Deadline neu prüfen. 05.11.: Spiel-Log bestätigt erneut 0 Min. (01.11. und 05.11. nicht eingesetzt).",
     "florian-wirtz": "GER-SRB 13.11.: in beiden Elfen (Sports Mole 11.11.: 'could start'; RotoWire 11.11.2026).",
     "evangelos-pavlidis": "NED-GRE 13.11.: in allen 4 Vorschauen in der Elf (Sports Mole 11.11., RotoWire 13.11., Goal 13.11., Khelnow 11.11.2026).",
-    "alexander-hartmann-bah": "POR-DEN 14.11.: Scores24 12.11.2026 RV Kristensen, Bah nicht in der Elf; Bah im Sept. 0' für Dänemark.",
-    "anatolii-trubin": "Spiel-Log: Samuel Soares 90' in den Ligaspielen 26.10. und 02.11., Trubin nur im EL-Spiel 05.11. (90'); Muster Trubin=EL, Soares=Liga (Glorioso 1904, undatiert). Lehre 03.11.: dem Benfica-Torwart der letzten 2–3 Ligaspiele folgen.",
+    "alexander-hartmann-bah": "Sorare-Spiel-Log 14.11.2026: 90' im letzten Länderspiel (POR-DEN) -> Start (RV statt Kristensen). Vorschau beim finalen Check prüfen.",
+    "anatolii-trubin": "Sorare-Spiel-Log 14.11.2026: 90' im Tor im letzten Länderspiel (NIR-UKR) -> Start, Nr. 1. Vorschau beim finalen Check prüfen.",
     "samuel-jumpe-soares": "Spiel-Log: 90' in den Ligaspielen 26.10. und 02.11.; im EL-Spiel 05.11. Bank, Trubin im Tor. Liga-Torwart → Start gegen Estrela wahrscheinlich.",
     "hany-mukhtar": "Sports Mole 06.11.2026 (Vorschau Cincinnati–Nashville): voraussichtliche Elf ohne Mukhtar, Rotation (Lovitz, Tagseth, Muyl, Madrigal) möglich; Nashville spielt aber um den Punkterekord. Rotation 28.10. (SixOneFive) als Präzedenz. Nur eine Quelle → moderat.",
     "matthew-james-corcoran": "Sports Mole 06.11.2026: nicht in der voraussichtlichen Elf; Spiel-Log 67', 0', 67'. Nur eine Quelle → moderat.",
@@ -82,14 +82,28 @@
     "nico-elvedi": "SLO-SUI 13.11.: Sports Mole 11./12.11. + Khelnow 11.11.2026: in beiden Elfen.",
     "breel-donald-embolo": "SLO-SUI 13.11.: Amdouni als Stürmer in Sports Mole 11./12.11. + Khelnow 11.11.2026, Embolo in keiner Vorschau erwähnt.",
     "eljif-elmas": "SCO-MKD 13.11.: Starting11 (Nov.-Vorschau) mit Elmas; Kapitän/Stammspieler, Okt.-Vorschauen ebenso. Nur eine aktuelle Quelle.",
-    "konrad-laimer": "AUT-IRL 14.11.: Sports Mole 12.11.2026 + Legalbet 12.11.2026: in beiden Elfen (LV).",
+    "konrad-laimer": "Sorare-Spiel-Log 14.11.2026: 90' im letzten Länderspiel (AUT-IRL) -> Start. Vorschau beim finalen Check prüfen.",
     "luca-weinhandl": "AUT-IRL 14.11.: 17-jähriger Debütant (Laola1 02.11.2026), in keiner Elf (Sports Mole + Legalbet 12.11.2026).",
-    "sasa-kalajdzic": "AUT-IRL 14.11.: Gregoritsch als Stürmer in Sports Mole + Legalbet 12.11.2026, Kalajdžić in keiner Elf.",
-    "rasmus-nissen-kristensen": "POR-DEN 14.11.: Scores24 12.11.2026 RV in der Elf; startete auch im Okt.-Spiel; Sorare: im Kader, keine Verletzung. 45' am 08.11. im Klub ohne Verletzungsmeldung.",
-    "victor-mow-froholdt": "POR-DEN 14.11.: Scores24 12.11.2026 ohne Froholdt (Hjulmand/Højbjerg). Nur eine Quelle -> nicht unter 0,45 (Lehre 13.11.).",
-    "diogo-meireles-costa": "POR-DEN 14.11.: Scores24 12.11.2026 im Tor; Portugals Nr. 1.",
+    "sasa-kalajdzic": "Sorare-Spiel-Log 14.11.2026: 30' Joker im letzten Länderspiel (AUT-IRL) -> Bank. Vorschau beim finalen Check prüfen.",
+    "rasmus-nissen-kristensen": "Sorare-Spiel-Log 14.11.2026: 0' im letzten Länderspiel (POR-DEN) -> Bank. Vorschau beim finalen Check prüfen.",
+    "victor-mow-froholdt": "Sorare-Spiel-Log 14.11.2026: 17' Joker im letzten Länderspiel (POR-DEN) -> Bank. Vorschau beim finalen Check prüfen.",
+    "diogo-meireles-costa": "Sorare-Spiel-Log 14.11.2026: 90' im letzten Länderspiel (POR-DEN) -> Start, Nr. 1. Vorschau beim finalen Check prüfen.",
     "dan-ndoye": "SLO-SUI 13.11.: Sports Mole 11./12.11.2026 + Khelnow 11.11.2026: in beiden Elfen.",
-    "dominik-szoboszlai": "GEO-HUN 14.11.: Kapitän, laut Sorare im Kader und ohne Verletzung (69' am 08.11. für Liverpool). Keine datierte Vorschau gefunden."
+    "dominik-szoboszlai": "Sorare-Spiel-Log 14.11.2026: 90' im letzten Länderspiel (GEO-HUN) -> Start, Kapitän. Vorschau beim finalen Check prüfen.",
+    "willi-orban": "Sorare-Spiel-Log 14.11.2026: 90' im letzten Länderspiel (GEO-HUN) -> Start. Vorschau beim finalen Check prüfen.",
+    "bendeguz-bolla": "Sorare-Spiel-Log 14.11.2026: 20' Joker im letzten Länderspiel (GEO-HUN) -> Bank. Vorschau beim finalen Check prüfen.",
+    "nikola-katic": "Sorare-Spiel-Log 14.11.2026: 90' im letzten Länderspiel (SWE-BIH) -> Start. Vorschau beim finalen Check prüfen.",
+    "amar-dedic": "Sorare-Spiel-Log 14.11.2026: 90' im letzten Länderspiel (SWE-BIH) -> Start. Vorschau beim finalen Check prüfen.",
+    "ermedin-demirovic": "Sorare-Spiel-Log 14.11.2026: 90' im letzten Länderspiel (SWE-BIH) -> Start. Vorschau beim finalen Check prüfen.",
+    "arjan-malic": "Sorare-Spiel-Log 14.11.2026: 23' Joker im letzten Länderspiel (SWE-BIH) -> Bank. Vorschau beim finalen Check prüfen.",
+    "nicolas-seiwald": "Sorare-Spiel-Log 14.11.2026: 90' im letzten Länderspiel (AUT-IRL) -> Start. Vorschau beim finalen Check prüfen.",
+    "antonio-eromonsele-nordby-nusa": "Sorare-Spiel-Log 14.11.2026: 90' im letzten Länderspiel (NOR-WAL) -> Start. Vorschau beim finalen Check prüfen.",
+    "fredrik-aursnes": "Sorare-Spiel-Log 14.11.2026: kein Einsatz/kein Kaderplatz (letztes Spiel 08.11. Klub) im letzten Länderspiel (NOR-WAL) -> nicht beteiligt. Vorschau beim finalen Check prüfen.",
+    "will-osula": "Sorare-Spiel-Log 14.11.2026: 17' Joker im letzten Länderspiel (POR-DEN) -> Bank. Vorschau beim finalen Check prüfen.",
+    "viktor-gyokeres": "Sorare-Spiel-Log 14.11.2026: 90' im letzten Länderspiel (SWE-BIH) -> Start. Vorschau beim finalen Check prüfen.",
+    "hugo-larsson": "Sorare-Spiel-Log 14.11.2026: 90' im letzten Länderspiel (SWE-BIH) -> Start. Vorschau beim finalen Check prüfen.",
+    "heorhii-sudakov": "Sorare-Spiel-Log 14.11.2026: 72' im letzten Länderspiel (NIR-UKR) -> Start. Vorschau beim finalen Check prüfen.",
+    "arijanet-muric": "Sorare-Spiel-Log 14.11.2026: 0' im letzten Länderspiel (KOS-ISR) -> Bank. Vorschau beim finalen Check prüfen."
   },
   "_fixture": "football-1-2-oct-2026",
   "_researched": "2026-09-28",
@@ -216,8 +230,8 @@
   },
   "konrad-laimer": {
     "p": 0.85,
-    "fixture": "football-13-17-nov-2026",
-    "researched": "2026-11-13"
+    "fixture": "football-17-20-nov-2026",
+    "researched": "2026-11-17"
   },
   "joakim-maehle": {
     "p": 0.92,
@@ -228,24 +242,24 @@
     "researched": "2026-09-29"
   },
   "rasmus-nissen-kristensen": {
-    "p": 0.8,
-    "fixture": "football-13-17-nov-2026",
-    "researched": "2026-11-13"
+    "p": 0.25,
+    "fixture": "football-17-20-nov-2026",
+    "researched": "2026-11-17"
   },
   "arijanet-muric": {
-    "p": 0.3,
-    "fixture": "football-27-30-oct-2026",
-    "researched": "2026-10-27"
+    "p": 0.15,
+    "fixture": "football-17-20-nov-2026",
+    "researched": "2026-11-17"
   },
   "alexander-hartmann-bah": {
-    "p": 0.35,
-    "fixture": "football-13-17-nov-2026",
-    "researched": "2026-11-13"
+    "p": 0.75,
+    "fixture": "football-17-20-nov-2026",
+    "researched": "2026-11-17"
   },
   "victor-mow-froholdt": {
-    "p": 0.45,
-    "fixture": "football-13-17-nov-2026",
-    "researched": "2026-11-13"
+    "p": 0.35,
+    "fixture": "football-17-20-nov-2026",
+    "researched": "2026-11-17"
   },
   "evangelos-pavlidis": {
     "p": 0.85,
@@ -289,10 +303,9 @@
     "researched": "2026-10-06"
   },
   "fredrik-aursnes": {
-    "p": 0.2,
-    "fixture": "football-2-6-oct-2026",
-    "researched": "2026-10-02",
-    "src": "sorare_app"
+    "p": 0.15,
+    "fixture": "football-17-20-nov-2026",
+    "researched": "2026-11-17"
   },
   "ladislav-krejci": {
     "p": 0.8,
@@ -376,9 +389,9 @@
     "researched": "2026-11-06"
   },
   "anatolii-trubin": {
-    "p": 0.2,
-    "fixture": "football-6-10-nov-2026",
-    "researched": "2026-11-06"
+    "p": 0.8,
+    "fixture": "football-17-20-nov-2026",
+    "researched": "2026-11-17"
   },
   "hany-mukhtar": {
     "p": 0.65,
@@ -436,18 +449,78 @@
     "researched": "2026-11-13"
   },
   "sasa-kalajdzic": {
-    "p": 0.15,
-    "fixture": "football-13-17-nov-2026",
-    "researched": "2026-11-13"
+    "p": 0.25,
+    "fixture": "football-17-20-nov-2026",
+    "researched": "2026-11-17"
   },
   "diogo-meireles-costa": {
-    "p": 0.88,
-    "fixture": "football-13-17-nov-2026",
-    "researched": "2026-11-13"
+    "p": 0.85,
+    "fixture": "football-17-20-nov-2026",
+    "researched": "2026-11-17"
   },
   "dominik-szoboszlai": {
+    "p": 0.85,
+    "fixture": "football-17-20-nov-2026",
+    "researched": "2026-11-17"
+  },
+  "willi-orban": {
     "p": 0.8,
-    "fixture": "football-13-17-nov-2026",
-    "researched": "2026-11-13"
+    "fixture": "football-17-20-nov-2026",
+    "researched": "2026-11-17"
+  },
+  "bendeguz-bolla": {
+    "p": 0.3,
+    "fixture": "football-17-20-nov-2026",
+    "researched": "2026-11-17"
+  },
+  "nikola-katic": {
+    "p": 0.8,
+    "fixture": "football-17-20-nov-2026",
+    "researched": "2026-11-17"
+  },
+  "amar-dedic": {
+    "p": 0.8,
+    "fixture": "football-17-20-nov-2026",
+    "researched": "2026-11-17"
+  },
+  "ermedin-demirovic": {
+    "p": 0.8,
+    "fixture": "football-17-20-nov-2026",
+    "researched": "2026-11-17"
+  },
+  "arjan-malic": {
+    "p": 0.3,
+    "fixture": "football-17-20-nov-2026",
+    "researched": "2026-11-17"
+  },
+  "nicolas-seiwald": {
+    "p": 0.8,
+    "fixture": "football-17-20-nov-2026",
+    "researched": "2026-11-17"
+  },
+  "antonio-eromonsele-nordby-nusa": {
+    "p": 0.8,
+    "fixture": "football-17-20-nov-2026",
+    "researched": "2026-11-17"
+  },
+  "will-osula": {
+    "p": 0.3,
+    "fixture": "football-17-20-nov-2026",
+    "researched": "2026-11-17"
+  },
+  "viktor-gyokeres": {
+    "p": 0.85,
+    "fixture": "football-17-20-nov-2026",
+    "researched": "2026-11-17"
+  },
+  "hugo-larsson": {
+    "p": 0.75,
+    "fixture": "football-17-20-nov-2026",
+    "researched": "2026-11-17"
+  },
+  "heorhii-sudakov": {
+    "p": 0.75,
+    "fixture": "football-17-20-nov-2026",
+    "researched": "2026-11-17"
   }
 }
